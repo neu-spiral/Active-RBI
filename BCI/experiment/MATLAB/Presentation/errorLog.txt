@@ -1,0 +1,23 @@
+
+2018-05-01 18:02:22
+MATLAB:UndefinedFunction
+Undefined function 'KbName' for input arguments of type 'cell'.
+Error in C:\Users\User\Desktop\rsvp_keyboard\Presentation\initializeRSVPKeyboardPresentation.m (line 28)
+Error in C:\Users\User\Desktop\rsvp_keyboard\Presentation\RSVPKeyboardPresentation.m (line 19)
+
+2018-05-06 19:06:22
+instrument:fopen:opfailed
+Unsuccessful open: Connection refused: connect
+Error in C:\Program Files (x86)\MATLAB\R2015b\toolbox\shared\instrument\@icinterface\fopen.m (line 83)
+Error in C:\Users\User\Yeganeh\bitbucket\RSVPKeyboard_RL\experiment\MATLAB\bci-frameworkRSVPKeyboard\Communications\sender2receiverCommInitialize.m (line 178)
+Error in C:\Users\User\Yeganeh\bitbucket\RSVPKeyboard_RL\experiment\MATLAB\Presentation\initializeRSVPKeyboardPresentation.m (line 17)
+Error in C:\Users\User\Yeganeh\bitbucket\RSVPKeyboard_RL\experiment\MATLAB\Presentation\RSVPKeyboardPresentation.m (line 19)
+
+2018-05-06 19:06:23
+instrument:fopen:opfailed
+Unsuccessful open: Connection refused: connect
+Error in C:\Program Files (x86)\MATLAB\R2015b\toolbox\shared\instrument\@icinterface\fopen.m (line 83)
+Error in C:\Users\User\Yeganeh\bitbucket\RSVPKeyboard_RL\experiment\MATLAB\bci-frameworkRSVPKeyboard\Communications\sender2receiverCommInitialize.m (line 178)
+Error in C:\Users\User\Yeganeh\bitbucket\RSVPKeyboard_RL\experiment\MATLAB\Presentation\initializeRSVPKeyboardPresentation.m (line 17)
+Error in C:\Users\User\Yeganeh\bitbucket\RSVPKeyboard_RL\experiment\MATLAB\Presentation\RSVPKeyboardPresentation.m (line 19)
+

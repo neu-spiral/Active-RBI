@@ -1,0 +1,112 @@
+\documentclass[12pt,letterpaper]{report}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\title{RSVP Keyboard\texttrademark~ v2.0 Operation Manual}
+\begin{document}
+\maketitle
+\tableofcontents
+\chapter{Introduction}
+RSVP Keyboard\texttrademark~ is an EEG (electroencephalography) based BCI (brain computer interface) typing system. It utilizes a visual presentation technique called rapid serial visual presentation (RSVP). In RSVP, the options are presented rapidly at a single location with a temporal separation. Similarly in RSVP Keyboard\texttrademark , the symbols (the letters and additional symbols) are shown at the center of screen. When the subject wants to select a symbol, he/she awaits for the intended symbol during the presentation. 
+
+To be able to use RSVP Keyboard\texttrademark~ v2.0 in typing, it is required to have a calibration session to learn the signal statistics corresponding to a person or a day. In the calibration session, a predesignated target symbol is shown before the presentation of a sequence of symbols and the subject is expected to focus for the target symbol given before the beginning of each sequence.
+
+In typing sessions, RSVP Keyboard\texttrademark~ can be used in one of the following modes.
+\begin{itemize}
+\item{Spelling:} The subject can type whatever he/she wants.
+\item{Copy phrase:} The subject is asked to copy a phrase given in a sentence.
+\item{Mastery task:} Copy phrase task with increasing difficulty levels.
+\end{itemize}
+\chapter{System Requirements}
+RSVP Keyboard\texttrademark~ v2.0 is tested in the following system configurations.
+\begin{itemize}
+	\item{Windows 7 (32-bit)}
+	\item{g.USBamp Driver v3.10.00}
+	\item{g.USBamp MATLAB API v3.11.00}
+	\item{MATLAB R2012a 32-bit}
+	\item{Psychtoolbox v3.0.10}
+	\item{Parallel port or ExpressCard to parallel port converter with its driver installed}
+\end{itemize}
+\chapter{Running RSVP Keyboard\texttrademark}
+To run the RSVP Keyboard\texttrademark~ v2.0, you should first open a MATLAB session. In MATLAB, go to main directory where the RSVP Keyboard\texttrademark~ v2.0 resides. MATLAB's current folder should contain RSVPKeyboard.m. Run the following command in MATLAB
+\begin{verbatim}
+>>RSVPKeyboard
+\end{verbatim}
+
+This command will start the RSVP Keyboard\texttrademark~ v2.0. Consequently, a list of subjects will be shown in the MATLAB command window with a query to select the ID of an existing subject. For example,
+\begin{verbatim}
+[1]: NEU1
+[2]: NEU2
+[3]: OHSU1
+[4]: OHSU2
+Please select the number of the subject or enter an ID for a 
+new subject:
+\end{verbatim}
+At this point, the number corresponding to the subject ID should be entered, e.g. 3, if it exists. If it doesn't exist a new ID can be entered to be added to the list of subjects. 
+
+\framebox{The list of subjects is stored in \textit{Parameters/subjectList.txt}.}\\
+
+After the selection of the subject, the modes of operation are displayed.
+\begin{samepage}
+\begin{verbatim}
+[1]: Calibration
+[2]: Spell
+[3]: CopyPhrase
+[4]: MasteryTask
+Please select the session type:
+\end{verbatim}
+\end{samepage}
+To select a mode of operation, enter the number corresponding to it, e.g. 1. These session types are explained in the following sections.
+\section{Calibration}
+After the selection of calibration mode, the system will automatically setup the connection with the amplifier and conduct a test of triggers. If amplifier initialization or the trigger test is not successful, it will print respective messages on the screen, otherwise a signal monitoring screen will initialize. In signal monitoring screen, \textit{``Display Signals''} should be selected in \textit{``Select MODE''} drop down list to display the signals and \textit{``Start EEG Display''} button should be pressed. After the signals are checked, if the quality is decided to be sufficiently well to continue the experiment ``Continue Session'' button should be pressed, otherwise ``Quit Session'' button should be pressed to exit RSVP Keyboard\texttrademark .
+
+If session is continued, the signal monitoring screen will be closed, the language model server will be initialized and the presentation will be initialized. In calibration, a randomly selected target symbol will be shown followed by a fixation symbol and a sequence of symbols containing the target. The subject is expected to look for the given target symbol in the sequence. These sequences with a predefined target symbol will be shown multiple times.
+\subsection{Offline Analysis}
+Using the data collected in the calibration session, an offline analysis may be conducted to calibrate the classifier and generate the calibration  file to be used in typing modes (spell, copy phrase and mastery task). To run the offline analysis, it should be started Matlab's command window
+\begin{verbatim}
+>>offlineAnalysis;
+\end{verbatim}
+If the offline analysis is going to be conducted without running a calibration session immediately before it, i.e using an already existing calibration recording file, \textit{offlineAnalysis.m} might not exist in MATLAB path and it should be added to the path. One way to do this is to run the following command from the main code directory
+\begin{verbatim}
+>>addpath(genpath('.'));
+\end{verbatim}
+
+After executing the offlineAnalysis routine, a file selection window pops up to select the file to be used in offline analysis. A \textit{daq} file with a recording of a calibration session should be selected. If not changed, the file name of a proper calibration file should end with \textit{\_Amp1\_Run.daq}. Selection of the data recording file would lead to calculation of area under the ROC curve, calibration of the classifier for typing sessions and simulation of the typing performance. Consequently, a figure with ERP plots and simulation results will be shown, if enabled. Some of the steps of the offline analysis may be disabled from \textit{Parameters/RSVPKeyboardParameters.m}, like simulation or calibration of the classifier. After the offline analysis \textit{calibrationFile.mat} containing calibrated classifiers is generated in the folder of the calibration data and it can be used in the typing sessions.
+ 
+\section{Spell}
+After the selection of spell mode, the system will automatically setup the connection with the amplifier and conduct a test of triggers. If amplifier initialization or the trigger test is not successful, it will print respective messages on the screen, otherwise a signal monitoring screen will initialize. In signal monitoring screen, \textit{``Display Signals''} should be selected in \textit{``Select MODE''} drop down list to display the signals and \textit{``Start EEG Display''} button should be pressed. After the signals are checked, if the quality is decided to be sufficiently well to continue the experiment ``Continue Session'' button should be pressed, otherwise ``Quit Session'' button should be pressed to exit RSVP Keyboard\texttrademark .
+
+If session is continued, the signal monitoring screen will be closed, a file selection window will pop-up to query for a calibration file. To be able to generate the calibration file (`.mat'), offline analysis should be completed on a data record file (`.daq') corresponding to a calibration session. 
+
+Consequently, the language model server and the presentation will be initialized. In spell mode, for each symbol to be selected, multiple sequences of trials is shown. The subject is expected to look for the target symbol he/she wishes to type. When a decision is made the text generated after the last selection will be shown at the top of the screen.
+
+\section{Copy Phrase} 
+After the selection of copy phrase mode, the system will automatically setup the connection with the amplifier and conduct a test of triggers. If amplifier initialization or the trigger test is not successful, it will print respective messages on the screen, otherwise a signal monitoring screen will initialize. In signal monitoring screen, \textit{``Display Signals''} should be selected in \textit{``Select MODE''} drop down list to display the signals and \textit{``Start EEG Display''} button should be pressed. After the signals are checked, if the quality is decided to be sufficiently well to continue the experiment ``Continue Session'' button should be pressed, otherwise ``Quit Session'' button should be pressed to exit RSVP Keyboard\texttrademark .
+
+If session is continued, the signal monitoring screen will be closed, a file selection window will pop-up to query for a calibration file. To be able to generate the calibration file (`.mat'), offline analysis should be completed on a data record file (`.daq') corresponding to a calibration session. 
+
+Consequently, the language model server will be initialized and the phrase list will be loaded automatically.\\
+\framebox{\begin{minipage}{\textwidth} The phrase list for the copy phrase task is stored in \textit{Parameters/copyphraseSentences.txt}.\end{minipage}}\\ 
+
+Afterwards, the presentation will initialize. At the top of the screen the target sentence will be shown with the target phrase marked in green. The subject is expected the copy the target phrase letter by letter. The phrase will end when it is successfully completed or one of the stopping criteria is reached. At any set, if a certain ratio of the phrases is successfully completed, the level becomes complete. For each symbol to be selected, multiple sequences of trials is shown. The subject is expected to look for the target symbol he/she wishes to type. When a decision is made, the text generated after the last selection will be shown as a second line at the top of the screen.
+\section{Mastery}
+After the selection of mastery mode, the system will automatically setup the connection with the amplifier and conduct a test of triggers. If amplifier initialization or the trigger test is not successful, it will print respective messages on the screen, otherwise a signal monitoring screen will initialize. In signal monitoring screen, \textit{``Display Signals''} should be selected in \textit{``Select MODE''} drop down list to display the signals and \textit{``Start EEG Display''} button should be pressed. After the signals are checked, if the quality is decided to be sufficiently well to continue the experiment ``Continue Session'' button should be pressed, otherwise ``Quit Session'' button should be pressed to exit RSVP Keyboard\texttrademark .
+
+If session is continued, the signal monitoring screen will be closed, a file selection window will pop-up to query for a calibration file. To be able to generate the calibration file (`.mat'), offline analysis should be completed on a data record file (`.daq') corresponding to a calibration session. 
+
+Consequently, the language model server will be initialized and the user will be asked to select the starting level and the starting set of the mastery task.\\
+\framebox{\begin{minipage}{\textwidth} The phrase list for the mastery task is stored in \textit{Parameters/masteryTaskSentences.xls}.\end{minipage}}\\
+
+After the selection of starting phrase and set, the presentation will initialize. At the top of the screen the target sentence will be shown with the target phrase marked in green. The subject is expected the copy the target phrase letter by letter. The phrase will end when it is successfully completed or one of the stopping criteria is reached. At any set, if a certain ratio of the phrases is successfully completed, the level becomes complete. For each symbol to be selected, multiple sequences of trials is shown. The subject is expected to look for the target symbol he/she wishes to type. When a decision is made, the text generated after the last selection will be shown as a second line at the top of the screen.
+\chapter{Appendix}
+\section{Option to run the system without amplifier}
+If \textit{RSVPKeyboardParams.DAQType} is set to \textit{'noAmp'} instead of \textit{'gUSBAmp'} in \textit{Parameters/RSVPKeyboardParameters}, the system will operate without the amplifier. This option is created for development and debugging purposes. It has the ability to randomly generate signals or play a previously selected file. Immediately after selection of the session type, the system will pop-up a file selection window to select a \textit{'daq'} file. 
+\begin{itemize}
+\item{If Esc key is pressed, the system will generate signals 16 channel Gaussian white noise as real time recording. This is the recommended option, for general purpose tests without amplifier.}
+\item{If a \textit{'daq'} file is selected, recorded file will be passed through the system as it is being recorded in real time. It can be used to play a recorded experiment. However this mode is still experimental and the trials shown in presentation side will be different from what was shown in the recording, while decisions and progress being equivalent.}
+\end{itemize}
+\framebox{\begin{minipage}{\textwidth} In Spell, CopyPhrase and MasteryTask sessions, two consecutive file selection windows pop-up. First one is for the 'daq' file to be played through the system, and the second one is for selecting the calibration file to be used. \end{minipage}}
+
+
+\end{document}

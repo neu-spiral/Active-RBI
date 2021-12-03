@@ -1,0 +1,366 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>RSVPKeyboardTask</title><meta name="generator" content="MATLAB 7.14"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2013-06-13"><meta name="DC.source" content="RSVPKeyboardTask.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+
+  </style></head><body><div class="content"><h1>RSVPKeyboardTask</h1><!--introduction--><p>RSVPKeyboardTask is the parent class for all the task classes. It keeps the properties and functions which are generic to all tasks. Examples of subclasses are CalibrationTask, SpellingTask, CopyTask.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#2">Properties of the RSVPKeyboardTask class</a></li><li><a href="#3">Methods of RSVPKeyboardTask class</a></li><li><a href="#4">self=RSVPKeyboardTask(symbolStructArray,RSVPKeyboardParams,scoreStruct,operationMode)</a></li><li><a href="#5">checkTaskUpdateCriteria(self)</a></li><li><a href="#6">updateDecisionState(self,results)</a></li><li><a href="#8">pInitializeLanguageModel(self,symbolStructArray,RSVPKeyboardParams)</a></li><li><a href="#9">pInitializeCurrentInfo(self)</a></li><li><a href="#10">pInitializeTaskUpdateCriteria(self,calibrationParams)</a></li><li><a href="#11">pUpdateCurrentInfo(self,results,decision,epochEndedFlag)</a></li><li><a href="#12">pSaveTaskHistory(self,saveLocation)</a></li></ul></div><pre class="codeinput"><span class="keyword">classdef</span> RSVPKeyboardTask &lt; handle
+</pre><h2>Properties of the RSVPKeyboardTask class<a name="2"></a></h2><pre class="codeinput">    properties
+        <span class="comment">% taskHistory keeps a history of the task. Actively used by just</span>
+        <span class="comment">% CopyTask, as a linkedList.</span>
+        taskHistory
+
+        <span class="comment">% decisionObj is a decisionClass object that handles the decision</span>
+        <span class="comment">% making.</span>
+        decisionObj
+
+        <span class="comment">% languageModelWrapperObject is a languageModelWrapper object handles</span>
+        <span class="comment">% access to the language model.</span>
+        languageModelWrapperObject
+
+        <span class="comment">% taskUpdateCriteria is a struct of criteria indicating when a task</span>
+        <span class="comment">% should be updated. It can contain different fields for different</span>
+        <span class="comment">% tasks. For example, it may contain stopping criteria for the</span>
+        <span class="comment">% calibration task or phrase changing criteria for the copy tasks.</span>
+        taskUpdateCriteria
+
+        <span class="comment">% symbolStructArray is a struct vector containing list of symbols</span>
+        <span class="comment">% or images used in presentations. Loaded using xls2Structs</span>
+        <span class="comment">% function called on imageList.xls.</span>
+        symbolStructArray
+
+        <span class="comment">% currentInfo is a structure that keeps the current status. Examples</span>
+        <span class="comment">% of its fields are globalSequenceCounter, decision, typingDuration.</span>
+        currentInfo
+
+        <span class="comment">%   operationMode - Mode of operation.</span>
+        <span class="comment">%                   0 : session</span>
+        <span class="comment">%                   1 : simulation</span>
+        operationMode
+
+        <span class="comment">% nextSequenceInfoStruct is a structure that keeps the decision rule</span>
+        <span class="comment">% for the next sequence and some more additional information</span>
+        <span class="comment">% depending on the task.</span>
+        nextSequenceInfoStruct
+    <span class="keyword">end</span>
+</pre><h2>Methods of RSVPKeyboardTask class<a name="3"></a></h2><pre class="codeinput">    methods
+</pre><h2>self=RSVPKeyboardTask(symbolStructArray,RSVPKeyboardParams,scoreStruct,operationMode)<a name="4"></a></h2><p>Constructor for the RSVPKeyboardTask. This constructor is called from individual tasks to make common initializations. The inputs of the constructor   symbolStructArray - a struct vector containing list of symbols   or images used in presentations. Loaded using xls2Structs   function called on imageList.xls.</p><pre class="language-matlab">RSVPKeyboardParams - RSVPKeyboard parameters <span class="string">from</span> <span class="string">the</span>
+parameter <span class="string">file</span> <span class="string">RSVPKeyboardParameters.m.</span>
+</pre><pre class="language-matlab">scoreStruct - A calibration <span class="string">file</span> <span class="string">containing</span> <span class="string">the</span> <span class="string">kernel</span> <span class="string">density</span>
+estimators.
+</pre><pre class="language-matlab">operationMode - Mode of <span class="string">operation.</span>
+                0 : session
+                1 : simulation
+</pre><pre class="codeinput">        <span class="keyword">function</span> self=RSVPKeyboardTask(symbolStructArray,RSVPKeyboardParams,scoreStruct,operationMode)
+            self.symbolStructArray=symbolStructArray;
+
+            self.pInitializeLanguageModel(symbolStructArray,RSVPKeyboardParams);
+            self.pInitializeCurrentInfo();
+
+            self.operationMode=operationMode;
+
+            self.decisionObj = DecisionClass(self.languageModelWrapperObject,scoreStruct,RSVPKeyboardParams.Typing);
+
+            self.nextSequenceInfoStruct.Rule = RSVPKeyboardParams.Typing.nextSequenceDecisionRule;
+        <span class="keyword">end</span>
+</pre><h2>checkTaskUpdateCriteria(self)<a name="5"></a></h2><p>Check if the session is completed.</p><pre class="codeinput">        <span class="keyword">function</span> checkTaskUpdateCriteria(self)
+            self.currentInfo.taskEndedFlag=self.currentInfo.globalSequenceCounter&gt;=self.taskUpdateCriteria.maximumNumberofSequences;
+        <span class="keyword">end</span>
+</pre><h2>updateDecisionState(self,results)<a name="6"></a></h2><p>updateDecisionState updates the decisionClass object which makes decisions using the results obtained from the feature extraction stage.</p><p>Input:       results - a structure containing one dimensional features       corresponding to each trial</p><pre>     results.trialLabels - the labels of the trials (vector of
+     indices)</pre><pre>     results.decideNextFlag - a boolean indicator indicates if a
+     new sequence is expected to be shown.</pre><pre>     results.completedSequenceCount - the number of sequences
+     completed and contained in the results structure</pre><pre>     results.duration - the duration of the sequence(s)</pre><pre class="codeinput">        <span class="keyword">function</span> updateDecisionState(self,results) <span class="comment">%</span>
+            [decision,epochEndedFlag]=self.decisionObj.makeDecision(results);
+            self.pUpdateCurrentInfo(results,decision,epochEndedFlag);
+        <span class="keyword">end</span>
+</pre><pre class="codeinput">    <span class="keyword">end</span>
+
+    methods (Access = protected)
+</pre><h2>pInitializeLanguageModel(self,symbolStructArray,RSVPKeyboardParams)<a name="8"></a></h2><p>Initializes the language model server if it is not running and creates corresponding language model wrapper object.</p><pre class="codeinput">        <span class="keyword">function</span> pInitializeLanguageModel(self,symbolStructArray,RSVPKeyboardParams)
+            [a,b]=dos(<span class="string">'tasklist /fi "imagename eq btlmserv.exe"'</span>);
+            <span class="keyword">if</span>(strcmp(b(1:8),<span class="string">'INFO: No'</span>))
+                dos([<span class="string">'btlmserver\btlmserv.exe btlmserver\models\'</span> RSVPKeyboardParams.languageModel <span class="string">' &amp;'</span>]);
+            <span class="keyword">end</span>
+            languageModelClient=btlm;
+            languageModelClient.initRemote;
+            languageModelClient.alloc;
+            self.languageModelWrapperObject=languageModelWrapper(languageModelClient,symbolStructArray,RSVPKeyboardParams.languageModelWrapper);
+        <span class="keyword">end</span>
+</pre><h2>pInitializeCurrentInfo(self)<a name="9"></a></h2><p>Sets up the initial values of the currentInfo.</p><pre class="codeinput">        <span class="keyword">function</span> pInitializeCurrentInfo(self)
+            self.currentInfo.globalSequenceCounter = 0;
+            self.currentInfo.globalTic = tic;
+            self.currentInfo.typingDuration=0;
+            self.currentInfo.taskEndedFlag = false;
+        <span class="keyword">end</span>
+</pre><h2>pInitializeTaskUpdateCriteria(self,calibrationParams)<a name="10"></a></h2><p>Initializes the generic task update criteria.</p><pre class="codeinput">        <span class="keyword">function</span> pInitializeTaskUpdateCriteria(self)
+            self.taskUpdateCriteria.maximumNumberofSequences = Inf;
+        <span class="keyword">end</span>
+</pre><h2>pUpdateCurrentInfo(self,results,decision,epochEndedFlag)<a name="11"></a></h2><p>After each attempt to decision making updates the current status according to the current states.</p><p>Input:       results - a structure containing one dimensional features       corresponding to each trial</p><pre>     results.trialLabels - the labels of the trials (vector of
+     indices)</pre><pre>     results.decideNextFlag - a boolean indicator indicates if a
+     new sequence is expected to be shown.</pre><pre>     results.completedSequenceCount - the number of sequences
+     completed and contained in the results structure</pre><pre>     results.duration - the duration of the sequence(s)</pre><pre>     decision - a structure containing the decision information.</pre><pre>     decision.posteriorProbs - a vector of the current posterior probabilities</pre><pre>     decision.decided - the index of the decided symbol if a
+     decision is made, otherwise it is empty.</pre><pre>     epochEndedFlag - a boolean flag indicating if the epoch
+     finished or not.
+            true - finished, i.e a decision is made
+            false - continuing</pre><pre class="codeinput">        <span class="keyword">function</span> pUpdateCurrentInfo(self,results,decision,epochEndedFlag)
+            self.currentInfo.typingDuration=self.currentInfo.typingDuration+results.duration;
+            self.currentInfo.globalSequenceCounter=self.currentInfo.globalSequenceCounter+results.completedSequenceCount;
+            self.currentInfo.decision.posteriorProbs=decision.posteriorProbs;
+            self.currentInfo.decision.decided=decision.decided;
+            self.currentInfo.epochEndedFlag=epochEndedFlag;
+        <span class="keyword">end</span>
+</pre><h2>pSaveTaskHistory(self,saveLocation)<a name="12"></a></h2><p>Abstract container function for pSaveTaskHistory in the subclasses.</p><pre class="codeinput">        <span class="keyword">function</span> pSaveTaskHistory(self,saveLocation)
+
+        <span class="keyword">end</span>
+</pre><pre class="codeinput">    <span class="keyword">end</span>
+</pre><pre class="codeinput"><span class="keyword">end</span>
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.14<br></p></div><!--
+##### SOURCE BEGIN #####
+%% RSVPKeyboardTask
+% RSVPKeyboardTask is the parent class for all the task classes. It keeps
+% the properties and functions which are generic to all tasks. Examples of
+% subclasses are CalibrationTask, SpellingTask, CopyTask.
+%%
+
+classdef RSVPKeyboardTask < handle
+    %% Properties of the RSVPKeyboardTask class
+    properties
+        % taskHistory keeps a history of the task. Actively used by just
+        % CopyTask, as a linkedList.
+        taskHistory
+        
+        % decisionObj is a decisionClass object that handles the decision
+        % making.
+        decisionObj
+        
+        % languageModelWrapperObject is a languageModelWrapper object handles
+        % access to the language model.
+        languageModelWrapperObject
+        
+        % taskUpdateCriteria is a struct of criteria indicating when a task
+        % should be updated. It can contain different fields for different
+        % tasks. For example, it may contain stopping criteria for the
+        % calibration task or phrase changing criteria for the copy tasks.
+        taskUpdateCriteria
+        
+        % symbolStructArray is a struct vector containing list of symbols
+        % or images used in presentations. Loaded using xls2Structs
+        % function called on imageList.xls.
+        symbolStructArray
+        
+        % currentInfo is a structure that keeps the current status. Examples
+        % of its fields are globalSequenceCounter, decision, typingDuration.
+        currentInfo
+        
+        %   operationMode - Mode of operation.
+        %                   0 : session
+        %                   1 : simulation_dir
+        operationMode
+        
+        % nextSequenceInfoStruct is a structure that keeps the decision rule
+        % for the next sequence and some more additional information
+        % depending on the task.
+        nextSequenceInfoStruct
+    end
+    
+    %% Methods of RSVPKeyboardTask class
+    methods
+        %% self=RSVPKeyboardTask(symbolStructArray,RSVPKeyboardParams,scoreStruct,operationMode)
+        % Constructor for the RSVPKeyboardTask. This constructor is called
+        % from individual tasks to make common initializations.
+        % The inputs of the constructor
+        %   symbolStructArray - a struct vector containing list of symbols
+        %   or images used in presentations. Loaded using xls2Structs
+        %   function called on imageList.xls.
+        %
+        %   RSVPKeyboardParams - RSVPKeyboard parameters from the
+        %   parameter file RSVPKeyboardParameters.m.
+        %
+        %   scoreStruct - A calibration file containing the kernel density
+        %   estimators. 
+        %
+        %   operationMode - Mode of operation.
+        %                   0 : session
+        %                   1 : simulation_dir
+        %
+        function self=RSVPKeyboardTask(symbolStructArray,RSVPKeyboardParams,scoreStruct,operationMode)
+            self.symbolStructArray=symbolStructArray;
+            
+            self.pInitializeLanguageModel(symbolStructArray,RSVPKeyboardParams);
+            self.pInitializeCurrentInfo();
+            
+            self.operationMode=operationMode;
+            
+            self.decisionObj = DecisionClass(self.languageModelWrapperObject,scoreStruct,RSVPKeyboardParams.Typing);
+            
+            self.nextSequenceInfoStruct.Rule = RSVPKeyboardParams.Typing.nextSequenceDecisionRule;
+        end
+        
+        %% checkTaskUpdateCriteria(self)
+        % Check if the session is completed.
+        function checkTaskUpdateCriteria(self)
+            self.currentInfo.taskEndedFlag=self.currentInfo.globalSequenceCounter>=self.taskUpdateCriteria.maximumNumberofSequences;
+        end
+        
+        %% updateDecisionState(self,results)
+        % updateDecisionState updates the decisionClass object which makes
+        % decisions using the results obtained from the feature extraction
+        % stage.
+        %
+        % Input:
+        %       results - a structure containing one dimensional features
+        %       corresponding to each trial
+        %
+        %       results.trialLabels - the labels of the trials (vector of
+        %       indices)
+        %
+        %       results.decideNextFlag - a boolean indicator indicates if a
+        %       new sequence is expected to be shown.
+        %
+        %       results.completedSequenceCount - the number of sequences
+        %       completed and contained in the results structure
+        %
+        %       results.duration - the duration of the sequence(s)
+        %
+        function updateDecisionState(self,results) %
+            [decision,epochEndedFlag]=self.decisionObj.makeDecision(results);
+            self.pUpdateCurrentInfo(results,decision,epochEndedFlag);
+        end
+        
+    end
+    
+    methods (Access = protected)
+        %% pInitializeLanguageModel(self,symbolStructArray,RSVPKeyboardParams)
+        % Initializes the language model server if it is not running and
+        % creates corresponding language model wrapper object.
+        function pInitializeLanguageModel(self,symbolStructArray,RSVPKeyboardParams)
+            [a,b]=dos('tasklist /fi "imagename eq btlmserv.exe"');
+            if(strcmp(b(1:8),'INFO: No'))
+                dos(['btlmserver\btlmserv.exe btlmserver\models\' RSVPKeyboardParams.languageModel ' &']);
+            end
+            languageModelClient=btlm;
+            languageModelClient.initRemote;
+            languageModelClient.alloc;
+            self.languageModelWrapperObject=languageModelWrapper(languageModelClient,symbolStructArray,RSVPKeyboardParams.languageModelWrapper);
+        end
+        
+        %% pInitializeCurrentInfo(self)
+        % Sets up the initial values of the currentInfo.
+        function pInitializeCurrentInfo(self)
+            self.currentInfo.globalSequenceCounter = 0;
+            self.currentInfo.globalTic = tic;
+            self.currentInfo.typingDuration=0;
+            self.currentInfo.taskEndedFlag = false;
+        end
+        
+        %% pInitializeTaskUpdateCriteria(self,calibrationParams)
+        % Initializes the generic task update criteria.
+        function pInitializeTaskUpdateCriteria(self)
+            self.taskUpdateCriteria.maximumNumberofSequences = Inf;
+        end
+        
+        %% pUpdateCurrentInfo(self,results,decision,epochEndedFlag)
+        % After each attempt to decision making updates the current status
+        % according to the current states.
+        %
+        %
+        % Input:
+        %       results - a structure containing one dimensional features
+        %       corresponding to each trial
+        %
+        %       results.trialLabels - the labels of the trials (vector of
+        %       indices)
+        %
+        %       results.decideNextFlag - a boolean indicator indicates if a
+        %       new sequence is expected to be shown.
+        %
+        %       results.completedSequenceCount - the number of sequences
+        %       completed and contained in the results structure
+        %
+        %       results.duration - the duration of the sequence(s)
+        %
+        %       decision - a structure containing the decision information.
+        %
+        %       decision.posteriorProbs - a vector of the current posterior probabilities
+        %
+        %       decision.decided - the index of the decided symbol if a
+        %       decision is made, otherwise it is empty.
+        %
+        %       epochEndedFlag - a boolean flag indicating if the epoch
+        %       finished or not.
+        %              true - finished, i.e a decision is made
+        %              false - continuing
+        %
+        function pUpdateCurrentInfo(self,results,decision,epochEndedFlag)
+            self.currentInfo.typingDuration=self.currentInfo.typingDuration+results.duration;
+            self.currentInfo.globalSequenceCounter=self.currentInfo.globalSequenceCounter+results.completedSequenceCount;
+            self.currentInfo.decision.posteriorProbs=decision.posteriorProbs;
+            self.currentInfo.decision.decided=decision.decided;
+            self.currentInfo.epochEndedFlag=epochEndedFlag;
+        end
+        
+        %% pSaveTaskHistory(self,saveLocation)
+        % Abstract container function for pSaveTaskHistory in the subclasses.
+        function pSaveTaskHistory(self,saveLocation)
+            
+        end
+        
+    end
+    
+    
+    
+end
+##### SOURCE END #####
+--></body></html>

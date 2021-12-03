@@ -1,0 +1,533 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>RSVPKeyboard</title><meta name="generator" content="MATLAB 7.14"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2013-06-13"><meta name="DC.source" content="RSVPKeyboard.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+
+  </style></head><body><div class="content"><h1>RSVPKeyboard</h1><!--introduction--><p>RSVPKeyboard.m starts the RSVP Keyboard, BCI typing system. It initializes the data acquisition using gTec, starts the language model server (btlm) and starts a separate MATLAB session for the presentation. All of the signal processing and machine learning modules are handled in this routine. Presentation information transmitted to the presentation MATLAB. The contextual probabilities are updated and acquired by communicating with the language model server. See \Documents\RSVPKeyboardOperationManual.pdf for more detailed information on the operation of RSVPKeyboard system.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#2">Initialization of parameters</a></li><li><a href="#3">Initialization of data acquisition</a></li><li><a href="#4">Initialization signal processing and machine learning</a></li><li><a href="#6">Start GUI MATLAB</a></li><li><a href="#7">Start presentation MATLAB</a></li><li><a href="#8">Start recording</a></li><li><a href="#9">Start main loop</a></li><li><a href="#11">Fetch the data</a></li><li><a href="#12">SignalProcessing</a></li><li><a href="#13">Trigger Control and Partitioning</a></li><li><a href="#14">Artifacts</a></li><li><a href="#15">Attention Monitoring</a></li><li><a href="#16">Feature Extraction</a></li><li><a href="#17">Decision making</a></li><li><a href="#18">Generate artificial triggers</a></li><li><a href="#19">Check packets from presentation</a></li><li><a href="#20">Communication with GUI</a></li><li><a href="#23">Save information and quit</a></li></ul></div><pre class="codeinput">clear;
+clc;
+</pre><h2>Initialization of parameters<a name="2"></a></h2><p>Initializes the parameters, queries the user input for subject and session and sets up the recording folders and files.</p><pre class="codeinput"><span class="keyword">global</span> BCIframeworkDir
+
+BCIframeworkDir=<span class="string">'.'</span>;
+addpath(genpath(<span class="string">'.'</span>));
+
+RSVPKeyboardParameters
+
+projectID=<span class="string">'CSL_RSVPKeyboard'</span>;
+subjectID=getSubjectInformation;
+[sessionID,sessionName]=getSessionInformation;
+
+setPathandFilenames
+</pre><h2>Initialization of data acquisition<a name="3"></a></h2><p>Initializes the data acquisition device, applies a trigger test and starts signal quality check GUI.</p><pre class="codeinput">initializeDAQ
+<span class="keyword">if</span>(success==0),<span class="keyword">return</span>,<span class="keyword">end</span>
+
+DAQSignalCheck
+<span class="keyword">if</span> ~continueMainBCIFlag
+    [success]=stopAmps(amplifierStruct);
+    [success]=closeAmps(amplifierStruct);
+    <span class="keyword">return</span>;
+<span class="keyword">end</span>
+</pre><h2>Initialization signal processing and machine learning<a name="4"></a></h2><p>Initializes the buffers, filters, feature extraction, language model and decision maker.</p><pre class="codeinput">initializeSignalProcessing
+initializeMachineLearning
+artifactFilteringParameters
+clear <span class="string">artifactFiltering</span>
+
+decisionLoop = true;
+<span class="keyword">while</span> decisionLoop
+</pre><pre class="codeinput">    [selection,~] = listdlg(<span class="keyword">...</span>
+                            <span class="string">'PromptString'</span>,<span class="string">'Select which modules you would like to run:'</span>,<span class="keyword">...</span>
+                            <span class="string">'ListString'</span>,RSVPKeyboardParams.modules<span class="keyword">...</span>
+                           );
+
+    <span class="keyword">if</span> isempty(selection)
+        decisionLoop = false;
+        showPresentation = false;
+        showGUI = false;
+    <span class="keyword">else</span>
+        showPresentation = any(selection == 1);
+        showGUI = any(selection == 2);
+    <span class="keyword">end</span>
+</pre><h2>Start GUI MATLAB<a name="6"></a></h2><pre class="codeinput">    remoteGUI = [];
+    displayMode = 0;
+    <span class="keyword">if</span> showGUI;
+        remoteGUI = RemoteSignalMonitorGUI();
+        remoteGUI.start(RSVPKeyboardParams.GUI.autoLaunch,RSVPKeyboardParams.IP_main,RSVPKeyboardParams.IP_GUI,RSVPKeyboardParams.port_mainAndGUI);
+        remoteGUI.setChannelNames(amplifierStruct.channelNames);
+        remoteGUI.setSampleRate(amplifierStruct.ai(1).SampleRate);
+    <span class="keyword">end</span>;
+</pre><h2>Start presentation MATLAB<a name="7"></a></h2><pre class="codeinput">    <span class="keyword">if</span> showPresentation;
+        remoteStartPresentation;
+    <span class="keyword">end</span>;
+</pre><h2>Start recording<a name="8"></a></h2><pre class="codeinput">    <span class="keyword">if</span> or(showGUI,showPresentation)
+        startAcquisition;
+    <span class="keyword">end</span>
+</pre><h2>Start main loop<a name="9"></a></h2><pre class="codeinput">    <span class="keyword">while</span> or(showGUI,showPresentation)
+</pre><h2>Fetch the data<a name="11"></a></h2><pre class="codeinput">        fetchData;
+</pre><h2>SignalProcessing<a name="12"></a></h2><p>Reads the data and trigger from the amplifer applies the frontEnd filter to the data and stores the data in the dataBuferObject and the trigger in triggerBufferObject.</p><pre class="codeinput">        [~,filteredData] = signalProcessing(<span class="keyword">...</span>
+                                               rawData,<span class="keyword">...</span>
+                                               triggerData,<span class="keyword">...</span>
+                                               dataBufferObject,<span class="keyword">...</span>
+                                               triggerBufferObject,<span class="keyword">...</span>
+                                               frontendFilter<span class="keyword">...</span>
+                                           );
+</pre><h2>Trigger Control and Partitioning<a name="13"></a></h2><p>Based on the triggers collected in the buffer, checks the completion of the sequences and partitions the sequence into trials accordingly.</p><pre class="codeinput">        [processingStruct.triggerPartitioner.firstUnprocessedTimeIndex,processingStruct.featureExtraction.completedSequenceCount,processingStruct.featureExtraction.trialSampleTimeIndices,processingStruct.featureExtraction.trialTargetness,processingStruct.featureExtraction.trialLabels]=triggerDecoder(triggerBufferObject,processingStruct.triggerPartitioner);
+</pre><h2>Artifacts<a name="14"></a></h2><p>Based on the setting detects the artifacts and tries to remove them from the signal.</p><pre class="codeinput">        processingStruct.featureExtraction = artifactFiltering(<span class="keyword">...</span>
+                                                                    amplifierStruct,<span class="keyword">...</span>
+                                                                    dataBufferObject,<span class="keyword">...</span>
+                                                                    cleanDataBufferObject,<span class="keyword">...</span>
+                                                                    artifactInfoBufferObject,<span class="keyword">...</span>
+                                                                    triggerBufferObject,<span class="keyword">...</span>
+                                                                    fs,<span class="keyword">...</span>
+                                                                    processingStruct.triggerPartitioner,<span class="keyword">...</span>
+                                                                    processingStruct.featureExtraction,<span class="keyword">...</span>
+                                                                    numberOfChannels,<span class="keyword">...</span>
+                                                                    artifactFilteringParams,<span class="keyword">...</span>
+                                                                    RSVPKeyboardParams.artifactFiltering.rejectSequence,<span class="keyword">...</span>
+                                                                    sessionID,<span class="keyword">...</span>
+                                                                    RSVPKeyboardParams.artifactFiltering.enabled,<span class="keyword">...</span>
+                                                                    remoteGUI<span class="keyword">...</span>
+                                                                );
+</pre><h2>Attention Monitoring<a name="15"></a></h2><p>Based on the setting detects the attention during experiment.         attentionMonitoringStruct = attentionMonitoring(...                                                             RSVPKeyboardParams.attentionMonitoring.enabled,...                                                             RSVPKeyboardParams.attentionMonitoring.useArtifactFilteringData,...                                                             RSVPKeyboardParams.attentionMonitoring.processWindowLength,...                                                             fs,...                                                             dataBufferObject,...                                                             cleanDataBufferObject,...                                                             RSVPKeyboardParams.artifactFiltering.enabled,...                                                             amplifierStruct.channelNames...                                                        );</p><h2>Feature Extraction<a name="16"></a></h2><p>Extracts the feature(s) corresponding to trials from the filtered EEG.</p><pre class="codeinput">        results = featureExtraction(<span class="keyword">...</span>
+                                        dataBufferObject,<span class="keyword">...</span>
+                                        cleanDataBufferObject,<span class="keyword">...</span>
+                                        artifactInfoBufferObject,<span class="keyword">...</span>
+                                        processingStruct.triggerPartitioner,<span class="keyword">...</span>
+                                        processingStruct.featureExtraction,<span class="keyword">...</span>
+                                        RSVPKeyboardParams.artifactFiltering.useArtifactFilteredData,<span class="keyword">...</span>
+                                        RSVPKeyboardParams.artifactFiltering.enabled<span class="keyword">...</span>
+                                    );
+</pre><h2>Decision making<a name="17"></a></h2><p>Makes decision based on the extracted features and language model. The decisions and the next trials to show is sent to the presentation MATLAB via TCP/IP.</p><pre class="codeinput">        <span class="keyword">if</span> showPresentation
+
+            [showPresentation,decision] = decisionMaker(<span class="keyword">...</span>
+                                                            results,<span class="keyword">...</span>
+                                                            RSVPKeyboardTaskObject,<span class="keyword">...</span>
+                                                            main2presentationCommObjectStruct,<span class="keyword">...</span>
+                                                            BCIPacketStruct<span class="keyword">...</span>
+                                                        );
+
+        <span class="keyword">end</span>
+</pre><h2>Generate artificial triggers<a name="18"></a></h2><p>In no amplifier mode ('noAmp'), triggers are generated artificially if no input file is selected.</p><pre class="codeinput">        <span class="keyword">if</span>(strcmp(amplifierStruct.DAQType,<span class="string">'noAmp'</span>))
+
+            generateArtificialTriggers(amplifierStruct,decision);
+
+        <span class="keyword">end</span>
+</pre><h2>Check packets from presentation<a name="19"></a></h2><p>Gets feedback from the presentation.</p><pre class="codeinput">        <span class="keyword">if</span> showPresentation
+
+            inPacket = receiveBCIPacket(main2presentationCommObjectStruct.main2presentationCommObject,BCIPacketStruct);
+
+            <span class="keyword">switch</span> inPacket.header
+
+                <span class="keyword">case</span> BCIPacketStruct.HDR.STOP
+                    showPresentation = false;
+
+            <span class="keyword">end</span>
+
+        <span class="keyword">end</span>
+</pre><h2>Communication with GUI<a name="20"></a></h2><pre class="codeinput">        <span class="keyword">if</span> showGUI
+
+            <span class="comment">% Gets feedback from the GUI.</span>
+            newDisplayMode = remoteGUI.getDisplayMode(1);
+
+            <span class="keyword">if</span> displayMode ~= newDisplayMode
+
+                displayMode = newDisplayMode;
+
+                <span class="comment">% Initialise new display mode properties.</span>
+                <span class="keyword">switch</span> displayMode;
+
+                    <span class="keyword">case</span> 0
+                        showGUI = false;
+
+                    <span class="keyword">case</span> {RSVPKeyboardParams.GUI.RAW_DATA,RSVPKeyboardParams.GUI.FILTERED_DATA}
+                        remoteGUI.setChannelNames(amplifierStruct.channelNames);
+
+                    <span class="keyword">case</span> RSVPKeyboardParams.GUI.AM_DATA
+                        remoteGUI.setChannelNames({<span class="string">'Theta Power'</span>,<span class="string">'Alpha Power'</span>,<span class="string">'Lateral Eye Movement'</span>,<span class="string">'Eye Blink Rate'</span>});
+                <span class="keyword">end</span>
+
+            <span class="keyword">end</span>
+
+            <span class="comment">% Sends data to the GUI, based on the display mode.</span>
+            <span class="keyword">if</span> ~isempty(rawData)
+
+                <span class="keyword">switch</span> displayMode;
+
+                    <span class="keyword">case</span> RSVPKeyboardParams.GUI.RAW_DATA
+                        remoteGUI.addData(rawData);
+
+                    <span class="keyword">case</span> RSVPKeyboardParams.GUI.FILTERED_DATA
+                        remoteGUI.addData(filteredData);
+
+                    <span class="keyword">case</span> RSVPKeyboardParams.GUI.AM_DATA
+
+                        <span class="keyword">if</span> attentionMonitoringStruct.show
+                            <span class="comment">% Prepare data packet.</span>
+                            AMData = [transpose(attentionMonitoringStruct.thetaPower),transpose(attentionMonitoringStruct.alphaPower),transpose(attentionMonitoringStruct.lateralEyeMovement),transpose(attentionMonitoringStruct.eyeBlinkRate)];
+                            remoteGUI.addData(AMData);
+                        <span class="keyword">end</span>
+
+                <span class="keyword">end</span>
+
+            <span class="keyword">end</span>
+
+        <span class="keyword">end</span>
+
+        pause(0.01);
+</pre><pre class="codeinput">    <span class="keyword">end</span>
+
+    <span class="comment">% Stop, but do not destroy, the DAQ(s).</span>
+    <span class="keyword">switch</span> amplifierStruct.DAQType
+
+        <span class="keyword">case</span> <span class="string">'gUSBAmp'</span>
+            stopAmps(amplifierStruct);
+
+        <span class="keyword">case</span> <span class="string">'noAmp'</span>
+            amplifierStruct.awaitingTriggers = [];
+    <span class="keyword">end</span>
+
+    <span class="keyword">if</span> any(selection == 1)
+
+        outPacket.header = BCIPacketStruct.HDR.STOP;
+        outPacket.data = [];
+        sendBCIPacket(main2presentationCommObjectStruct.main2presentationCommObject,BCIPacketStruct,outPacket);
+
+    <span class="keyword">end</span>
+
+    <span class="keyword">if</span> any(selection == 2)
+
+        remoteGUI.stop();
+
+    <span class="keyword">end</span>
+</pre><pre class="codeinput"><span class="keyword">end</span>
+</pre><h2>Save information and quit<a name="23"></a></h2><pre class="codeinput">saveInformation;
+quitDAQ(amplifierStruct);
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.14<br></p></div><!--
+##### SOURCE BEGIN #####
+%% RSVPKeyboard
+% RSVPKeyboard.m starts the RSVP Keyboard, BCI typing system. It initializes the data acquisition
+% using gTec, starts the language model server (btlm) and starts a separate MATLAB session for the
+% presentation. All of the signal processing and machine learning modules are handled in this
+% routine. Presentation information transmitted to the presentation MATLAB. The contextual
+% probabilities are updated and acquired by communicating with the language model server. See
+% \Documents\RSVPKeyboardOperationManual.pdf for more detailed information on the operation of
+% RSVPKeyboard system.
+%%
+
+clear;
+clc;
+
+%% Initialization of parameters
+% Initializes the parameters, queries the user input for subject and session and sets up the
+% recording folders and files.
+global BCIframeworkDir
+
+BCIframeworkDir='.';
+addpath(genpath('.'));
+
+RSVPKeyboardParameters
+
+projectID='CSL_RSVPKeyboard';
+subjectID=getSubjectInformation;
+[sessionID,sessionName]=getSessionInformation;
+
+setPathandFilenames
+
+%% Initialization of data acquisition
+% Initializes the data acquisition device, applies a trigger test and starts signal quality check
+% GUI.
+initializeDAQ
+if(success==0),return,end
+
+DAQSignalCheck
+if ~continueMainBCIFlag
+    [success]=stopAmps(amplifierStruct);
+    [success]=closeAmps(amplifierStruct);
+    return;
+end
+
+%% Initialization signal processing and machine learning
+% Initializes the buffers, filters, feature extraction, language model and decision maker.
+initializeSignalProcessing
+initializeMachineLearning
+artifactFilteringParameters
+clear artifactFiltering
+
+decisionLoop = true;
+while decisionLoop
+    
+    [selection,~] = listdlg(...
+                            'PromptString','Select which modules you would like to run:',...
+                            'ListString',RSVPKeyboardParams.modules...
+                           );
+    
+    if isempty(selection)
+        decisionLoop = false;
+        showPresentation = false;
+        showGUI = false;
+    else
+        showPresentation = any(selection == 1);
+        showGUI = any(selection == 2);
+    end
+
+    %% Start GUI MATLAB
+    remoteGUI = [];
+    displayMode = 0;
+    if showGUI;
+        remoteGUI = RemoteSignalMonitorGUI();
+        remoteGUI.start(RSVPKeyboardParams.GUI.autoLaunch,RSVPKeyboardParams.IP_main,RSVPKeyboardParams.IP_GUI,RSVPKeyboardParams.port_mainAndGUI);
+        remoteGUI.setChannelNames(amplifierStruct.channelNames);
+        remoteGUI.setSampleRate(amplifierStruct.ai(1).SampleRate);
+    end;
+
+    %% Start presentation MATLAB
+    if showPresentation;
+        remoteStartPresentation;
+    end;
+    
+    %% Start recording
+    if or(showGUI,showPresentation)
+        startAcquisition;
+    end
+
+    %% Start main loop
+    while or(showGUI,showPresentation)
+
+        %% Fetch the data
+        fetchData;
+
+
+        %% SignalProcessing
+        % Reads the data and trigger from the amplifer applies the frontEnd filter
+        % to the data and stores the data in the dataBuferObject and the trigger in
+        % triggerBufferObject.
+        [~,filteredData] = signalProcessing(...
+                                               rawData,...
+                                               triggerData,...
+                                               dataBufferObject,...
+                                               triggerBufferObject,...
+                                               frontendFilter...
+                                           );
+
+        %% Trigger Control and Partitioning
+        % Based on the triggers collected in the buffer, checks the completion of the sequences and
+        % partitions the sequence into trials accordingly.
+        [processingStruct.triggerPartitioner.firstUnprocessedTimeIndex,processingStruct.featureExtraction.completedSequenceCount,processingStruct.featureExtraction.trialSampleTimeIndices,processingStruct.featureExtraction.trialTargetness,processingStruct.featureExtraction.trialLabels]=triggerDecoder(triggerBufferObject,processingStruct.triggerPartitioner);
+
+        %% Artifacts
+        % Based on the setting detects the artifacts and tries to remove them from
+        % the signal.
+        processingStruct.featureExtraction = artifactFiltering(...
+                                                                    amplifierStruct,...
+                                                                    dataBufferObject,...
+                                                                    cleanDataBufferObject,...
+                                                                    artifactInfoBufferObject,...
+                                                                    triggerBufferObject,...
+                                                                    fs,...
+                                                                    processingStruct.triggerPartitioner,...
+                                                                    processingStruct.featureExtraction,...
+                                                                    numberOfChannels,...
+                                                                    artifactFilteringParams,...
+                                                                    RSVPKeyboardParams.artifactFiltering.rejectSequence,...
+                                                                    sessionID,...
+                                                                    RSVPKeyboardParams.artifactFiltering.enabled,...
+                                                                    remoteGUI...
+                                                                );
+
+        %% Attention Monitoring
+        % Based on the setting detects the attention during experiment.
+%         attentionMonitoringStruct = attentionMonitoring(...
+%                                                             RSVPKeyboardParams.attentionMonitoring.enabled,...
+%                                                             RSVPKeyboardParams.attentionMonitoring.useArtifactFilteringData,...
+%                                                             RSVPKeyboardParams.attentionMonitoring.processWindowLength,...
+%                                                             fs,...
+%                                                             dataBufferObject,...
+%                                                             cleanDataBufferObject,...
+%                                                             RSVPKeyboardParams.artifactFiltering.enabled,...
+%                                                             amplifierStruct.channelNames...
+%                                                        );
+
+        %% Feature Extraction
+        % Extracts the feature(s) corresponding to trials from the filtered EEG.
+        results = featureExtraction(...
+                                        dataBufferObject,...
+                                        cleanDataBufferObject,...
+                                        artifactInfoBufferObject,...
+                                        processingStruct.triggerPartitioner,...
+                                        processingStruct.featureExtraction,...
+                                        RSVPKeyboardParams.artifactFiltering.useArtifactFilteredData,...
+                                        RSVPKeyboardParams.artifactFiltering.enabled...
+                                    );
+
+        %% Decision making
+        % Makes decision based on the extracted features and language model. The decisions and the next
+        % trials to show is sent to the presentation MATLAB via TCP/IP.
+        if showPresentation
+
+            [showPresentation,decision] = decisionMaker(...
+                                                            results,...
+                                                            RSVPKeyboardTaskObject,...
+                                                            main2presentationCommObjectStruct,...
+                                                            BCIPacketStruct...
+                                                        );
+
+        end
+
+        %% Generate artificial triggers
+        % In no amplifier mode ('noAmp'), triggers are generated artificially if no input file is selected.
+        if(strcmp(amplifierStruct.DAQType,'noAmp'))
+
+            generateArtificialTriggers(amplifierStruct,decision);
+
+        end
+
+        %% Check packets from presentation
+        % Gets feedback from the presentation.
+        if showPresentation
+
+            inPacket = receiveBCIPacket(main2presentationCommObjectStruct.main2presentationCommObject,BCIPacketStruct);
+
+            switch inPacket.header
+
+                case BCIPacketStruct.HDR.STOP
+                    showPresentation = false;
+
+            end
+
+        end
+
+        %% Communication with GUI
+        if showGUI
+
+            % Gets feedback from the GUI.
+            newDisplayMode = remoteGUI.getDisplayMode(1);
+
+            if displayMode ~= newDisplayMode
+
+                displayMode = newDisplayMode;
+
+                % Initialise new display mode properties.
+                switch displayMode;
+
+                    case 0
+                        showGUI = false;
+
+                    case {RSVPKeyboardParams.GUI.RAW_DATA,RSVPKeyboardParams.GUI.FILTERED_DATA}
+                        remoteGUI.setChannelNames(amplifierStruct.channelNames);
+
+                    case RSVPKeyboardParams.GUI.AM_DATA
+                        remoteGUI.setChannelNames({'Theta Power','Alpha Power','Lateral Eye Movement','Eye Blink Rate'});
+                end
+
+            end
+
+            % Sends data to the GUI, based on the display mode.
+            if ~isempty(rawData)
+
+                switch displayMode;
+
+                    case RSVPKeyboardParams.GUI.RAW_DATA
+                        remoteGUI.addData(rawData);
+
+                    case RSVPKeyboardParams.GUI.FILTERED_DATA
+                        remoteGUI.addData(filteredData);
+
+                    case RSVPKeyboardParams.GUI.AM_DATA
+
+                        if attentionMonitoringStruct.show
+                            % Prepare data packet.
+                            AMData = [transpose(attentionMonitoringStruct.thetaPower),transpose(attentionMonitoringStruct.alphaPower),transpose(attentionMonitoringStruct.lateralEyeMovement),transpose(attentionMonitoringStruct.eyeBlinkRate)];
+                            remoteGUI.addData(AMData);
+                        end
+
+                end
+
+            end
+
+        end
+
+        pause(0.01);
+    end
+    
+    % Stop, but do not destroy, the DAQ(s).
+    switch amplifierStruct.DAQType
+        
+        case 'gUSBAmp'
+            stopAmps(amplifierStruct);
+            
+        case 'noAmp'
+            amplifierStruct.awaitingTriggers = [];
+    end
+    
+    if any(selection == 1)
+        
+        outPacket.header = BCIPacketStruct.HDR.STOP;
+        outPacket.data = [];
+        sendBCIPacket(main2presentationCommObjectStruct.main2presentationCommObject,BCIPacketStruct,outPacket);
+        
+    end
+    
+    if any(selection == 2)
+        
+        remoteGUI.stop();
+        
+    end
+
+end
+
+%% Save information and quit
+saveInformation;
+quitDAQ(amplifierStruct);
+##### SOURCE END #####
+--></body></html>

@@ -1,0 +1,306 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>imageElement</title><meta name="generator" content="MATLAB 7.14"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2013-06-13"><meta name="DC.source" content="imageElement.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+
+  </style></head><body><div class="content"><pre class="codeinput"><span class="keyword">classdef</span> imageElement &lt; handle
+    <span class="keyword">properties</span>
+        XPosition=<span class="string">'center'</span>
+        YPosition=<span class="string">'center'</span>
+        image
+        imageRect
+        imgAdress
+        windowRect
+        imgSize
+        XCursor
+        YCursor
+        windowHandle
+        Parent
+        Children
+        tex
+    <span class="keyword">end</span>
+    <span class="keyword">methods</span>
+        <span class="keyword">function</span> self=imageElement(type,imageAdress,presentationInfo)
+            self.Children=linkedList;
+            <span class="keyword">if</span>(nargin&gt;0)
+                self.windowHandle=presentationInfo.window;
+                self.windowRect=presentationInfo.windowRect;
+                <span class="keyword">switch</span> type
+                    <span class="keyword">case</span> {<span class="string">'LevelUpSign'</span>}
+                        <span class="keyword">if</span> isfield(presentationInfo,<span class="string">'imageRectSize'</span>)
+                            self.imgSize=presentationInfo.imageRectSize;
+                        <span class="keyword">else</span>
+                            self.imgSize=<span class="string">'Origin'</span>;
+                        <span class="keyword">end</span>
+                        <span class="keyword">if</span>(ischar(imageAdress))
+                            self.imgAdress=imageAdress;
+                        <span class="keyword">else</span>
+                            self.imgAdress=imageAdress.Stimulus;
+                        <span class="keyword">end</span>
+                        self.image=presentationInfo.imageTextures.image{strcmpi(presentationInfo.imageTextures.Address,self.imgAdress)};
+                        self.tex=presentationInfo.imageTextures.tex{strcmpi(presentationInfo.imageTextures.Address,self.imgAdress)};
+                    <span class="keyword">case</span> {<span class="string">'Trial'</span>,<span class="string">'Stimulus'</span>,<span class="string">'Fixation'</span>,<span class="string">'Target'</span>,<span class="string">'Decision'</span>}
+                       <span class="keyword">if</span> isfield(presentationInfo,<span class="string">'imageRectSize'</span>)
+                           self.imgSize=presentationInfo.imageRectSize;
+                       <span class="keyword">else</span>
+                           self.imgSize=presentationInfo.StimulusTextSize;
+
+                       <span class="keyword">end</span>
+                        <span class="keyword">if</span>(ischar(imageAdress))
+                            self.imgAdress=imageAdress;
+                        <span class="keyword">else</span>
+                            self.imgAdress=imageAdress.Stimulus;
+                        <span class="keyword">end</span>
+                        self.image=presentationInfo.imageTextures.image{strcmpi(presentationInfo.imageTextures.Address,self.imgAdress)};
+                        self.tex=presentationInfo.imageTextures.tex{strcmpi(presentationInfo.imageTextures.Address,self.imgAdress)};
+
+
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> addGraphicElement(self,element)
+            self.Children.insertEnd(listNode(element));
+            element.Parent=self;
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> Draw(self)
+            <span class="keyword">if</span>(~isempty(self.Parent))
+                <span class="keyword">switch</span> class(self.Parent)
+                    <span class="keyword">case</span> <span class="string">'imageElement'</span>
+                        self.XPosition=self.Parent.XCursor;
+                        self.YPosition=self.Parent.YCursor;
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+            rect=round(self.windowRect/2);
+            <span class="keyword">if</span> ischar(self.imgSize)
+                self.imgSize=max(size(self.image));
+            <span class="keyword">end</span>
+            rect=rect(3:end);
+            rect=rect-round(self.imgSize/2);
+            rect(2)=rect(2)+round(self.imgSize*.2);
+            self.imageRect=[rect,rect+self.imgSize];
+
+            <span class="keyword">if</span> isnumeric(self.XPosition)
+                self.imageRect(1,1)= self.imageRect(1,1)+ self.XPosition;
+                self.imageRect(1,3)= self.imageRect(1,3)+ self.XPosition;
+                self.imageRect(1,2)= self.imageRect(1,2)+ self.YPosition;
+                self.imageRect(1,4)= self.imageRect(1,4)+ self.YPosition;
+
+            <span class="keyword">end</span>
+            <span class="keyword">if</span>(isempty(self.imgAdress))
+                self.XCursor=self.XPosition;
+                self.YCursor=self.YPosition;
+                self.imageRect=[self.XCursor,self.YCursor,self.XCursor,self.YCursor];
+            <span class="keyword">else</span>
+            <span class="comment">%tex=Screen('MakeTexture', self.windowHandle, self.image);</span>
+            Screen(<span class="string">'DrawTexture'</span>, self.windowHandle, self.tex, [],self.imageRect);
+
+
+            <span class="keyword">end</span>
+            currentNode=self.Children.Head;
+            <span class="keyword">for</span>(elementIndex=1:self.Children.elementCount)
+                currentNode.Data.Draw;
+                currentNode=currentNode.Next;
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> copyObject=copy(self)
+            copyObject=imageElement;
+            S=properties(self);
+            <span class="keyword">for</span>(propertyIndex=1:length(S))
+                copyObject.(S{propertyIndex})=self.(S{propertyIndex});
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span>(~isempty(self.Children))
+                copyObject.Children=linkedList;
+                currentNode=self.Children.Head;
+                <span class="keyword">while</span>(~isempty(currentNode))
+                    copyObject.Children.insertEnd(listNode(copy(currentNode.Data)));
+                    copyObject.Children.Tail.Data.Parent=copyObject;
+                    currentNode=currentNode.Next;
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.14<br></p></div><!--
+##### SOURCE BEGIN #####
+classdef imageElement < handle
+    properties
+        XPosition='center'
+        YPosition='center'
+        image
+        imageRect
+        imgAdress
+        windowRect
+        imgSize
+        XCursor
+        YCursor
+        windowHandle
+        Parent
+        Children
+        tex
+    end
+    methods
+        function self=imageElement(type,imageAdress,presentationInfo)
+            self.Children=linkedList;
+            if(nargin>0)
+                self.windowHandle=presentationInfo.window;
+                self.windowRect=presentationInfo.windowRect;
+                switch type
+                    case {'LevelUpSign'}
+                        if isfield(presentationInfo,'imageRectSize')
+                            self.imgSize=presentationInfo.imageRectSize;
+                        else
+                            self.imgSize='Origin';
+                        end
+                        if(ischar(imageAdress))
+                            self.imgAdress=imageAdress;
+                        else
+                            self.imgAdress=imageAdress.Stimulus;
+                        end    
+                        self.image=presentationInfo.imageTextures.image{strcmpi(presentationInfo.imageTextures.Address,self.imgAdress)};
+                        self.tex=presentationInfo.imageTextures.tex{strcmpi(presentationInfo.imageTextures.Address,self.imgAdress)};
+                    case {'Trial','Stimulus','Fixation','Target','Decision'}  
+                       if isfield(presentationInfo,'imageRectSize')
+                           self.imgSize=presentationInfo.imageRectSize;
+                       else
+                           self.imgSize=presentationInfo.StimulusTextSize;
+                           
+                       end
+                        if(ischar(imageAdress))
+                            self.imgAdress=imageAdress;
+                        else
+                            self.imgAdress=imageAdress.Stimulus;
+                        end
+                        self.image=presentationInfo.imageTextures.image{strcmpi(presentationInfo.imageTextures.Address,self.imgAdress)};
+                        self.tex=presentationInfo.imageTextures.tex{strcmpi(presentationInfo.imageTextures.Address,self.imgAdress)};
+ 
+                        
+                end
+            end
+        end
+        
+        function addGraphicElement(self,element)
+            self.Children.insertEnd(listNode(element));
+            element.Parent=self;
+        end
+        
+        function Draw(self)
+            if(~isempty(self.Parent))
+                switch class(self.Parent)
+                    case 'imageElement'
+                        self.XPosition=self.Parent.XCursor;
+                        self.YPosition=self.Parent.YCursor;
+                end
+            end
+            rect=round(self.windowRect/2);
+            if ischar(self.imgSize)
+                self.imgSize=max(size(self.image));
+            end
+            rect=rect(3:end);
+            rect=rect-round(self.imgSize/2);
+            rect(2)=rect(2)+round(self.imgSize*.2);
+            self.imageRect=[rect,rect+self.imgSize];
+            
+            if isnumeric(self.XPosition)
+                self.imageRect(1,1)= self.imageRect(1,1)+ self.XPosition;
+                self.imageRect(1,3)= self.imageRect(1,3)+ self.XPosition;
+                self.imageRect(1,2)= self.imageRect(1,2)+ self.YPosition;
+                self.imageRect(1,4)= self.imageRect(1,4)+ self.YPosition;
+            
+            end
+            if(isempty(self.imgAdress))
+                self.XCursor=self.XPosition;
+                self.YCursor=self.YPosition;
+                self.imageRect=[self.XCursor,self.YCursor,self.XCursor,self.YCursor];
+            else
+            %tex=Screen('MakeTexture', self.windowHandle, self.image);
+            Screen('DrawTexture', self.windowHandle, self.tex, [],self.imageRect);
+               
+            
+            end
+            currentNode=self.Children.Head;
+            for(elementIndex=1:self.Children.elementCount)
+                currentNode.Data.Draw;
+                currentNode=currentNode.Next;
+            end
+        end
+        
+        function copyObject=copy(self)
+            copyObject=imageElement;
+            S=properties(self);
+            for(propertyIndex=1:length(S))
+                copyObject.(S{propertyIndex})=self.(S{propertyIndex});
+            end
+            
+            if(~isempty(self.Children))
+                copyObject.Children=linkedList;
+                currentNode=self.Children.Head;
+                while(~isempty(currentNode))
+                    copyObject.Children.insertEnd(listNode(copy(currentNode.Data)));
+                    copyObject.Children.Tail.Data.Parent=copyObject;
+                    currentNode=currentNode.Next;
+                end
+            end
+        end
+        
+    end
+end
+##### SOURCE END #####
+--></body></html>

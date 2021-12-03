@@ -1,0 +1,317 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>linkedList</title><meta name="generator" content="MATLAB 7.14"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2013-06-13"><meta name="DC.source" content="linkedList.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+
+  </style></head><body><div class="content"><pre class="codeinput"><span class="keyword">classdef</span> linkedList &lt; handle
+    <span class="comment">% LINKEDLIST  A class to represent a doubly-linked list node.</span>
+    <span class="comment">% Multiple dlnode objects may be linked together to create linked lists.</span>
+    <span class="comment">% Each node contains a piece of data and provides access to the next</span>
+    <span class="comment">% and previous nodes.</span>
+    <span class="keyword">properties</span>
+        Head
+        Tail
+        elementCount=0;
+    <span class="keyword">end</span>
+    <span class="keyword">methods</span>
+        <span class="keyword">function</span> insertBeginning(self,node)
+            <span class="keyword">if</span>(~isa(node,<span class="string">'listNode'</span>))
+               node=listNode(node);
+            <span class="keyword">end</span>
+            <span class="keyword">if</span>(isempty(self.Head))
+                self.Head=node;
+                self.Tail=node;
+            <span class="keyword">else</span>
+            node.Next=self.Head;
+            node.Prev=[];
+            self.Head.Prev=node;
+            self.Head=node;
+            <span class="keyword">end</span>
+            self.elementCount=self.elementCount+1;
+        <span class="keyword">end</span>
+        <span class="keyword">function</span> insertEnd(self,node)
+            <span class="keyword">if</span>(~isa(node,<span class="string">'listNode'</span>))
+               node=listNode(node);
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span>(isempty(self.Tail))
+                self.Head=node;
+                self.Tail=node;
+            <span class="keyword">else</span>
+            node.Prev=self.Tail;
+            node.Next=[];
+            self.Tail.Next=node;
+            self.Tail=node;
+            <span class="keyword">end</span>
+            self.elementCount=self.elementCount+1;
+        <span class="keyword">end</span>
+        <span class="keyword">function</span> insertAfter(self,node,newNode)
+            <span class="keyword">if</span>(~isa(newNode,<span class="string">'listNode'</span>))
+               newNode=listNode(newNode);
+            <span class="keyword">end</span>
+            <span class="keyword">if</span>(isempty(node.Next))
+                self.insertEnd(newNode);
+            <span class="keyword">else</span>
+                newNode.Next=node.Next;
+                newNode.Prev=node;
+                node.Next.Prev=newNode;
+                node.Next=newNode;
+            <span class="keyword">end</span>
+            self.elementCount=self.elementCount+1;
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> insertBefore(self,node,newNode)
+            <span class="keyword">if</span>(~isa(newNode,<span class="string">'listNode'</span>))
+               newNode=listNode(newNode);
+            <span class="keyword">end</span>
+            <span class="keyword">if</span>(isempty(node.Prev))
+                self.insertBeginning(newNode);
+            <span class="keyword">else</span>
+                newNode.Prev=node.Prev;
+                newNode.Next=node;
+                node.Prev.Next=newNode;
+                node.Prev=newNode;
+            <span class="keyword">end</span>
+            self.elementCount=self.elementCount+1;
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> remove(self,node)
+            <span class="keyword">if</span>(~isempty(node.Prev))
+                node.Prev.Next=node.Next;
+            <span class="keyword">else</span>
+                self.Head=node.Next;
+            <span class="keyword">end</span>
+            <span class="keyword">if</span>(~isempty(node.Next))
+                node.Next.Prev=node.Prev;
+            <span class="keyword">else</span>
+                self.Tail=node.Prev;
+            <span class="keyword">end</span>
+
+            node.Next=[];
+            node.Prev=[];
+            self.elementCount=self.elementCount-1;
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> removeBefore(self,node)
+            <span class="keyword">if</span>(~isempty(node))
+           numberofElements2delete=0;
+           tempNode=node.Prev;
+           <span class="keyword">while</span>(~isempty(tempNode))
+              numberofElements2delete=numberofElements2delete+1;
+              tempNode=tempNode.Prev;
+           <span class="keyword">end</span>
+           node.Prev=[];
+           self.Head=node;
+           self.elementCount=self.elementCount-numberofElements2delete;
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> deleteNode(self,node)
+            self.remove(node);
+            delete(node);
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> listCell=toCell(self)
+            currentNode=self.Head;
+            listCell=cell(1,self.elementCount);
+            <span class="keyword">for</span>(elementIndex=1:self.elementCount)
+                listCell{elementIndex}=currentNode.Data;
+                currentNode=currentNode.Next;
+            <span class="keyword">end</span>
+
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> empty(self)
+           self.Head=[];
+           self.Tail=[];
+           self.elementCount=0;
+        <span class="keyword">end</span>
+
+
+    <span class="keyword">end</span> <span class="comment">% methods</span>
+<span class="keyword">end</span> <span class="comment">% classdef</span>
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.14<br></p></div><!--
+##### SOURCE BEGIN #####
+classdef linkedList < handle
+    % LINKEDLIST  A class to represent a doubly-linked list node.
+    % Multiple dlnode objects may be linked together to create linked lists.
+    % Each node contains a piece of data and provides access to the next
+    % and previous nodes.
+    properties
+        Head
+        Tail
+        elementCount=0;
+    end
+    methods
+        function insertBeginning(self,node)
+            if(~isa(node,'listNode'))
+               node=listNode(node); 
+            end
+            if(isempty(self.Head))
+                self.Head=node;
+                self.Tail=node;
+            else
+            node.Next=self.Head;
+            node.Prev=[];
+            self.Head.Prev=node;
+            self.Head=node;
+            end
+            self.elementCount=self.elementCount+1;
+        end
+        function insertEnd(self,node)
+            if(~isa(node,'listNode'))
+               node=listNode(node); 
+            end
+            
+            if(isempty(self.Tail))
+                self.Head=node;
+                self.Tail=node;
+            else
+            node.Prev=self.Tail;
+            node.Next=[];
+            self.Tail.Next=node;
+            self.Tail=node;
+            end
+            self.elementCount=self.elementCount+1;
+        end
+        function insertAfter(self,node,newNode)
+            if(~isa(newNode,'listNode'))
+               newNode=listNode(newNode); 
+            end
+            if(isempty(node.Next))
+                self.insertEnd(newNode);
+            else
+                newNode.Next=node.Next;
+                newNode.Prev=node;
+                node.Next.Prev=newNode;
+                node.Next=newNode;
+            end
+            self.elementCount=self.elementCount+1;
+        end
+        
+        function insertBefore(self,node,newNode)
+            if(~isa(newNode,'listNode'))
+               newNode=listNode(newNode); 
+            end
+            if(isempty(node.Prev))
+                self.insertBeginning(newNode);
+            else
+                newNode.Prev=node.Prev;
+                newNode.Next=node;
+                node.Prev.Next=newNode;
+                node.Prev=newNode;
+            end
+            self.elementCount=self.elementCount+1;
+        end
+        
+        function remove(self,node)
+            if(~isempty(node.Prev))
+                node.Prev.Next=node.Next;
+            else
+                self.Head=node.Next;
+            end
+            if(~isempty(node.Next))
+                node.Next.Prev=node.Prev;
+            else
+                self.Tail=node.Prev;
+            end
+            
+            node.Next=[];
+            node.Prev=[];
+            self.elementCount=self.elementCount-1;
+        end
+        
+        function removeBefore(self,node)
+            if(~isempty(node))
+           numberofElements2delete=0;
+           tempNode=node.Prev;
+           while(~isempty(tempNode))
+              numberofElements2delete=numberofElements2delete+1;
+              tempNode=tempNode.Prev; 
+           end
+           node.Prev=[];
+           self.Head=node;
+           self.elementCount=self.elementCount-numberofElements2delete;
+            end
+        end
+        
+        function deleteNode(self,node)
+            self.remove(node);
+            delete(node);
+        end
+        
+        function listCell=toCell(self)
+            currentNode=self.Head;
+            listCell=cell(1,self.elementCount);
+            for(elementIndex=1:self.elementCount)
+                listCell{elementIndex}=currentNode.Data;
+                currentNode=currentNode.Next;
+            end
+           
+        end
+        
+        function empty(self)
+           self.Head=[]; 
+           self.Tail=[];
+           self.elementCount=0;
+        end
+        
+        
+    end % methods
+end % classdef
+
+##### SOURCE END #####
+--></body></html>

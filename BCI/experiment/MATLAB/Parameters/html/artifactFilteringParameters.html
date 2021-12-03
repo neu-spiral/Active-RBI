@@ -1,0 +1,142 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>artifactFilteringParameters</title><meta name="generator" content="MATLAB 7.14"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2013-06-13"><meta name="DC.source" content="artifactFilteringParameters.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">artifactFilteringParameters</a></li><li><a href="#2">parameters Related to the artifactRemoval function</a></li><li><a href="#3">parameters which are required for "RSVP iconCHAT" that artifactFiltering function should recieve</a></li><li><a href="#4">parameters which are required for "RSVP keyboard" that artifactFiltering function should recieve</a></li></ul></div><h2>artifactFilteringParameters<a name="1"></a></h2><p>Contains user adjustable parameter file corresponding to artifact filtering</p><pre>  It creates the following structure,</pre><pre>     artifactFilteringParams: Contains the parameters for the artifactRmoval function inside artifactFiltering function.
+     The following fields are set as parameters,
+        *artifactFilteringParams.trh1-  threshold for channel rejection &amp; interpolation section
+        *artifactFilteringParams.trh2-  threshold for epoch rejection section
+        *artifactFilteringParams.trh3-  threshold for component rejection section
+        *artifactFilteringParams.trh4-  threshold for channels in epochs rejection &amp; interpolation section
+        *artifactFilteringParams.lpf1-   lowpass band for rejecting ICs
+        *artifactFilteringParams.lpf2-   lowpass band for rejecting ICs</pre><pre class="codeinput"><span class="comment">%          *artifactFilteringParams.bufferDurationSec - Length of the buffer in seconds</span>
+<span class="comment">%          *artifactFilteringParams.frontendFilteringFlag - Enables (1)/disables (0) the</span>
+<span class="comment">%           frontend filtering before buffering</span>
+<span class="comment">%</span>
+</pre><h2>parameters Related to the artifactRemoval function<a name="2"></a></h2><pre class="codeinput">artifactFilteringParams.trh1=3;
+artifactFilteringParams.trh2=3;
+artifactFilteringParams.trh3=2.6;
+artifactFilteringParams.trh3eyeBlinkDetector=3;
+artifactFilteringParams.trh4=2.5;
+artifactFilteringParams.lpf1=0;
+artifactFilteringParams.lpf2=0.0222;
+</pre><h2>parameters which are required for "RSVP iconCHAT" that artifactFiltering function should recieve<a name="3"></a></h2><pre class="codeinput"><span class="comment">% range1=3;          % range of trigger values for stimuluses: [range1,range2]</span>
+<span class="comment">% range2=7;</span>
+<span class="comment">% triggerValue.sequenceOn=1;  % trigger value for sequence on</span>
+<span class="comment">% trialPerSequence=5 ;  % number of trials in each sequence</span>
+<span class="comment">% trialWindow=100;  % length of each trial in samples (approximation)</span>
+<span class="comment">% seQuenceLength=trialPerSequence*trialWindow;     % length of each sequence in samples (approximation)</span>
+</pre><h2>parameters which are required for "RSVP keyboard" that artifactFiltering function should recieve<a name="4"></a></h2><pre class="codeinput">artifactFilteringParams.trh1d=3.5;  <span class="comment">% threshold for channel rejection &amp; interpolation section</span>
+<span class="comment">% seQuenceLength=RSVPKeyboardParams.Calibration.NumberofTrials*trialWindow;</span>
+artifactFilteringParams.contaminatedSamplesPercentage=0.5;
+artifactFilteringParams.flatChannelVarianceThr=1e-13;
+<span class="comment">% artifactFilteringParams.rejectSequence=0;</span>
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.14<br></p></div><!--
+##### SOURCE BEGIN #####
+%% artifactFilteringParameters
+% Contains user adjustable parameter file corresponding to artifact
+% filtering
+%    
+%    It creates the following structure,
+%      
+%       artifactFilteringParams: Contains the parameters for the artifactRmoval function inside artifactFiltering function.
+%       The following fields are set as parameters,
+%          *artifactFilteringParams.trh1-  threshold for channel rejection & interpolation section  
+%          *artifactFilteringParams.trh2-  threshold for epoch rejection section
+%          *artifactFilteringParams.trh3-  threshold for component rejection section 
+%          *artifactFilteringParams.trh4-  threshold for channels in epochs rejection & interpolation section
+%          *artifactFilteringParams.lpf1-   lowpass band for rejecting ICs
+%          *artifactFilteringParams.lpf2-   lowpass band for rejecting ICs
+
+%          *artifactFilteringParams.bufferDurationSec - Length of the buffer in seconds
+%          *artifactFilteringParams.frontendFilteringFlag - Enables (1)/disables (0) the
+%           frontend filtering before buffering
+%
+
+%% parameters Related to the artifactRemoval function
+artifactFilteringParams.trh1=3;
+artifactFilteringParams.trh2=3;
+artifactFilteringParams.trh3=2.6;
+artifactFilteringParams.trh3eyeBlinkDetector=3;
+artifactFilteringParams.trh4=2.5;
+artifactFilteringParams.lpf1=0;
+artifactFilteringParams.lpf2=0.0222;
+
+%% parameters which are required for "RSVP iconCHAT" that artifactFiltering function should recieve
+
+% range1=3;          % range of trigger values for stimuluses: [range1,range2] 
+% range2=7;        
+% triggerValue.sequenceOn=1;  % trigger value for sequence on 
+% trialPerSequence=5 ;  % number of trials in each sequence
+% trialWindow=100;  % length of each trial in samples (approximation)
+% seQuenceLength=trialPerSequence*trialWindow;     % length of each sequence in samples (approximation)
+
+%% parameters which are required for "RSVP keyboard" that artifactFiltering function should recieve
+artifactFilteringParams.trh1d=3.5;  % threshold for channel rejection & interpolation section  
+% seQuenceLength=RSVPKeyboardParams.Calibration.NumberofTrials*trialWindow;
+artifactFilteringParams.contaminatedSamplesPercentage=0.5;
+artifactFilteringParams.flatChannelVarianceThr=1e-13;
+% artifactFilteringParams.rejectSequence=0;
+
+
+
+
+
+
+
+##### SOURCE END #####
+--></body></html>

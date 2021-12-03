@@ -1,0 +1,300 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>setupAmplifierParameters</title><meta name="generator" content="MATLAB 7.14"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2013-06-13"><meta name="DC.source" content="setupAmplifierParameters.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">[success,amplifierStruct]=setupAmplifierParameters(amplifierStruct,daqStruct)</a></li><li><a href="#3">Global variables to define the folder and the name of the file that record the channel parameters</a></li><li><a href="#4">Reading the channel information file and saving it in the recording folder</a></li><li><a href="#5">Checking the number of channels connected to each amplifier</a></li><li><a href="#6">Set mode and log filename</a></li><li><a href="#7">Adding channels to each amplifier with prespecified channel names, bandpass and notch filter structures</a></li><li><a href="#8">Adding the trigger channel to the first amplifier and specifying the input and output range for this channel</a></li><li><a href="#9">Setting up the channel properties such as sampling rate, buffering mode and ground and reference specifications</a></li><li><a href="#10">Computing the total number of channels, and beginning and ending indices of channels for different amplifiers</a></li></ul></div><h2>[success,amplifierStruct]=setupAmplifierParameters(amplifierStruct,daqStruct)<a name="1"></a></h2><pre class="codeinput"><span class="comment">%setupAmplifierParameters(amplifierStruct,daqStruct) reads the channel</span>
+<span class="comment">%   information from channel parameters file (a comma separated file with user defined</span>
+<span class="comment">%   channel names and properties) and daqStruct, and accordingly adds channels to</span>
+<span class="comment">%   the corresponding amplifiers.</span>
+<span class="comment">%</span>
+<span class="comment">%   [success,amplifierStruct]=setupAmplifierParameters(amplifierStruct,daqStruct)</span>
+<span class="comment">%</span>
+<span class="comment">%   The inputs of the function</span>
+<span class="comment">%          amplifierStruct - A structure that contains the amplifier</span>
+<span class="comment">%          information.</span>
+<span class="comment">%          daqStruct  - A structure that contains the data acquisition</span>
+<span class="comment">%          parameters. The following members of this function is used in</span>
+<span class="comment">%          this function.</span>
+<span class="comment">%              * daqStruct.fs - Sampling Frequency</span>
+<span class="comment">%              * daqStruct.ampFilterNdx - Filter Index for using built-in amplifier filters</span>
+<span class="comment">%              * daqStruct.notchFiltexNdx - A notch filter index for using</span>
+<span class="comment">%              built-in amplifier filters</span>
+<span class="comment">%              * daqStruct.ampBufferLengthSec - Amplifier buffer length</span>
+<span class="comment">%              * daqStruct.calibrationOn (0/1) - A flag to activate the</span>
+<span class="comment">%              calibration of the amplifiers</span>
+<span class="comment">%</span>
+<span class="comment">%   The outputs of the function</span>
+<span class="comment">%          success (0/1) - a flag to show the success of the operation</span>
+<span class="comment">%</span>
+<span class="comment">%           amplifierStruct - The following members of this structure</span>
+<span class="comment">%           is filled in this function.</span>
+<span class="comment">%</span>
+<span class="comment">%               * amplifierStruct.numberOfChannels - Number of channels for</span>
+<span class="comment">%               each amplifier (integer)</span>
+<span class="comment">%               * amplifierStruct.totalNumberOfChannels - Total number of</span>
+<span class="comment">%               channels connected to the system (integer) to be used in getAmpsData()</span>
+<span class="comment">%               * amplifierStruct.channelBeginIndices - Beginning indices</span>
+<span class="comment">%               of channels for different amplifiers (integer) to be used in getAmpsData()</span>
+<span class="comment">%               * amplifierStruct.channelEndIndices - Ending indices of</span>
+<span class="comment">%               channels for different amplifiers (integer) to be used in getAmpsData()</span>
+<span class="comment">%               * amplifierStruct.channelNames - active channel names in the order</span>
+<span class="comment">%               of channel numbers in rawData (data read from the amplifiers)</span>
+<span class="comment">%</span>
+<span class="comment">%   See also readChannelInfo, DAQParameters, getAmpsData</span>
+</pre><pre class="codeinput"><span class="keyword">function</span> [success,amplifierStruct]=setupAmplifierParameters(amplifierStruct,daqStruct)
+</pre><h2>Global variables to define the folder and the name of the file that record the channel parameters<a name="3"></a></h2><pre class="codeinput"><span class="keyword">global</span> recordingFolder
+<span class="keyword">global</span> channelParametersFilename
+
+<span class="keyword">try</span>
+</pre><h2>Reading the channel information file and saving it in the recording folder<a name="4"></a></h2><pre class="codeinput">    [success,ampChannelList]=readChannelInfo(channelParametersFilename);
+    success = copyfile(channelParametersFilename,[recordingFolder <span class="string">'\'</span> recordingFolder <span class="string">'-channelsLog.csv'</span>],<span class="string">'f'</span>);
+</pre><h2>Checking the number of channels connected to each amplifier<a name="5"></a></h2><pre class="codeinput">    tempChannelList = find(~strcmpi(ampChannelList.channelType, <span class="string">'NC'</span>));
+
+    <span class="keyword">if</span> amplifierStruct.numberOfAmplifiers &lt; ceil(tempChannelList(end)/16)
+        tempStr=<span class="string">'Error: Not enough amplifiers are connected.'</span>;
+        logError(tempStr)
+        disp(tempStr);
+        success=0;
+    <span class="keyword">end</span>
+
+    amplifierStruct.numberOfChannels=zeros(amplifierStruct.numberOfAmplifiers,1);
+</pre><h2>Set mode and log filename<a name="6"></a></h2><pre class="codeinput">    <span class="keyword">for</span> ampIndex = 1: amplifierStruct.numberOfAmplifiers
+        set(amplifierStruct.ai(ampIndex),<span class="string">'Mode'</span>,<span class="string">'Normal'</span>);
+        set(amplifierStruct.ai(ampIndex),<span class="string">'LoggingMode'</span>,<span class="string">'Disk&amp;Memory'</span>);
+        set(amplifierStruct.ai(ampIndex),<span class="string">'LogToDiskMode'</span>,<span class="string">'Index'</span>);
+
+    <span class="keyword">end</span>
+</pre><h2>Adding channels to each amplifier with prespecified channel names, bandpass and notch filter structures<a name="7"></a></h2><pre class="codeinput">    iChannelCounter = 1;
+    <span class="keyword">for</span> channelIndex = tempChannelList'
+        ampIndex = floor((channelIndex-1)/16)+1;
+        amplifierStruct.numberOfChannels(ampIndex)=amplifierStruct.numberOfChannels(ampIndex)+1;
+        ampChannelIndex = mod(channelIndex,16)+(mod(channelIndex,16)==0)*16;
+
+
+        addchannel(amplifierStruct.ai(ampIndex),ampChannelIndex);
+        set(amplifierStruct.ai(ampIndex).Channel(amplifierStruct.numberOfChannels(ampIndex)),<span class="keyword">...</span>
+            <span class="string">'BPIndex'</span>,daqStruct.ampFilterNdx,<span class="keyword">...</span>
+            <span class="string">'NotchIndex'</span>,daqStruct.notchFiltexNdx,<span class="keyword">...</span>
+            <span class="string">'ChannelName'</span>,ampChannelList.electrodeLocations{channelIndex});
+        amplifierStruct.channelNames{iChannelCounter} = ampChannelList.electrodeLocations{channelIndex};
+        iChannelCounter = iChannelCounter + 1;
+
+    <span class="keyword">end</span>
+</pre><h2>Adding the trigger channel to the first amplifier and specifying the input and output range for this channel<a name="8"></a></h2><pre class="codeinput">    ampIndex = 1;
+    addchannel(amplifierStruct.ai(ampIndex),17);
+    amplifierStruct.triggerIndex=amplifierStruct.numberOfChannels(ampIndex)+1;
+    set(amplifierStruct.ai(ampIndex).Channel(amplifierStruct.triggerIndex),<span class="keyword">...</span>
+        <span class="string">'ChannelName'</span>,<span class="string">'Trigger'</span>,<span class="keyword">...</span>
+        <span class="string">'InputRange'</span>,[0 5],<span class="keyword">...</span>
+        <span class="string">'SensorRange'</span>,[0 5],<span class="keyword">...</span>
+        <span class="string">'UnitsRange'</span>,[0 5]);
+</pre><h2>Setting up the channel properties such as sampling rate, buffering mode and ground and reference specifications<a name="9"></a></h2><pre class="codeinput">    <span class="keyword">for</span> ampIndex = 1:amplifierStruct.numberOfAmplifiers
+        set(amplifierStruct.ai(ampIndex),<span class="keyword">...</span>
+            <span class="string">'SampleRate'</span>,daqStruct.fs,<span class="keyword">...</span>
+            <span class="string">'SamplesPerTrigger'</span>,daqStruct.ampBufferLengthSec*daqStruct.fs,<span class="keyword">...</span>
+            <span class="string">'BufferingMode'</span>,<span class="string">'Auto'</span>,<span class="keyword">...</span>
+            <span class="string">'GroupAToCommonGround'</span>,<span class="string">'Enabled'</span>,<span class="string">'GroupAToCommonReference'</span>,<span class="string">'Enabled'</span>,<span class="keyword">...</span>
+            <span class="string">'GroupBToCommonGround'</span>,<span class="string">'Enabled'</span>,<span class="string">'GroupBToCommonReference'</span>,<span class="string">'Enabled'</span>,<span class="keyword">...</span>
+            <span class="string">'GroupCToCommonGround'</span>,<span class="string">'Enabled'</span>,<span class="string">'GroupCToCommonReference'</span>,<span class="string">'Enabled'</span>,<span class="keyword">...</span>
+            <span class="string">'GroupDToCommonGround'</span>,<span class="string">'Enabled'</span>,<span class="string">'GroupDToCommonReference'</span>,<span class="string">'Enabled'</span>,<span class="keyword">...</span>
+            <span class="string">'Timeout'</span>,5);
+    <span class="keyword">end</span>
+</pre><h2>Computing the total number of channels, and beginning and ending indices of channels for different amplifiers<a name="10"></a></h2><pre class="codeinput">    amplifierStruct.totalNumberOfChannels=sum(amplifierStruct.numberOfChannels);
+    amplifierStruct.channelBeginIndices=cumsum([1;amplifierStruct.numberOfChannels(1:end-1)]);
+    amplifierStruct.channelEndIndices=cumsum(amplifierStruct.numberOfChannels);
+    success=1;
+</pre><pre class="codeinput"><span class="keyword">catch</span> ME
+    logError(ME);
+    success=0;
+<span class="keyword">end</span>
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.14<br></p></div><!--
+##### SOURCE BEGIN #####
+%% [success,amplifierStruct]=setupAmplifierParameters(amplifierStruct,daqStruct)
+%setupAmplifierParameters(amplifierStruct,daqStruct) reads the channel
+%   information from channel parameters file (a comma separated file with user defined
+%   channel names and properties) and daqStruct, and accordingly adds channels to
+%   the corresponding amplifiers.
+%
+%   [success,amplifierStruct]=setupAmplifierParameters(amplifierStruct,daqStruct)
+%   
+%   The inputs of the function
+%          amplifierStruct - A structure that contains the amplifier
+%          information.
+%          daqStruct  - A structure that contains the data acquisition
+%          parameters. The following members of this function is used in
+%          this function.
+%              * daqStruct.fs - Sampling Frequency
+%              * daqStruct.ampFilterNdx - Filter Index for using built-in amplifier filters
+%              * daqStruct.notchFiltexNdx - A notch filter index for using
+%              built-in amplifier filters
+%              * daqStruct.ampBufferLengthSec - Amplifier buffer length 
+%              * daqStruct.calibrationOn (0/1) - A flag to activate the
+%              calibration of the amplifiers
+%
+%   The outputs of the function
+%          success (0/1) - a flag to show the success of the operation
+%          
+%           amplifierStruct - The following members of this structure
+%           is filled in this function.
+%
+%               * amplifierStruct.numberOfChannels - Number of channels for
+%               each amplifier (integer) 
+%               * amplifierStruct.totalNumberOfChannels - Total number of
+%               channels connected to the system (integer) to be used in getAmpsData()
+%               * amplifierStruct.channelBeginIndices - Beginning indices
+%               of channels for different amplifiers (integer) to be used in getAmpsData()
+%               * amplifierStruct.channelEndIndices - Ending indices of
+%               channels for different amplifiers (integer) to be used in getAmpsData()
+%               * amplifierStruct.channelNames - active channel names in the order
+%               of channel numbers in rawData (data read from the amplifiers)
+%
+%   See also readChannelInfo, DAQParameters, getAmpsData
+%%
+
+
+function [success,amplifierStruct]=setupAmplifierParameters(amplifierStruct,daqStruct)
+    %% Global variables to define the folder and the name of the file that record the channel parameters
+
+
+global recordingFolder
+global channelParametersFilename
+
+try
+    %% Reading the channel information file and saving it in the recording folder
+    
+    
+    
+    [success,ampChannelList]=readChannelInfo(channelParametersFilename);
+    success = copyfile(channelParametersFilename,[recordingFolder '\' recordingFolder '-channelsLog.csv'],'f');
+    %% Checking the number of channels connected to each amplifier
+    
+    tempChannelList = find(~strcmpi(ampChannelList.channelType, 'NC'));
+    
+    if amplifierStruct.numberOfAmplifiers < ceil(tempChannelList(end)/16)
+        tempStr='Error: Not enough amplifiers are connected.';
+        logError(tempStr)
+        disp(tempStr);
+        success=0;
+    end
+    
+    amplifierStruct.numberOfChannels=zeros(amplifierStruct.numberOfAmplifiers,1);
+    
+    %% Set mode and log filename
+    for ampIndex = 1: amplifierStruct.numberOfAmplifiers
+        set(amplifierStruct.ai(ampIndex),'Mode','Normal');
+        set(amplifierStruct.ai(ampIndex),'LoggingMode','Disk&Memory');
+        set(amplifierStruct.ai(ampIndex),'LogToDiskMode','Index');
+        
+    end
+    
+    %% Adding channels to each amplifier with prespecified channel names, bandpass and notch filter structures
+    
+    iChannelCounter = 1;
+    for channelIndex = tempChannelList'
+        ampIndex = floor((channelIndex-1)/16)+1;
+        amplifierStruct.numberOfChannels(ampIndex)=amplifierStruct.numberOfChannels(ampIndex)+1;
+        ampChannelIndex = mod(channelIndex,16)+(mod(channelIndex,16)==0)*16;
+        
+        
+        addchannel(amplifierStruct.ai(ampIndex),ampChannelIndex);
+        set(amplifierStruct.ai(ampIndex).Channel(amplifierStruct.numberOfChannels(ampIndex)),...
+            'BPIndex',daqStruct.ampFilterNdx,...
+            'NotchIndex',daqStruct.notchFiltexNdx,...
+            'ChannelName',ampChannelList.electrodeLocations{channelIndex});
+        amplifierStruct.channelNames{iChannelCounter} = ampChannelList.electrodeLocations{channelIndex};
+        iChannelCounter = iChannelCounter + 1;
+        
+    end
+    
+    %% Adding the trigger channel to the first amplifier and specifying the input and output range for this channel
+    ampIndex = 1;
+    addchannel(amplifierStruct.ai(ampIndex),17);
+    amplifierStruct.triggerIndex=amplifierStruct.numberOfChannels(ampIndex)+1;
+    set(amplifierStruct.ai(ampIndex).Channel(amplifierStruct.triggerIndex),...
+        'ChannelName','Trigger',...
+        'InputRange',[0 5],...
+        'SensorRange',[0 5],...
+        'UnitsRange',[0 5]);
+    
+    %% Setting up the channel properties such as sampling rate, buffering mode and ground and reference specifications
+    
+    for ampIndex = 1:amplifierStruct.numberOfAmplifiers
+        set(amplifierStruct.ai(ampIndex),...
+            'SampleRate',daqStruct.fs,...
+            'SamplesPerTrigger',daqStruct.ampBufferLengthSec*daqStruct.fs,...
+            'BufferingMode','Auto',...
+            'GroupAToCommonGround','Enabled','GroupAToCommonReference','Enabled',...
+            'GroupBToCommonGround','Enabled','GroupBToCommonReference','Enabled',...
+            'GroupCToCommonGround','Enabled','GroupCToCommonReference','Enabled',...
+            'GroupDToCommonGround','Enabled','GroupDToCommonReference','Enabled',...
+            'Timeout',5);
+    end
+    
+    %% Computing the total number of channels, and beginning and ending indices of channels for different amplifiers
+    
+    amplifierStruct.totalNumberOfChannels=sum(amplifierStruct.numberOfChannels);
+    amplifierStruct.channelBeginIndices=cumsum([1;amplifierStruct.numberOfChannels(1:end-1)]);
+    amplifierStruct.channelEndIndices=cumsum(amplifierStruct.numberOfChannels);
+    success=1;
+catch ME
+    logError(ME);
+    success=0;
+end
+
+
+##### SOURCE END #####
+--></body></html>

@@ -1,0 +1,1137 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>classdef processNode &lt; handle</title><meta name="generator" content="MATLAB 7.14"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2013-06-13"><meta name="DC.source" content="processNode.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+
+  </style></head><body><div class="content"><h1>classdef processNode &lt; handle</h1><!--introduction--><p>Encapsulates the learning and operation of a specific cluster of data.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#3">Properties</a></li><li><a href="#6">function self = processNode(operatorHandle,operationMode,operatorParameters)</a></li><li><a href="#8">function learn(self,data,labels,trials)</a></li><li><a href="#10">function output = operate(self,data,trials)</a></li></ul></div><pre class="codeinput"><span class="keyword">classdef</span> processNode &lt; handle
+</pre><h2>Properties<a name="3"></a></h2><pre class="language-matlab">operatorHandle - Handle, points <span class="string">to</span> <span class="string">the</span> <span class="string">operator</span> <span class="string">function</span> <span class="string">being</span> <span class="string">used</span> <span class="string">by</span> <span class="string">the</span> <span class="string">node.</span>
+</pre><pre class="language-matlab">operationMode - Double, used <span class="string">to</span> <span class="string">determine</span> <span class="string">the</span> <span class="string">mode</span> <span class="string">of</span> <span class="string">operation</span> <span class="string">of</span> <span class="string">the</span> <span class="string">node.</span> <span class="string">Default</span> <span class="string">value:</span> <span class="string">0.</span>
+</pre><pre class="language-matlab">operators - Object or <span class="string">array</span> <span class="string">of</span> <span class="string">objects</span>, created <span class="string">by</span> <span class="string">the</span> <span class="string">operator</span> <span class="string">handle</span> <span class="string">function.</span> <span class="string">The</span> <span class="string">objects</span> <span class="string">contains</span> <span class="string">the</span> <span class="string">learn</span> <span class="string">and</span> <span class="string">operate</span> <span class="string">functions</span> <span class="string">being</span> <span class="string">used</span> <span class="string">by</span> <span class="string">the</span> <span class="string">node.</span>
+</pre><pre class="language-matlab">operatorParameters - Array, contains <span class="string">the</span> <span class="string">variables</span> <span class="string">being</span> <span class="string">used</span> <span class="string">by</span> <span class="string">the</span> <span class="string">operator</span> <span class="string">handle</span> <span class="string">function.</span>
+</pre><pre class="codeinput">    properties
+
+        operatorHandle
+        operationMode = 0;
+        operators
+        operatorParameters
+
+    <span class="keyword">end</span>
+
+    methods
+</pre><h2>function self = processNode(operatorHandle,operationMode,operatorParameters)<a name="6"></a></h2><p>Constructor.</p><pre class="language-matlab">The <span class="string">inputs</span> <span class="string">of</span> <span class="string">the</span> <span class="string">function:</span>
+</pre><pre>     operatorHandle - Handle, points to the operator function being used by the node.</pre><pre>     operationMode - Double, used to determine the mode of operation of the node. Default value: 0.</pre><pre>     operatorParameters - Array, contains the variables being used by the operator handle function.</pre><pre class="codeinput">        <span class="keyword">function</span> self = processNode(operatorHandle,operationMode,operatorParameters)
+
+            <span class="comment">% Set the value of the operator handle.</span>
+            self.operatorHandle = operatorHandle;
+
+            <span class="comment">% Check if the number of input variables is greater than or equal to 2, and if the variable operationMode is not empty.</span>
+            <span class="keyword">if</span> (nargin &gt;= 2) &amp;&amp; ~isempty(operationMode)
+
+                <span class="comment">% Set the value of the operation mode.</span>
+                self.operationMode = operationMode;
+
+            <span class="keyword">end</span>
+
+            <span class="comment">% Check if the number of input variables is greater than or equal to 3.</span>
+            <span class="keyword">if</span> nargin &gt;= 3
+
+                <span class="comment">% Set the value of the operation parameters.</span>
+                self.operatorParameters = operatorParameters;
+
+            <span class="keyword">end</span>
+
+        <span class="keyword">end</span>
+</pre><h2>function learn(self,data,labels,trials)<a name="8"></a></h2><p>Evaluates the conditions of the provided data, creates the operator objects by evaluating the operator handle and parameters, and then executes the learn function of the operators object.</p><pre class="language-matlab">The <span class="string">inputs</span> <span class="string">of</span> <span class="string">the</span> <span class="string">function:</span>
+</pre><pre>     data - Cell array, contains the data being learnt and operated upon by the nodes.</pre><pre>     labels - Array, contains the labels that nominatively represent the data.</pre><pre>     trials - Array, used to determine the data and label elements that come from trials.</pre><pre class="codeinput">        <span class="keyword">function</span> learn(self,data,labels,trials)
+
+            <span class="comment">% Check if the operation mode of this object is 0.</span>
+            <span class="keyword">if</span> self.operationMode == 0
+
+                <span class="comment">% Check if there are any operator parameters.</span>
+                <span class="keyword">if</span> isempty(self.operatorParameters)
+
+                    <span class="comment">% Set the operator of this object to the evaluated result of the operator handle.</span>
+                    self.operators = feval(self.operatorHandle);
+
+                <span class="keyword">else</span>
+
+                    <span class="comment">% Set the operator of this object to the evaluated result of the operator handle using the operator parameters.</span>
+                    self.operators = feval(self.operatorHandle,self.operatorParameters);
+
+                <span class="keyword">end</span>
+
+                <span class="comment">% Check if the variable data is a cell array.</span>
+                <span class="keyword">if</span>(iscell(data))
+
+                    <span class="comment">% Create a buffer copy of the data cell array.</span>
+                    temp = cat(1,data{:});
+
+                    <span class="comment">% Get the size of the data array.</span>
+                    tempSize = size(temp);
+
+                    <span class="comment">% Reshape the buffer data array, converting it from an n-dimensional array into a 2-dimensional array.</span>
+                    temp = reshape(temp,prod(tempSize(1:end-1)),tempSize(end));
+
+                    <span class="comment">% Check if the number of input variables is 4.</span>
+                    <span class="keyword">if</span> nargin == 4
+
+                        <span class="comment">% Makes the buffer data array only contain trial data.</span>
+                        temp = temp(:,trials);
+
+                        <span class="comment">% Creates a buffer array of labels, containing only trial data labels.</span>
+                        tempLabels = labels(trials);
+
+                    <span class="keyword">else</span>
+
+                        <span class="comment">% Create a buffer copy of the label array.</span>
+                        tempLabels = labels;
+
+                    <span class="keyword">end</span>
+
+                    <span class="comment">% Execute the learn function in the operators object, using the buffer data array and the buffer label array as input variables.</span>
+                    self.operators.learn(temp,tempLabels);
+
+                <span class="keyword">else</span>
+
+                    <span class="comment">% Get the size of the data array.</span>
+                    tempSize = size(data);
+
+                    <span class="comment">% Create a buffer copy of the data array and reshape it, converting it from an n-dimensional array into a 2-dimensional array.</span>
+                    temp = reshape(data,prod(tempSize(1:end-1)),tempSize(end));
+
+                    <span class="comment">% Check if the number of input variables is 4.</span>
+                    <span class="keyword">if</span> nargin == 4
+
+                        <span class="comment">% Makes the buffer data array only contain trial data.</span>
+                        temp = temp(:,trials);
+
+                        <span class="comment">% Creates a buffer array of labels, containing only trial data labels.</span>
+                        tempLabels = labels(trials);
+
+                    <span class="keyword">else</span>
+
+                        <span class="comment">% Create a buffer copy of the label array.</span>
+                        tempLabels = labels;
+
+                    <span class="keyword">end</span>
+
+                    <span class="comment">% Execute the learn function in the operators object, using the buffer data array and the buffer label array as input variables.</span>
+                    self.operators.learn(temp,tempLabels);
+
+                <span class="keyword">end</span>
+
+            <span class="comment">% Otherwise, check if the operation mode of this object is greater than 0.</span>
+            <span class="keyword">elseif</span> self.operationMode &gt; 0
+
+                <span class="comment">% Check if the variable data is a cell array.</span>
+                <span class="keyword">if</span> iscell(data)
+
+                    <span class="comment">%self.operators=zeros(1,length(data));</span>
+
+                    <span class="comment">% Set the variable operatorCnt to the length of the data array.</span>
+                    operatorCnt = length(data);
+
+                    <span class="comment">% Check if there are no operator parameters.</span>
+                    <span class="keyword">if</span> isempty(self.operatorParameters)
+
+                        <span class="comment">% Iterate backwards over the length of the data.</span>
+                        <span class="keyword">for</span> cellIndex = operatorCnt:-1:1
+
+                            <span class="comment">% Check if the current cell is last cell in the data.</span>
+                            <span class="keyword">if</span> cellIndex == operatorCnt
+
+                                <span class="comment">% Create a buffer operator object by evaluating the operator handle of this object, without any parameters.</span>
+                                tempOperator = feval(self.operatorHandle);
+
+                                <span class="comment">% Sets the operators of this object to an array that contains multiple copies of the buffer operator object.</span>
+                                self.operators = repmat(tempOperator,1,operatorCnt);
+
+                            <span class="keyword">else</span>
+
+                                <span class="comment">% Set the current element of the operators variable from this object to the evaluation of the operator handle of this object, without any parameters.</span>
+                                self.operators(cellIndex) = feval(self.operatorHandle);
+
+                            <span class="keyword">end</span>
+
+                            <span class="comment">% Create a buffer variable that contains the current element of the data array.</span>
+                            temp = data{cellIndex};
+
+                            <span class="comment">% Get the size of the current element of the data array.</span>
+                            tempSize = size(temp);
+
+                            <span class="comment">% Check if the number of input variables is 4.</span>
+                            <span class="keyword">if</span> nargin == 4
+
+                                <span class="comment">%....................................................................................................</span>
+
+                                <span class="comment">% Create a string to be evaluated.</span>
+                                evalString = [<span class="string">'temp=temp('</span> repmat(<span class="string">':,'</span>,1,length(tempSize) - 1) <span class="string">'trials);'</span>];
+
+                                <span class="comment">% Evaluate the string. This will set the buffer variable to an array that contains multiple copies of itself (?).</span>
+                                eval(evalString);
+
+                                <span class="comment">% Creates a buffer array of labels, containing only trial data labels.</span>
+                                tempLabels = labels(trials);
+
+                            <span class="keyword">else</span>
+
+                                <span class="comment">% Create a buffer copy of the label array.</span>
+                                tempLabels = labels;
+
+                            <span class="keyword">end</span>
+
+                            <span class="comment">% Execute the learn function in the current element's operators object, using the buffer data array (minus any singleton dimensions) and the buffer label array as input variables.</span>
+                            self.operators(cellIndex).learn(squeeze(temp),tempLabels);
+
+                        <span class="keyword">end</span>
+
+                    <span class="keyword">else</span>
+
+                        <span class="comment">% Iterate backwards over the length of the data.</span>
+                        <span class="keyword">for</span> cellIndex = operatorCnt:-1:1
+
+                            <span class="comment">% Check if the current cell is last cell in the data.</span>
+                            <span class="keyword">if</span> cellIndex == operatorCnt
+
+                                <span class="comment">% Create a buffer operator object by evaluating the operator handle of this object, without any parameters.</span>
+                                tempOperator = feval(self.operatorHandle);
+
+                                <span class="comment">% Sets the operators of this object to an array that contains multiple copies of the buffer operator object.</span>
+                                self.operators = repmat(tempOperator,1,operatorCnt);
+
+                            <span class="keyword">else</span>
+
+                                <span class="comment">% Set the current element of the operators variable from this object to the evaluation of the operator handle of this object, without any parameters.</span>
+                                self.operators(cellIndex) = feval(self.operatorHandle);
+
+                            <span class="keyword">end</span>
+
+                            <span class="comment">% Create a buffer variable that contains the current element of the data array.</span>
+                            temp = data{cellIndex};
+
+                            <span class="comment">% Get the size of the current element of the data array.</span>
+                            tempSize = size(temp);
+
+                            <span class="comment">% Check if the number of input variables is 4.</span>
+                            <span class="keyword">if</span> nargin == 4
+
+                                <span class="comment">%....................................................................................................</span>
+
+                                <span class="comment">% Create a string to be evaluated.</span>
+                                evalString = [<span class="string">'temp=temp('</span> repmat(<span class="string">':,'</span>,1,length(tempSize)-1) <span class="string">'trials);'</span>];
+
+                                <span class="comment">% Evaluate the string. This will set the buffer variable to an array that contains multiple copies of itself (?).</span>
+                                eval(evalString);
+
+                                <span class="comment">% Creates a buffer array of labels, containing only trial data labels.</span>
+                                tempLabels = labels(trials);
+
+                            <span class="keyword">else</span>
+
+                                <span class="comment">% Create a buffer copy of the label array.</span>
+                                tempLabels = labels;
+
+                            <span class="keyword">end</span>
+
+                            <span class="comment">% Execute the learn function in the current element's operators object, using the buffer data array (minus any singleton dimensions) and the buffer label array as input variables.</span>
+                            self.operators(cellIndex).learn(squeeze(temp),tempLabels);
+
+                        <span class="keyword">end</span>
+
+                    <span class="keyword">end</span>
+
+                <span class="keyword">else</span>
+
+                    <span class="comment">% Get the size of the data.</span>
+                    dataSize = size(data);
+
+                    <span class="comment">% Set the variable operatorCnt to the length of the data array.</span>
+                    operatorCnt = dataSize(self.operationMode);
+
+                    <span class="comment">%self.operators=zeros(1,dataSize(self.operationMode));</span>
+
+                    <span class="comment">% Check if there are no operator parameters.</span>
+                    <span class="keyword">if</span> isempty(self.operatorParameters)
+
+                        <span class="comment">% Iterate backwards over the length of the data.</span>
+                        <span class="keyword">for</span> cellIndex = operatorCnt:-1:1
+
+                            <span class="comment">% Check if the current cell is last cell in the data.</span>
+                            <span class="keyword">if</span> cellIndex == operatorCnt
+
+                                <span class="comment">% Create a buffer operator object by evaluating the operator handle of this object, without any parameters.</span>
+                                tempOperator = feval(self.operatorHandle);
+
+                                <span class="comment">% Sets the operators of this object to an array that contains multiple copies of the buffer operator object.</span>
+                                self.operators = repmat(tempOperator,1,operatorCnt);
+
+                            <span class="keyword">else</span>
+
+                                <span class="comment">% Set the current element of the operators variable from this object to the evaluation of the operator handle of this object, without any parameters.</span>
+                                self.operators(cellIndex) = feval(self.operatorHandle);
+
+                            <span class="keyword">end</span>
+
+                            <span class="comment">% Check if the number of input variables is 4.</span>
+                            <span class="keyword">if</span> nargin == 4
+
+                                <span class="comment">%....................................................................................................</span>
+
+                                <span class="comment">% Create a string to be evaluated.</span>
+                                evalString = [<span class="string">'temp=data('</span> repmat(<span class="string">':,'</span>,1,self.operationMode - 1) <span class="string">'cellIndex,'</span> repmat(<span class="string">':,'</span>,1,length(dataSize) - self.operationMode - 1) <span class="string">'trials);'</span>];
+
+                                <span class="comment">% Creates a buffer array of labels, containing only trial data labels.</span>
+                                tempLabels = labels(trials);
+
+                            <span class="keyword">else</span>
+
+                                <span class="comment">%....................................................................................................</span>
+
+                                <span class="comment">% Create a string to be evaluated.</span>
+                                evalString = [<span class="string">'temp=data('</span> repmat(<span class="string">':,'</span>,1,self.operationMode - 1) <span class="string">'cellIndex,'</span> repmat(<span class="string">':,'</span>,1,length(dataSize) - self.operationMode - 1) <span class="string">':);'</span>];
+
+                                <span class="comment">% Create a buffer copy of the label array.</span>
+                                tempLabels = labels;
+
+                            <span class="keyword">end</span>
+
+                            <span class="comment">% Evaluate the string. This will set the buffer variable to an array that contains multiple copies of itself (?).</span>
+                            eval(evalString);
+
+                            <span class="comment">% Execute the learn function in the current element's operators object, using the buffer data array (minus any singleton dimensions) and the buffer label array as input variables.</span>
+                            self.operators(cellIndex).learn(squeeze(temp),tempLabels);
+
+                        <span class="keyword">end</span>
+
+                    <span class="keyword">else</span>
+
+                        <span class="comment">% Iterate backwards over the length of the data.</span>
+                        <span class="keyword">for</span> cellIndex = operatorCnt:-1:1
+
+                            <span class="comment">% Check if the current cell is last cell in the data.</span>
+                            <span class="keyword">if</span> cellIndex == operatorCnt
+
+                                <span class="comment">% Create a buffer operator object by evaluating the operator handle of this object, without any parameters.</span>
+                                tempOperator = feval(self.operatorHandle,self.operatorParameters);
+
+                                <span class="comment">% Sets the operators of this object to an array that contains multiple copies of the buffer operator object.</span>
+                                self.operators = repmat(tempOperator,1,operatorCnt);
+
+                            <span class="keyword">else</span>
+
+                                <span class="comment">% Set the current element of the operators variable from this object to the evaluation of the operator handle of this object.</span>
+                                self.operators(cellIndex) = feval(self.operatorHandle,self.operatorParameters);
+
+                            <span class="keyword">end</span>
+
+                            <span class="comment">% Check if the number of input variables is 4.</span>
+                            <span class="keyword">if</span> nargin == 4
+
+                                <span class="comment">%....................................................................................................</span>
+
+                                <span class="comment">% Create a string to be evaluated.</span>
+                                evalString = [<span class="string">'temp=data('</span> repmat(<span class="string">':,'</span>,1,self.operationMode-1) <span class="string">'cellIndex,'</span> repmat(<span class="string">':,'</span>,1,length(dataSize)-self.operationMode-1) <span class="string">'trials);'</span>];
+
+                                <span class="comment">% Creates a buffer array of labels, containing only trial data labels.</span>
+                                tempLabels = labels(trials);
+
+                            <span class="keyword">else</span>
+
+                                <span class="comment">%....................................................................................................</span>
+
+                                <span class="comment">% Create a string to be evaluated.</span>
+                                evalString = [<span class="string">'temp=data('</span> repmat(<span class="string">':,'</span>,1,self.operationMode-1) <span class="string">'cellIndex,'</span> repmat(<span class="string">':,'</span>,1,length(dataSize)-self.operationMode-1) <span class="string">':);'</span>];
+
+                                <span class="comment">% Create a buffer copy of the label array.</span>
+                                tempLabels = labels;
+
+                            <span class="keyword">end</span>
+
+                            <span class="comment">% Evaluate the string. This will set the buffer variable to an array that contains multiple copies of itself (?).</span>
+                            eval(evalString);
+
+                            <span class="comment">% Execute the learn function in the current element's operators object, using the buffer data array (minus any singleton dimensions) and the buffer label array as input variables.</span>
+                            self.operators(cellIndex).learn(squeeze(temp),tempLabels);
+
+                        <span class="keyword">end</span>
+
+                    <span class="keyword">end</span>
+
+                <span class="keyword">end</span>
+
+            <span class="keyword">end</span>
+
+        <span class="keyword">end</span>
+</pre><h2>function output = operate(self,data,trials)<a name="10"></a></h2><p>Evaluates the conditions of the provided data, then executes the operate function of the operators object, and returns the data obtained from those executed functions.</p><pre class="language-matlab">The <span class="string">inputs</span> <span class="string">of</span> <span class="string">the</span> <span class="string">function:</span>
+</pre><pre>     data - Cell array, contains the data to be operated upon by the nodes.</pre><pre>     trials - Array, used to determine the data elements that come from trials.</pre><pre class="language-matlab">The <span class="string">outputs</span> <span class="string">of</span> <span class="string">the</span> <span class="string">function:</span>
+</pre><pre>     output - Cell array, contains the data that has been operated upon by the nodes.</pre><pre class="codeinput">        <span class="keyword">function</span> output = operate(self,data,trials)
+
+            <span class="comment">% Check if the operation mode of this object is 0.</span>
+            <span class="keyword">if</span> self.operationMode == 0
+
+                <span class="comment">% Check if the data is a cell array.</span>
+                <span class="keyword">if</span> iscell(data)
+
+                    <span class="comment">% Create a buffer copy of the data array.</span>
+                    temp = cat(1,data{:});
+
+                    <span class="comment">% Get the size of the data cell array.</span>
+                    tempSize = size(temp);
+
+                    <span class="comment">% Reshape the buffer data array, converting it from an n-dimensional array into a 2-dimensional array.</span>
+                    temp = reshape(temp,prod(tempSize(1:end-1)),tempSize(end));
+
+                    <span class="comment">% Check if the number of input variables is 3.</span>
+                    <span class="keyword">if</span> nargin == 3
+
+                        <span class="comment">% Makes the buffer data array only contain trial data.</span>
+                        temp = temp(:,trials);
+
+                    <span class="keyword">end</span>
+
+                    <span class="comment">% Set the output to the value of the operate function called from the operators object of this object, using the buffer data array as the input variable.</span>
+                    output = self.operators.operate(temp);
+
+                <span class="keyword">else</span>
+
+                    <span class="comment">% Get the size of the data cell array.</span>
+                    tempSize = size(data);
+
+                    <span class="comment">% Create a buffer copy of the data array and reshape it, converting it from an n-dimensional array into a 2-dimensional array.</span>
+                    temp = reshape(data,prod(tempSize(1:end-1)),tempSize(end));
+
+                    <span class="comment">% Check if the number of input variables is 3.</span>
+                    <span class="keyword">if</span> nargin == 3
+
+                        <span class="comment">% Makes the buffer data array only contain trial data.</span>
+                        temp = temp(:,trials);
+
+                    <span class="keyword">end</span>
+
+                    <span class="comment">% Set the output to the value of the operate function called from the operators object of this object, using the buffer data array as the input variable.</span>
+                    output = self.operators.operate(temp);
+
+                <span class="keyword">end</span>
+
+            <span class="comment">% Otherwise, check if the operation mode of this object is greater than 0.</span>
+            <span class="keyword">elseif</span> self.operationMode &gt; 0
+
+                <span class="comment">% Set the output to a cell array that is the size of the operators array in this object.</span>
+                output = cell(size(self.operators));
+
+                <span class="comment">% Check if the data is a cell array.</span>
+                <span class="keyword">if</span> iscell(data)
+
+                    <span class="comment">% Iterate over the length of the operators array of this object.</span>
+                    <span class="keyword">for</span> cellIndex = 1:length(self.operators)
+
+                        <span class="comment">% Create a buffer variable that contains the current element of the data array.</span>
+                        temp = data{cellIndex};
+
+                        <span class="comment">% Get the size of the current element of the data array.</span>
+                        tempSize = size(temp);
+
+                        <span class="comment">% Check if the number of input variables is 3.</span>
+                        <span class="keyword">if</span> nargin == 3
+
+                            <span class="comment">%....................................................................................................</span>
+
+                            <span class="comment">% Create a string to be evaluated.</span>
+                            evalString = [<span class="string">'temp=temp('</span> repmat(<span class="string">':,'</span>,1,length(tempSize) - 1) <span class="string">'trials);'</span>];
+
+                            <span class="comment">% Evaluate the string. This will set the buffer variable to an array that contains multiple copies of itself (?).</span>
+                            eval(evalString);
+
+                        <span class="keyword">end</span>
+
+                        <span class="comment">% Set the current element of the output to the value of the operate function called from the operators object of this object, using the buffer data array as the input variable (minus any singleton dimensions).</span>
+                        output{cellIndex} = self.operators(cellIndex).operate(squeeze(temp));
+
+                    <span class="keyword">end</span>
+
+                <span class="keyword">else</span>
+
+                    <span class="comment">% Get the size of the data array.</span>
+                    dataSize = size(data);
+
+                    <span class="comment">% Iterate over the length of the operators array of this object.</span>
+                    <span class="keyword">for</span> cellIndex = 1:length(self.operators)
+
+                        <span class="comment">% Check if the number of input variables is 3.</span>
+                        <span class="keyword">if</span> nargin == 3
+
+                            <span class="comment">%....................................................................................................</span>
+
+                            <span class="comment">% Create a string to be evaluated.</span>
+                            evalString = [<span class="string">'temp=data('</span> repmat(<span class="string">':,'</span>,1,self.operationMode-1) <span class="string">'cellIndex,'</span> repmat(<span class="string">':,'</span>,1,length(dataSize)-self.operationMode-1) <span class="string">'trials);'</span>];
+
+                        <span class="keyword">else</span>
+
+                            <span class="comment">%....................................................................................................</span>
+
+                            <span class="comment">% Create a string to be evaluated.</span>
+                            evalString = [<span class="string">'temp=data('</span> repmat(<span class="string">':,'</span>,1,self.operationMode-1) <span class="string">'cellIndex,'</span> repmat(<span class="string">':,'</span>,1,length(dataSize)-self.operationMode-1) <span class="string">':);'</span>];
+
+                        <span class="keyword">end</span>
+
+                        <span class="comment">% Evaluate the string. This will set the buffer variable to an array that contains multiple copies of itself (?).</span>
+                        eval(evalString);
+
+                        <span class="comment">% Set the current element of the output to the value of the operate function called from the operators object of this object, using the buffer data array as the input variable (minus any singleton dimensions).</span>
+                        output{cellIndex} = self.operators(cellIndex).operate(squeeze(temp));
+
+                    <span class="keyword">end</span>
+
+                <span class="keyword">end</span>
+
+                <span class="comment">% Gets the numbers of elements in the each of the element arrays of the output array.</span>
+                outputNumels = cellfun(@numel,output);
+
+                <span class="comment">% Check if all the numbers of elements of each of the arrays in the output array are equal.</span>
+                <span class="keyword">if</span> ~any(outputNumels ~= outputNumels(1))
+
+                    <span class="comment">% Iterate over the length of the output array</span>
+                    <span class="keyword">for</span> cellIndex = 1:length(output)
+
+                        <span class="comment">% Get the size of the current element of the output array.</span>
+                        outputSize = size(output{cellIndex});
+
+                        <span class="comment">% Reshape the curent element of the output array into an (n x 1 x m) array, where (n + m = self.operationMode).</span>
+                        output{cellIndex} = reshape(output{cellIndex},[outputSize(1:self.operationMode-1) 1 outputSize(self.operationMode:end)]);
+
+                    <span class="keyword">end</span>
+
+                    <span class="comment">% Append the operation mode to the beginning of the output array.</span>
+                    output = cat(self.operationMode,output{:});
+
+                <span class="keyword">end</span>
+
+            <span class="keyword">end</span>
+
+        <span class="keyword">end</span>
+</pre><pre class="codeinput">    <span class="keyword">end</span>
+</pre><pre class="codeinput"><span class="keyword">end</span>
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.14<br></p></div><!--
+##### SOURCE BEGIN #####
+%% classdef processNode < handle
+% Encapsulates the learning and operation of a specific cluster of data.
+%%
+
+classdef processNode < handle
+    
+    %% Properties
+    %
+    %   operatorHandle - Handle, points to the operator function being used by the node.
+    %
+    %   operationMode - Double, used to determine the mode of operation of the node. Default value: 0.
+    %
+    %   operators - Object or array of objects, created by the operator handle function. The objects contains the learn and operate functions being used by the node.
+    %
+    %   operatorParameters - Array, contains the variables being used by the operator handle function.
+    %
+    %%
+    
+    properties
+        
+        operatorHandle
+        operationMode = 0;
+        operators
+        operatorParameters
+        
+    end
+    
+    methods
+        
+        %% function self = processNode(operatorHandle,operationMode,operatorParameters)
+        % Constructor.
+        %
+        %   The inputs of the function:
+        %
+        %       operatorHandle - Handle, points to the operator function being used by the node.
+        %
+        %       operationMode - Double, used to determine the mode of operation of the node. Default value: 0.
+        %
+        %       operatorParameters - Array, contains the variables being used by the operator handle function.
+        %
+        %%
+        
+        function self = processNode(operatorHandle,operationMode,operatorParameters)
+            
+            % Set the value of the operator handle.
+            self.operatorHandle = operatorHandle;
+            
+            % Check if the number of input variables is greater than or equal to 2, and if the variable operationMode is not empty.
+            if (nargin >= 2) && ~isempty(operationMode)
+                
+                % Set the value of the operation mode.
+                self.operationMode = operationMode;
+                
+            end
+            
+            % Check if the number of input variables is greater than or equal to 3.
+            if nargin >= 3
+                
+                % Set the value of the operation parameters.
+                self.operatorParameters = operatorParameters;
+                
+            end
+            
+        end
+        
+        
+        
+        %% function learn(self,data,labels,trials)
+        % Evaluates the conditions of the provided data, creates the operator objects by evaluating the operator handle and parameters, and then executes the learn function of the operators object.
+        %
+        %   The inputs of the function:
+        %
+        %       data - Cell array, contains the data being learnt and operated upon by the nodes.
+        %
+        %       labels - Array, contains the labels that nominatively represent the data.
+        %
+        %       trials - Array, used to determine the data and label elements that come from trials.
+        %
+        %%
+        
+        function learn(self,data,labels,trials)
+            
+            % Check if the operation mode of this object is 0.
+            if self.operationMode == 0
+                
+                % Check if there are any operator parameters.
+                if isempty(self.operatorParameters)
+                    
+                    % Set the operator of this object to the evaluated result of the operator handle.
+                    self.operators = feval(self.operatorHandle);
+                    
+                else
+                    
+                    % Set the operator of this object to the evaluated result of the operator handle using the operator parameters.
+                    self.operators = feval(self.operatorHandle,self.operatorParameters);
+                    
+                end
+                
+                % Check if the variable data is a cell array.
+                if(iscell(data))
+                    
+                    % Create a buffer copy of the data cell array.
+                    temp = cat(1,data{:});
+                    
+                    % Get the size of the data array.
+                    tempSize = size(temp);
+                    
+                    % Reshape the buffer data array, converting it from an n-dimensional array into a 2-dimensional array.
+                    temp = reshape(temp,prod(tempSize(1:end-1)),tempSize(end));
+                    
+                    % Check if the number of input variables is 4.
+                    if nargin == 4
+                        
+                        % Makes the buffer data array only contain trial data.
+                        temp = temp(:,trials);
+                        
+                        % Creates a buffer array of labels, containing only trial data labels.
+                        tempLabels = labels(trials);
+                        
+                    else
+                        
+                        % Create a buffer copy of the label array.
+                        tempLabels = labels;
+                        
+                    end
+                    
+                    % Execute the learn function in the operators object, using the buffer data array and the buffer label array as input variables.
+                    self.operators.learn(temp,tempLabels);
+                    
+                else
+                    
+                    % Get the size of the data array.
+                    tempSize = size(data);
+                    
+                    % Create a buffer copy of the data array and reshape it, converting it from an n-dimensional array into a 2-dimensional array.
+                    temp = reshape(data,prod(tempSize(1:end-1)),tempSize(end));
+                    
+                    % Check if the number of input variables is 4.
+                    if nargin == 4
+                        
+                        % Makes the buffer data array only contain trial data.
+                        temp = temp(:,trials);
+                        
+                        % Creates a buffer array of labels, containing only trial data labels.
+                        tempLabels = labels(trials);
+                        
+                    else
+                        
+                        % Create a buffer copy of the label array.
+                        tempLabels = labels;
+                        
+                    end
+                    
+                    % Execute the learn function in the operators object, using the buffer data array and the buffer label array as input variables.
+                    self.operators.learn(temp,tempLabels);
+                    
+                end
+                
+            % Otherwise, check if the operation mode of this object is greater than 0.
+            elseif self.operationMode > 0
+                
+                % Check if the variable data is a cell array.
+                if iscell(data)
+                    
+                    %self.operators=zeros(1,length(data));
+                    
+                    % Set the variable operatorCnt to the length of the data array.
+                    operatorCnt = length(data);
+                    
+                    % Check if there are no operator parameters.
+                    if isempty(self.operatorParameters)
+                        
+                        % Iterate backwards over the length of the data.
+                        for cellIndex = operatorCnt:-1:1
+                            
+                            % Check if the current cell is last cell in the data.
+                            if cellIndex == operatorCnt
+                                
+                                % Create a buffer operator object by evaluating the operator handle of this object, without any parameters.
+                                tempOperator = feval(self.operatorHandle);
+                                
+                                % Sets the operators of this object to an array that contains multiple copies of the buffer operator object.
+                                self.operators = repmat(tempOperator,1,operatorCnt);
+                                
+                            else
+                                
+                                % Set the current element of the operators variable from this object to the evaluation of the operator handle of this object, without any parameters.
+                                self.operators(cellIndex) = feval(self.operatorHandle);
+                                
+                            end
+                            
+                            % Create a buffer variable that contains the current element of the data array.
+                            temp = data{cellIndex};
+                            
+                            % Get the size of the current element of the data array.
+                            tempSize = size(temp);
+                            
+                            % Check if the number of input variables is 4.
+                            if nargin == 4
+                                
+                                %....................................................................................................
+                                
+                                % Create a string to be evaluated.
+                                evalString = ['temp=temp(' repmat(':,',1,length(tempSize) - 1) 'trials);'];
+                                
+                                % Evaluate the string. This will set the buffer variable to an array that contains multiple copies of itself (?).
+                                eval(evalString);
+                                
+                                % Creates a buffer array of labels, containing only trial data labels.
+                                tempLabels = labels(trials);
+                                
+                            else
+                                
+                                % Create a buffer copy of the label array.
+                                tempLabels = labels;
+                                
+                            end
+                            
+                            % Execute the learn function in the current element's operators object, using the buffer data array (minus any singleton dimensions) and the buffer label array as input variables.
+                            self.operators(cellIndex).learn(squeeze(temp),tempLabels);
+                            
+                        end
+                        
+                    else
+                        
+                        % Iterate backwards over the length of the data.
+                        for cellIndex = operatorCnt:-1:1
+                            
+                            % Check if the current cell is last cell in the data.
+                            if cellIndex == operatorCnt
+                                
+                                % Create a buffer operator object by evaluating the operator handle of this object, without any parameters.
+                                tempOperator = feval(self.operatorHandle);
+                                
+                                % Sets the operators of this object to an array that contains multiple copies of the buffer operator object.
+                                self.operators = repmat(tempOperator,1,operatorCnt);
+                                
+                            else
+                                
+                                % Set the current element of the operators variable from this object to the evaluation of the operator handle of this object, without any parameters.
+                                self.operators(cellIndex) = feval(self.operatorHandle);
+                                
+                            end
+                            
+                            % Create a buffer variable that contains the current element of the data array.
+                            temp = data{cellIndex};
+                            
+                            % Get the size of the current element of the data array.
+                            tempSize = size(temp);
+                            
+                            % Check if the number of input variables is 4.
+                            if nargin == 4
+                                
+                                %....................................................................................................
+                                
+                                % Create a string to be evaluated.
+                                evalString = ['temp=temp(' repmat(':,',1,length(tempSize)-1) 'trials);'];
+                                
+                                % Evaluate the string. This will set the buffer variable to an array that contains multiple copies of itself (?).
+                                eval(evalString);
+                                
+                                % Creates a buffer array of labels, containing only trial data labels.
+                                tempLabels = labels(trials);
+                                
+                            else
+                                
+                                % Create a buffer copy of the label array.
+                                tempLabels = labels;
+                                
+                            end
+                            
+                            % Execute the learn function in the current element's operators object, using the buffer data array (minus any singleton dimensions) and the buffer label array as input variables.
+                            self.operators(cellIndex).learn(squeeze(temp),tempLabels);
+                            
+                        end
+                        
+                    end
+                    
+                else
+                    
+                    % Get the size of the data.
+                    dataSize = size(data);
+                    
+                    % Set the variable operatorCnt to the length of the data array.
+                    operatorCnt = dataSize(self.operationMode);
+                    
+                    %self.operators=zeros(1,dataSize(self.operationMode));
+                    
+                    % Check if there are no operator parameters.
+                    if isempty(self.operatorParameters)
+                        
+                        % Iterate backwards over the length of the data.
+                        for cellIndex = operatorCnt:-1:1
+                            
+                            % Check if the current cell is last cell in the data.
+                            if cellIndex == operatorCnt
+                                
+                                % Create a buffer operator object by evaluating the operator handle of this object, without any parameters.
+                                tempOperator = feval(self.operatorHandle);
+                                
+                                % Sets the operators of this object to an array that contains multiple copies of the buffer operator object.
+                                self.operators = repmat(tempOperator,1,operatorCnt);
+                                
+                            else
+                                
+                                % Set the current element of the operators variable from this object to the evaluation of the operator handle of this object, without any parameters.
+                                self.operators(cellIndex) = feval(self.operatorHandle);
+                                
+                            end
+                            
+                            % Check if the number of input variables is 4.
+                            if nargin == 4
+                                
+                                %....................................................................................................
+                                
+                                % Create a string to be evaluated.
+                                evalString = ['temp=data(' repmat(':,',1,self.operationMode - 1) 'cellIndex,' repmat(':,',1,length(dataSize) - self.operationMode - 1) 'trials);'];
+                                
+                                % Creates a buffer array of labels, containing only trial data labels.
+                                tempLabels = labels(trials);
+                                
+                            else
+                                
+                                %....................................................................................................
+                                
+                                % Create a string to be evaluated.
+                                evalString = ['temp=data(' repmat(':,',1,self.operationMode - 1) 'cellIndex,' repmat(':,',1,length(dataSize) - self.operationMode - 1) ':);'];
+                                
+                                % Create a buffer copy of the label array.
+                                tempLabels = labels;
+                                
+                            end
+                            
+                            % Evaluate the string. This will set the buffer variable to an array that contains multiple copies of itself (?).
+                            eval(evalString);
+                            
+                            % Execute the learn function in the current element's operators object, using the buffer data array (minus any singleton dimensions) and the buffer label array as input variables.
+                            self.operators(cellIndex).learn(squeeze(temp),tempLabels);
+                            
+                        end
+                        
+                    else
+                        
+                        % Iterate backwards over the length of the data.
+                        for cellIndex = operatorCnt:-1:1
+                            
+                            % Check if the current cell is last cell in the data.
+                            if cellIndex == operatorCnt
+                                
+                                % Create a buffer operator object by evaluating the operator handle of this object, without any parameters.
+                                tempOperator = feval(self.operatorHandle,self.operatorParameters);
+                                
+                                % Sets the operators of this object to an array that contains multiple copies of the buffer operator object.
+                                self.operators = repmat(tempOperator,1,operatorCnt);
+                                
+                            else
+                                
+                                % Set the current element of the operators variable from this object to the evaluation of the operator handle of this object.
+                                self.operators(cellIndex) = feval(self.operatorHandle,self.operatorParameters);
+                                
+                            end
+                            
+                            % Check if the number of input variables is 4.
+                            if nargin == 4
+                                
+                                %....................................................................................................
+                                
+                                % Create a string to be evaluated.
+                                evalString = ['temp=data(' repmat(':,',1,self.operationMode-1) 'cellIndex,' repmat(':,',1,length(dataSize)-self.operationMode-1) 'trials);'];
+                                
+                                % Creates a buffer array of labels, containing only trial data labels.
+                                tempLabels = labels(trials);
+                                
+                            else
+                                
+                                %....................................................................................................
+                                
+                                % Create a string to be evaluated.
+                                evalString = ['temp=data(' repmat(':,',1,self.operationMode-1) 'cellIndex,' repmat(':,',1,length(dataSize)-self.operationMode-1) ':);'];
+                                
+                                % Create a buffer copy of the label array.
+                                tempLabels = labels;
+                                
+                            end
+                            
+                            % Evaluate the string. This will set the buffer variable to an array that contains multiple copies of itself (?).
+                            eval(evalString);
+                            
+                            % Execute the learn function in the current element's operators object, using the buffer data array (minus any singleton dimensions) and the buffer label array as input variables.
+                            self.operators(cellIndex).learn(squeeze(temp),tempLabels);
+                            
+                        end
+                        
+                    end
+                    
+                end
+                
+            end
+            
+        end
+        
+        
+        
+        %% function output = operate(self,data,trials)
+        % Evaluates the conditions of the provided data, then executes the operate function of the operators object, and returns the data obtained from those executed functions.
+        %
+        %   The inputs of the function:
+        %
+        %       data - Cell array, contains the data to be operated upon by the nodes.
+        %
+        %       trials - Array, used to determine the data elements that come from trials.
+        %
+        %   The outputs of the function:
+        %
+        %       output - Cell array, contains the data that has been operated upon by the nodes.
+        %
+        %%
+        
+        function output = operate(self,data,trials)
+            
+            % Check if the operation mode of this object is 0.
+            if self.operationMode == 0
+                
+                % Check if the data is a cell array.
+                if iscell(data)
+                    
+                    % Create a buffer copy of the data array.
+                    temp = cat(1,data{:});
+                    
+                    % Get the size of the data cell array.
+                    tempSize = size(temp);
+                    
+                    % Reshape the buffer data array, converting it from an n-dimensional array into a 2-dimensional array.
+                    temp = reshape(temp,prod(tempSize(1:end-1)),tempSize(end));
+                    
+                    % Check if the number of input variables is 3.
+                    if nargin == 3
+                        
+                        % Makes the buffer data array only contain trial data.
+                        temp = temp(:,trials);
+                        
+                    end
+                    
+                    % Set the output to the value of the operate function called from the operators object of this object, using the buffer data array as the input variable.
+                    output = self.operators.operate(temp);
+                    
+                else
+                    
+                    % Get the size of the data cell array.
+                    tempSize = size(data);
+                    
+                    % Create a buffer copy of the data array and reshape it, converting it from an n-dimensional array into a 2-dimensional array.
+                    temp = reshape(data,prod(tempSize(1:end-1)),tempSize(end));
+                    
+                    % Check if the number of input variables is 3.
+                    if nargin == 3
+                        
+                        % Makes the buffer data array only contain trial data.
+                        temp = temp(:,trials);
+                        
+                    end
+                    
+                    % Set the output to the value of the operate function called from the operators object of this object, using the buffer data array as the input variable.
+                    output = self.operators.operate(temp);
+                    
+                end
+                
+            % Otherwise, check if the operation mode of this object is greater than 0.
+            elseif self.operationMode > 0
+                
+                % Set the output to a cell array that is the size of the operators array in this object.
+                output = cell(size(self.operators));
+                
+                % Check if the data is a cell array.
+                if iscell(data)
+                    
+                    % Iterate over the length of the operators array of this object.
+                    for cellIndex = 1:length(self.operators)
+                        
+                        % Create a buffer variable that contains the current element of the data array.
+                        temp = data{cellIndex};
+                        
+                        % Get the size of the current element of the data array.
+                        tempSize = size(temp);
+                        
+                        % Check if the number of input variables is 3.
+                        if nargin == 3
+                            
+                            %....................................................................................................
+                                
+                            % Create a string to be evaluated.
+                            evalString = ['temp=temp(' repmat(':,',1,length(tempSize) - 1) 'trials);'];
+                            
+                            % Evaluate the string. This will set the buffer variable to an array that contains multiple copies of itself (?).
+                            eval(evalString);
+                            
+                        end
+                        
+                        % Set the current element of the output to the value of the operate function called from the operators object of this object, using the buffer data array as the input variable (minus any singleton dimensions).
+                        output{cellIndex} = self.operators(cellIndex).operate(squeeze(temp));
+                        
+                    end
+                    
+                else
+                    
+                    % Get the size of the data array.
+                    dataSize = size(data);
+                    
+                    % Iterate over the length of the operators array of this object.
+                    for cellIndex = 1:length(self.operators)
+                        
+                        % Check if the number of input variables is 3.
+                        if nargin == 3
+                            
+                            %....................................................................................................
+                            
+                            % Create a string to be evaluated.
+                            evalString = ['temp=data(' repmat(':,',1,self.operationMode-1) 'cellIndex,' repmat(':,',1,length(dataSize)-self.operationMode-1) 'trials);'];
+                            
+                        else
+                            
+                            %....................................................................................................
+                            
+                            % Create a string to be evaluated.
+                            evalString = ['temp=data(' repmat(':,',1,self.operationMode-1) 'cellIndex,' repmat(':,',1,length(dataSize)-self.operationMode-1) ':);'];
+                            
+                        end
+                        
+                        % Evaluate the string. This will set the buffer variable to an array that contains multiple copies of itself (?).
+                        eval(evalString);
+                        
+                        % Set the current element of the output to the value of the operate function called from the operators object of this object, using the buffer data array as the input variable (minus any singleton dimensions).
+                        output{cellIndex} = self.operators(cellIndex).operate(squeeze(temp));
+                        
+                    end
+                    
+                end
+                
+                % Gets the numbers of elements in the each of the element arrays of the output array.
+                outputNumels = cellfun(@numel,output);
+                
+                % Check if all the numbers of elements of each of the arrays in the output array are equal.
+                if ~any(outputNumels ~= outputNumels(1))
+                    
+                    % Iterate over the length of the output array
+                    for cellIndex = 1:length(output)
+                        
+                        % Get the size of the current element of the output array.
+                        outputSize = size(output{cellIndex});
+                        
+                        % Reshape the curent element of the output array into an (n x 1 x m) array, where (n + m = self.operationMode).
+                        output{cellIndex} = reshape(output{cellIndex},[outputSize(1:self.operationMode-1) 1 outputSize(self.operationMode:end)]);
+                    
+                    end
+                    
+                    % Append the operation mode to the beginning of the output array.
+                    output = cat(self.operationMode,output{:});
+                
+                end
+                
+            end
+            
+        end
+        
+    end
+    
+end
+##### SOURCE END #####
+--></body></html>

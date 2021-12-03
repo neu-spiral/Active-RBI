@@ -1,0 +1,300 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>function insertStimulusNode(presentationQueue,stimulusStruct,presentationInfo,stimulusType,backgroundNode)</title><meta name="generator" content="MATLAB 7.14"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2013-06-13"><meta name="DC.source" content="insertStimulusNode.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+
+  </style></head><body><div class="content"><h1>function insertStimulusNode(presentationQueue,stimulusStruct,presentationInfo,stimulusType,backgroundNode)</h1><!--introduction--><p>Initialises and inserts a new stimulus node into the specified presentation queue, using the provided data.</p><pre class="language-matlab">The <span class="string">inputs</span> <span class="string">of</span> <span class="string">the</span> <span class="string">function:</span>
+</pre><pre>     presentationQueue - Object, queue which contains the nodes being processed by the presentation. The new stimulus node is added to this queue.</pre><pre>     stimulusStruct - Struct, contains information about the stimulus.</pre><pre>     presentationInfo - Struct, contains information about the presentation.</pre><pre>     stimulusType - String, labels the stimulus type.</pre><pre>     backgroundNode - Object, contains information pertaining to a graphical representation of the stimulus.</pre><!--/introduction--><pre class="codeinput"><span class="keyword">function</span> insertStimulusNode(presentationQueue,stimulusStruct,presentationInfo,stimulusType,backgroundNode)
+
+    <span class="comment">% Initialise the duration of the stimulus.</span>
+    <span class="keyword">if</span> strcmpi(stimulusType,<span class="string">'activePauseBarChannelDrop'</span>)
+        duration = presentationInfo.Duration.activePauseBar;
+        <span class="comment">% Sets the values of the variable active and the variable paasive as determined by the getAdjustedDuration function.</span>
+      [active,passive] = getAdjustedDuration(duration,presentationInfo.interFlipInterval,presentationInfo.DutyCycle.activePauseBar);
+
+    <span class="keyword">else</span>
+
+        duration = presentationInfo.Duration.(stimulusType);
+        <span class="comment">% Sets the values of the variable active and the variable paasive as determined by the getAdjustedDuration function.</span>
+        [active,passive] = getAdjustedDuration(duration,presentationInfo.interFlipInterval,presentationInfo.DutyCycle.(stimulusType));
+
+    <span class="keyword">end</span>
+
+    <span class="comment">% Check if the variable active is not equal to 0.</span>
+    <span class="keyword">if</span> active ~= 0
+
+        <span class="comment">% Sets the value of the variable mainScreenNode to a screenNode object.</span>
+        mainScreenNode = screenNode(presentationInfo.window,presentationInfo.interFlipInterval,active);
+
+        <span class="comment">% Checks if the stimulusType variable has the value 'activePauseBar' (ignoring case) or if the stimulusStruct struct is not empty.</span>
+        <span class="keyword">if</span> strcmpi(stimulusType,<span class="string">'activePauseBar'</span>) || ~isempty(stimulusStruct)|| strcmpi(stimulusType,<span class="string">'activePauseBarChannelDrop'</span>)
+
+            <span class="keyword">if</span> isfield(stimulusStruct,<span class="string">'Type'</span>)
+                stimulusBased=stimulusStruct.Type;
+            <span class="keyword">else</span>
+                stimulusBased=<span class="string">'Non'</span>;
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> strcmpi(stimulusBased,<span class="string">'Image'</span>)
+                tempElement=imageElement(stimulusType,stimulusStruct,presentationInfo);
+            <span class="keyword">else</span>
+                <span class="comment">% Sets the value of the tempElement variable to a new textElement object.</span>
+                tempElement = textElement(stimulusType,stimulusStruct,presentationInfo);
+            <span class="keyword">end</span>
+
+            <span class="comment">% Adds the tempElement object as a graphic element to the mainScreenNode object.</span>
+            mainScreenNode.addGraphicElement(tempElement);
+
+            <span class="comment">% Checks if the backgroundNode object is not empty.</span>
+            <span class="keyword">if</span> ~isempty(backgroundNode)
+
+                <span class="comment">% Adds the backgroundNode object as a graphic element to the mainScreenNode object.</span>
+                mainScreenNode.addGraphicElement(backgroundNode);
+
+            <span class="keyword">end</span>
+
+            <span class="comment">% Checks the value of the stimulusType variable.</span>
+            <span class="keyword">switch</span> stimulusType
+
+                <span class="keyword">case</span> <span class="string">'Target'</span> <span class="comment">% If the value is 'Target', the stimulus node is given a target trigger value.</span>
+
+                    <span class="comment">% Sets the trigger value of the mainScreenNode object to the target trigger value, as designated by (stimulusStruct.ID + presentationInfo.TARGET_TRIGGER_OFFSET).</span>
+                    mainScreenNode.setTriggerValue(stimulusStruct.ID + presentationInfo.TARGET_TRIGGER_OFFSET);
+
+                <span class="keyword">case</span> {<span class="string">'Trial'</span>,<span class="string">'Fixation'</span>} <span class="comment">% If the value is 'Trial' or 'Fixation', the stimulus node is given a default trigger value.</span>
+
+                    <span class="comment">% Sets the trigger value of the mainScreenNode object to the default trigger value, as designated by stimulusStruct.ID.</span>
+                    mainScreenNode.setTriggerValue(stimulusStruct.ID);
+
+                <span class="keyword">otherwise</span>
+
+                    <span class="comment">% Do nothing.</span>
+
+            <span class="keyword">end</span>
+
+            presentationQueue.insertEnd(listNode(mainScreenNode));
+
+        <span class="keyword">end</span>
+
+    <span class="keyword">end</span>
+
+    <span class="comment">% Check if the variable passive is not equal to 0.</span>
+    <span class="keyword">if</span> passive ~= 0
+
+        <span class="comment">% Sets the value of the variable mainScreenNode to a screenNode object.</span>
+        mainScreenNode = screenNode(presentationInfo.window,presentationInfo.interFlipInterval,passive);
+
+        <span class="comment">% Checks if the backgroundNode object is not empty.</span>
+        <span class="keyword">if</span> ~isempty(backgroundNode)
+
+            <span class="comment">% Appends the backgroundNode object as a graphic element to the mainScreenNode object.</span>
+            mainScreenNode.addGraphicElement(backgroundNode);
+
+        <span class="keyword">end</span>
+
+        <span class="comment">% Casts the mainScreenNode object to a listNode object and then appends it to the presentationQueue object.</span>
+        presentationQueue.insertEnd(listNode(mainScreenNode));
+
+    <span class="keyword">end</span>
+
+<span class="keyword">end</span>
+
+
+
+
+<span class="comment">% function insertStimulusNode(presentationQueue,stimulusStruct,presentationInfo,stimulusType)</span>
+<span class="comment">% [active,passive]=getAdjustedDuration(presentationInfo.Duration.(stimulusType),presentationInfo.interFlipInterval,presentationInfo.Duration.DutyCycle);</span>
+<span class="comment">% if(active~=0)</span>
+<span class="comment">%     stimulusStruct.Duration=active;</span>
+<span class="comment">%     presentationQueue.insertEnd(listNode(stimulusStruct));</span>
+<span class="comment">% end</span>
+<span class="comment">% if(passive~=0)</span>
+<span class="comment">%     S=presentationInfo.blankScreen;</span>
+<span class="comment">%     S.Duration=passive;</span>
+<span class="comment">%     presentationQueue.insertEnd(listNode(S));</span>
+<span class="comment">%</span>
+<span class="comment">% end</span>
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.14<br></p></div><!--
+##### SOURCE BEGIN #####
+%% function insertStimulusNode(presentationQueue,stimulusStruct,presentationInfo,stimulusType,backgroundNode)
+% Initialises and inserts a new stimulus node into the specified presentation queue, using the provided data.
+%
+%   The inputs of the function:
+%
+%       presentationQueue - Object, queue which contains the nodes being processed by the presentation. The new stimulus node is added to this queue.
+%
+%       stimulusStruct - Struct, contains information about the stimulus.
+%
+%       presentationInfo - Struct, contains information about the presentation.
+%
+%       stimulusType - String, labels the stimulus type.
+%
+%       backgroundNode - Object, contains information pertaining to a graphical representation of the stimulus.
+%
+%%
+
+function insertStimulusNode(presentationQueue,stimulusStruct,presentationInfo,stimulusType,backgroundNode)
+
+    % Initialise the duration of the stimulus.
+    if strcmpi(stimulusType,'activePauseBarChannelDrop')
+        duration = presentationInfo.Duration.activePauseBar;
+        % Sets the values of the variable active and the variable paasive as determined by the getAdjustedDuration function.
+      [active,passive] = getAdjustedDuration(duration,presentationInfo.interFlipInterval,presentationInfo.DutyCycle.activePauseBar);
+
+    else
+        
+        duration = presentationInfo.Duration.(stimulusType);
+        % Sets the values of the variable active and the variable paasive as determined by the getAdjustedDuration function.
+        [active,passive] = getAdjustedDuration(duration,presentationInfo.interFlipInterval,presentationInfo.DutyCycle.(stimulusType));
+
+    end
+    
+    % Check if the variable active is not equal to 0.
+    if active ~= 0
+        
+        % Sets the value of the variable mainScreenNode to a screenNode object.
+        mainScreenNode = screenNode(presentationInfo.window,presentationInfo.interFlipInterval,active);
+        
+        % Checks if the stimulusType variable has the value 'activePauseBar' (ignoring case) or if the stimulusStruct struct is not empty.
+        if strcmpi(stimulusType,'activePauseBar') || ~isempty(stimulusStruct)|| strcmpi(stimulusType,'activePauseBarChannelDrop')
+            
+            if isfield(stimulusStruct,'Type')
+                stimulusBased=stimulusStruct.Type;
+            else
+                stimulusBased='Non';
+            end
+            
+            if strcmpi(stimulusBased,'Image')
+                tempElement=imageElement(stimulusType,stimulusStruct,presentationInfo);
+            else
+                % Sets the value of the tempElement variable to a new textElement object.
+                tempElement = textElement(stimulusType,stimulusStruct,presentationInfo);
+            end
+            
+            % Adds the tempElement object as a graphic element to the mainScreenNode object.
+            mainScreenNode.addGraphicElement(tempElement);
+            
+            % Checks if the backgroundNode object is not empty.
+            if ~isempty(backgroundNode)
+                
+                % Adds the backgroundNode object as a graphic element to the mainScreenNode object.
+                mainScreenNode.addGraphicElement(backgroundNode);
+                
+            end
+
+            % Checks the value of the stimulusType variable.
+            switch stimulusType
+                
+                case 'Target' % If the value is 'Target', the stimulus node is given a target trigger value.
+                    
+                    % Sets the trigger value of the mainScreenNode object to the target trigger value, as designated by (stimulusStruct.ID + presentationInfo.TARGET_TRIGGER_OFFSET).
+                    mainScreenNode.setTriggerValue(stimulusStruct.ID + presentationInfo.TARGET_TRIGGER_OFFSET);
+
+                case {'Trial','Fixation'} % If the value is 'Trial' or 'Fixation', the stimulus node is given a default trigger value.
+                    
+                    % Sets the trigger value of the mainScreenNode object to the default trigger value, as designated by stimulusStruct.ID.
+                    mainScreenNode.setTriggerValue(stimulusStruct.ID);
+
+                otherwise
+                    
+                    % Do nothing.
+                    
+            end
+            
+            presentationQueue.insertEnd(listNode(mainScreenNode));
+            
+        end
+         
+    end
+    
+    % Check if the variable passive is not equal to 0.
+    if passive ~= 0
+        
+        % Sets the value of the variable mainScreenNode to a screenNode object.
+        mainScreenNode = screenNode(presentationInfo.window,presentationInfo.interFlipInterval,passive);
+        
+        % Checks if the backgroundNode object is not empty.
+        if ~isempty(backgroundNode)
+            
+            % Appends the backgroundNode object as a graphic element to the mainScreenNode object.
+            mainScreenNode.addGraphicElement(backgroundNode);
+            
+        end
+        
+        % Casts the mainScreenNode object to a listNode object and then appends it to the presentationQueue object.
+        presentationQueue.insertEnd(listNode(mainScreenNode));
+
+    end
+    
+end
+
+
+
+
+% function insertStimulusNode(presentationQueue,stimulusStruct,presentationInfo,stimulusType)
+% [active,passive]=getAdjustedDuration(presentationInfo.Duration.(stimulusType),presentationInfo.interFlipInterval,presentationInfo.Duration.DutyCycle);
+% if(active~=0)
+%     stimulusStruct.Duration=active;
+%     presentationQueue.insertEnd(listNode(stimulusStruct));
+% end
+% if(passive~=0)
+%     S=presentationInfo.blankScreen;
+%     S.Duration=passive;
+%     presentationQueue.insertEnd(listNode(S));
+%
+% end
+##### SOURCE END #####
+--></body></html>

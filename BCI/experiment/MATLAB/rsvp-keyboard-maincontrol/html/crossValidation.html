@@ -1,0 +1,296 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>CROSSVALIDATION class</title><meta name="generator" content="MATLAB 7.14"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2013-06-13"><meta name="DC.source" content="crossValidation.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+
+  </style></head><body><div class="content"><h1>CROSSVALIDATION class</h1><!--introduction--><p>crossValidation is an object that contains the below mentioned properties and methods. The constructor returns a handle to this object. When a   handle to a dataBuffer object is copied, for example during assignment or when passed   to a MATLAB function, the handle is copied but not the underlying   object property values.</p><pre>crossValidation properties:
+ crossValidationPartitioning   - row vector with the size of Labels that
+ has a number 1:k for each index in random or uniform order according to
+ partitioning type(uniform/random)(dimension: 1 x L)</pre><pre>crossValidation methods:
+ crossValidation      - constructor
+ apply                - applies cross validation</pre><pre>  *(Access=private):
+ partition            - fills crossValidationPartitioning propertis of
+ the crossValidation object with a partition vector in random or uniform
+ order</pre><pre>  *(Static):
+ pPartition           - partitions data to k fold uniformly</pre><pre class="language-matlab">see <span class="string">also</span> <span class="string">learn.</span>
+</pre><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#3">Methods of the crossValidation class</a></li><li><a href="#4">crossValidation(parameters)</a></li></ul></div><pre class="codeinput"><span class="keyword">classdef</span> crossValidation &lt; handle
+</pre><pre class="codeinput">    properties
+        crossValidationPartitioning
+
+        <span class="comment">%         performanceEstimationType = 'Aggregate';</span>
+        K = 10;
+        partitioningType = <span class="string">'Uniform'</span>;
+
+    <span class="keyword">end</span>
+</pre><h2>Methods of the crossValidation class<a name="3"></a></h2><pre class="codeinput">    methods
+</pre><h2>crossValidation(parameters)<a name="4"></a></h2><p>Constructor for the crossValidation object. It initializes the empty crossValidation object with the parameters K(number of folds for crossValidation), partitioningType(uniform/random)numberOfChannels that are components of the input structure</p><pre class="codeinput">        <span class="keyword">function</span> self=crossValidation(parameters)
+            <span class="keyword">if</span>(nargin &gt; 0)
+                <span class="comment">%         if(isfield(parammeters,'performanceEstimationType'))</span>
+                <span class="comment">%             self.performanceEstimationType=parameters.performanceEstimationType;</span>
+                <span class="comment">%         end</span>
+                <span class="keyword">if</span>(isfield(parameters,<span class="string">'K'</span>))
+                    self.K=parameters.K;
+                <span class="keyword">end</span>
+                <span class="keyword">if</span>(isfield(parameters,<span class="string">'partitioningType'</span>))
+                    self.partitioningType=parameters.partitioningType;
+                <span class="keyword">end</span>
+
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+
+        <span class="keyword">function</span> output=apply(self,flowHandle,data,labels)
+            <span class="comment">%    apply(self,flowHandle,data,labels) applies cross validation on data for given classification process. It</span>
+            <span class="comment">%    partitions data and calculate scores for each fold of cross-validation fold</span>
+            <span class="comment">%   The inputs of the function</span>
+            <span class="comment">%      flowHandle - processFlow containing classification steps</span>
+            <span class="comment">%      data       - data to apply cross validation on, might be multidimensional but the</span>
+            <span class="comment">%      last dimension should correspond to trials.</span>
+            <span class="comment">%      labels     - contains a vector of labels corresponding to all labels.</span>
+            <span class="comment">%</span>
+            <span class="comment">%   The outputs of the function</span>
+            <span class="comment">%      output - scores</span>
+
+            <span class="comment">% performanceEstimationType='Uniform'</span>
+            self.partition(length(labels));
+
+            <span class="comment">%valSets=unique(crossValidationPartitioning);</span>
+            output=zeros(1,length(labels));
+
+            <span class="keyword">for</span> k=1:self.K
+                trials=self.crossValidationPartitioning==k;
+                flowHandle.learn(data,labels,~trials);
+                output(trials)=flowHandle.operate(data,trials);
+            <span class="keyword">end</span>
+            <span class="comment">%output=self.crossValidationPartitioning;</span>
+        <span class="keyword">end</span>
+</pre><pre class="codeinput">    <span class="keyword">end</span>
+
+    methods (Access=private)
+        <span class="keyword">function</span> partition(self,L)
+            <span class="comment">%  partition(self,L) uses pPartition to generate a partition vector</span>
+            <span class="comment">%  explained in pPartition function(read pPartition) and check to see if</span>
+            <span class="comment">%  partitioning type is random or not. If so, make the partition vector in</span>
+            <span class="comment">%  random order. And fill crossValidationPartitioning with this vector.</span>
+
+            <span class="keyword">switch</span> self.partitioningType
+                <span class="keyword">case</span> <span class="string">'Uniform'</span>
+                    self.crossValidationPartitioning=crossValidation.pPartition(L,self.K);
+                <span class="keyword">case</span> <span class="string">'Random'</span>
+                    temp=crossValidation.pPartition(length(labels),self.K);
+                    self.crossValidationPartitioning=temp(randperm(L));
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+    <span class="keyword">end</span>
+
+    methods (Static)
+        <span class="keyword">function</span> partitionOutput=pPartition(L,K)
+            <span class="comment">% %  pPartition(L,K) gets L(number of features or labels) and K(number of folds for crossValidation)</span>
+            <span class="comment">%    and assign a partion number(1:K) for each index of Labels(or feature</span>
+            <span class="comment">%    vectores). Since K is not allways dividable to K, number of labels in</span>
+            <span class="comment">%    each partion may vary from one from partion to partition.</span>
+            <span class="comment">%    The inputs of the function</span>
+            <span class="comment">%      K - number of partitions(for K-fold cross-validation).</span>
+            <span class="comment">%      L - number of Labels</span>
+            <span class="comment">%</span>
+            <span class="comment">%   The output of the function</span>
+            <span class="comment">%      partitionOutput - row vector with the size of Labels that has a number 1:k for each index (dimension: 1 x L).</span>
+
+            baseValSize=floor(L/K);
+            extraValSampleCount=mod(L,K);
+
+            temp1=repmat(1:extraValSampleCount,baseValSize+1,1);
+            temp2=repmat(extraValSampleCount+1:K,baseValSize,1);
+            partitionOutput=[reshape(temp1,1,numel(temp1)), reshape(temp2,1,numel(temp2))];
+
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+    <span class="comment">% end</span>
+</pre><pre class="codeinput"><span class="keyword">end</span>
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.14<br></p></div><!--
+##### SOURCE BEGIN #####
+%% CROSSVALIDATION class
+% crossValidation is an object that contains the below mentioned properties and methods. The constructor returns a handle to this object. When a
+%   handle to a dataBuffer object is copied, for example during assignment or when passed
+%   to a MATLAB function, the handle is copied but not the underlying
+%   object property values.
+%
+%  crossValidation properties:
+%   crossValidationPartitioning   - row vector with the size of Labels that
+%   has a number 1:k for each index in random or uniform order according to
+%   partitioning type(uniform/random)(dimension: 1 x L)
+%
+%  crossValidation methods:
+%   crossValidation      - constructor
+%   apply                - applies cross validation
+%
+%    *(Access=private):
+%   partition            - fills crossValidationPartitioning propertis of
+%   the crossValidation object with a partition vector in random or uniform
+%   order
+%
+%    *(Static):
+%   pPartition           - partitions data to k fold uniformly
+%
+%   see also learn.
+%%
+
+classdef crossValidation < handle
+    
+    properties
+        crossValidationPartitioning
+        
+        %         performanceEstimationType = 'Aggregate';
+        K = 10;
+        partitioningType = 'Uniform';
+        
+    end
+    %%  Methods of the crossValidation class
+    methods
+        %% crossValidation(parameters)
+        % Constructor for the crossValidation object. It initializes the
+        % empty crossValidation object with the parameters K(number of folds for crossValidation), partitioningType(uniform/random)numberOfChannels
+        % that are components of the input structure
+        function self=crossValidation(parameters)
+            if(nargin > 0)
+                %         if(isfield(parammeters,'performanceEstimationType'))
+                %             self.performanceEstimationType=parameters.performanceEstimationType;
+                %         end
+                if(isfield(parameters,'K'))
+                    self.K=parameters.K;
+                end
+                if(isfield(parameters,'partitioningType'))
+                    self.partitioningType=parameters.partitioningType;
+                end
+                
+            end
+        end
+        
+        
+        function output=apply(self,flowHandle,data,labels)
+            %    apply(self,flowHandle,data,labels) applies cross validation on data for given classification process. It
+            %    partitions data and calculate scores for each fold of cross-validation fold
+            %   The inputs of the function
+            %      flowHandle - processFlow containing classification steps
+            %      data       - data to apply cross validation on, might be multidimensional but the
+            %      last dimension should correspond to trials.
+            %      labels     - contains a vector of labels corresponding to all labels.
+            %
+            %   The outputs of the function
+            %      output - scores
+            
+            % performanceEstimationType='Uniform'
+            self.partition(length(labels));
+            
+            %valSets=unique(crossValidationPartitioning);
+            output=zeros(1,length(labels));
+            
+            for k=1:self.K
+                trials=self.crossValidationPartitioning==k;
+                flowHandle.learn(data,labels,~trials);
+                output(trials)=flowHandle.operate(data,trials);
+            end
+            %output=self.crossValidationPartitioning;
+        end
+        
+        
+    end
+    
+    methods (Access=private)
+        function partition(self,L)
+            %  partition(self,L) uses pPartition to generate a partition vector
+            %  explained in pPartition function(read pPartition) and check to see if
+            %  partitioning type is random or not. If so, make the partition vector in
+            %  random order. And fill crossValidationPartitioning with this vector.
+            
+            switch self.partitioningType
+                case 'Uniform'
+                    self.crossValidationPartitioning=crossValidation.pPartition(L,self.K);
+                case 'Random'
+                    temp=crossValidation.pPartition(length(labels),self.K);
+                    self.crossValidationPartitioning=temp(randperm(L));
+            end
+        end
+        
+    end
+    
+    methods (Static)
+        function partitionOutput=pPartition(L,K)
+            % %  pPartition(L,K) gets L(number of features or labels) and K(number of folds for crossValidation)
+            %    and assign a partion number(1:K) for each index of Labels(or feature
+            %    vectores). Since K is not allways dividable to K, number of labels in
+            %    each partion may vary from one from partion to partition.
+            %    The inputs of the function
+            %      K - number of partitions(for K-fold cross-validation).
+            %      L - number of Labels
+            %
+            %   The output of the function
+            %      partitionOutput - row vector with the size of Labels that has a number 1:k for each index (dimension: 1 x L).
+            
+            baseValSize=floor(L/K);
+            extraValSampleCount=mod(L,K);
+            
+            temp1=repmat(1:extraValSampleCount,baseValSize+1,1);
+            temp2=repmat(extraValSampleCount+1:K,baseValSize,1);
+            partitionOutput=[reshape(temp1,1,numel(temp1)), reshape(temp2,1,numel(temp2))];
+            
+        end
+    end
+    % end
+end
+##### SOURCE END #####
+--></body></html>

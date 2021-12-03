@@ -1,0 +1,164 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>initializeSignalProcessing</title><meta name="generator" content="MATLAB 7.14"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2013-06-13"><meta name="DC.source" content="initializeSignalProcessing.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">initializeSignalProcessing</a></li><li><a href="#2">filterState: Global variable to define the filter conditions, which will be updated after each filtering operation.</a></li><li><a href="#3">Loading the signal processing parameters.</a></li><li><a href="#4">Loading the frontend filter information.</a></li><li><a href="#5">Calculating the buffer size in samples and creates a dataBuffer class object for non-trigger data.</a></li><li><a href="#6">If frontend filtering is not enabled, there is no group delay introduced by it.</a></li><li><a href="#7">Initializes the dataBuffer object for the trigger signal.</a></li><li><a href="#8">Initializes the beginning filter conditions as zero.</a></li><li><a href="#9">calls the initializeArtifactFiltering script</a></li></ul></div><h2>initializeSignalProcessing<a name="1"></a></h2><pre class="codeinput"><span class="comment">%initializeSignalProcessing</span>
+<span class="comment">% Initializes the signal processing. It loads the parameters, frontend</span>
+<span class="comment">% filter</span>
+<span class="comment">%  information, sets up data acquisition buffers.</span>
+<span class="comment">%</span>
+<span class="comment">%   The frontend filter information is contained in a file named as</span>
+<span class="comment">%   inputFilterCoef.mat. It contains the following structure,</span>
+<span class="comment">%       frontendFilter - It should have the following fields,</span>
+<span class="comment">%               frontendFilter.groupDelay - shift to be introduced for</span>
+<span class="comment">%               triggers in samples frontendFilter.Den - denominator</span>
+<span class="comment">%               coefficients of the</span>
+<span class="comment">%                       filter. This should be 1 for FIR filters.</span>
+<span class="comment">%               frontendFilter.Num - numerator coefficients of the</span>
+<span class="comment">%                       filter.</span>
+<span class="comment">%               frontendFilter.filteringFlag - Enables (1)/disables (0) the</span>
+<span class="comment">%                       frontend filtering before buffering. This flag is</span>
+<span class="comment">%                       set in this routine from mainBuffer structure</span>
+<span class="comment">%                       loaded from signal processing parameters.</span>
+<span class="comment">%</span>
+<span class="comment">%</span>
+<span class="comment">%  See also signalProcessing, dataBuffer</span>
+</pre><h2>filterState: Global variable to define the filter conditions, which will be updated after each filtering operation.<a name="2"></a></h2><pre class="codeinput"><span class="keyword">global</span> filterState
+</pre><h2>Loading the signal processing parameters.<a name="3"></a></h2><pre class="codeinput">signalProcessingParameters;
+</pre><h2>Loading the frontend filter information.<a name="4"></a></h2><pre class="codeinput">load <span class="string">'inputFilterCoef.mat'</span>
+</pre><h2>Calculating the buffer size in samples and creates a dataBuffer class object for non-trigger data.<a name="5"></a></h2><pre class="codeinput">    bufferLength=fs*mainBuffer.bufferDurationSec;
+
+bufferType=strcmpi(mainBuffer.bufferingMethod,<span class="string">'linear'</span>);
+dataBufferObject=dataBuffer(bufferLength,numberOfChannels,bufferType);
+
+cleanDataBufferObject=dataBuffer(bufferLength,numberOfChannels,bufferType);
+artifactInfoBufferObject=dataBuffer(bufferLength,numberOfChannels,bufferType);
+</pre><h2>If frontend filtering is not enabled, there is no group delay introduced by it.<a name="6"></a></h2><pre class="codeinput"><span class="keyword">if</span>(~mainBuffer.frontendFilteringFlag)
+    frontendFilter.groupDelay=0;
+<span class="keyword">end</span>
+frontendFilter.filteringFlag=mainBuffer.frontendFilteringFlag;
+</pre><h2>Initializes the dataBuffer object for the trigger signal.<a name="7"></a></h2><pre class="codeinput">    <span class="comment">%Group delay of the frontend filter requires a shift in the triggers.</span>
+    <span class="comment">%Hence the dataBuffer object corresponding to triggers contain a</span>
+    <span class="comment">%corresponding shift.</span>
+triggerBufferObject=dataBuffer(bufferLength,1,bufferType,frontendFilter.groupDelay);
+</pre><h2>Initializes the beginning filter conditions as zero.<a name="8"></a></h2><pre class="codeinput">filterState=zeros(max(length(frontendFilter.Num),length(frontendFilter.Den))-1,numberOfChannels);
+</pre><h2>calls the initializeArtifactFiltering script<a name="9"></a></h2><p>initializeArtifactFiltering</p><p class="footer"><br>
+      Published with MATLAB&reg; 7.14<br></p></div><!--
+##### SOURCE BEGIN #####
+%% initializeSignalProcessing
+%initializeSignalProcessing
+% Initializes the signal processing. It loads the parameters, frontend
+% filter
+%  information, sets up data acquisition buffers.
+%
+%   The frontend filter information is contained in a file named as
+%   inputFilterCoef.mat. It contains the following structure,
+%       frontendFilter - It should have the following fields,
+%               frontendFilter.groupDelay - shift to be introduced for
+%               triggers in samples frontendFilter.Den - denominator
+%               coefficients of the
+%                       filter. This should be 1 for FIR filters.
+%               frontendFilter.Num - numerator coefficients of the
+%                       filter.
+%               frontendFilter.filteringFlag - Enables (1)/disables (0) the
+%                       frontend filtering before buffering. This flag is
+%                       set in this routine from mainBuffer structure
+%                       loaded from signal processing parameters.
+%
+%
+%  See also signalProcessing, dataBuffer
+%%
+
+    %% filterState: Global variable to define the filter conditions, which will be updated after each filtering operation.
+global filterState
+
+    %% Loading the signal processing parameters.
+signalProcessingParameters;
+    
+    %% Loading the frontend filter information.
+load 'inputFilterCoef.mat'    
+
+    %% Calculating the buffer size in samples and creates a dataBuffer class object for non-trigger data.
+    bufferLength=fs*mainBuffer.bufferDurationSec;
+    
+bufferType=strcmpi(mainBuffer.bufferingMethod,'linear');
+dataBufferObject=dataBuffer(bufferLength,numberOfChannels,bufferType);
+
+cleanDataBufferObject=dataBuffer(bufferLength,numberOfChannels,bufferType); 
+artifactInfoBufferObject=dataBuffer(bufferLength,numberOfChannels,bufferType); 
+    %% If frontend filtering is not enabled, there is no group delay introduced by it.
+if(~mainBuffer.frontendFilteringFlag)
+    frontendFilter.groupDelay=0;
+end
+frontendFilter.filteringFlag=mainBuffer.frontendFilteringFlag;
+
+    %% Initializes the dataBuffer object for the trigger signal.
+    %Group delay of the frontend filter requires a shift in the triggers.
+    %Hence the dataBuffer object corresponding to triggers contain a
+    %corresponding shift.
+triggerBufferObject=dataBuffer(bufferLength,1,bufferType,frontendFilter.groupDelay);
+
+    %% Initializes the beginning filter conditions as zero.
+filterState=zeros(max(length(frontendFilter.Num),length(frontendFilter.Den))-1,numberOfChannels);
+
+    %% calls the initializeArtifactFiltering script
+% initializeArtifactFiltering
+
+
+
+
+##### SOURCE END #####
+--></body></html>

@@ -1,0 +1,391 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>h_eeg_interp_spl_m</title><meta name="generator" content="MATLAB 7.14"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2013-06-13"><meta name="DC.source" content="h_eeg_interp_spl_m.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+
+  </style></head><body><div class="content"><pre class="codeinput"><span class="comment">% Small edits to the EEGLAB file</span>
+<span class="comment">% Cleaned up and removed irrelevant sections.</span>
+<span class="comment">%</span>
+<span class="comment">% eeg_interp() - interpolate data channels</span>
+<span class="comment">%</span>
+<span class="comment">% Usage: EEGOUT = eeg_interp(EEG, badchans, method);</span>
+<span class="comment">%</span>
+<span class="comment">% Inputs:</span>
+<span class="comment">%     EEG      - EEGLAB dataset</span>
+<span class="comment">%     badchans - [integer array] indices of channels to interpolate.</span>
+<span class="comment">%                For instance, these channels might be bad.</span>
+<span class="comment">%                [chanlocs structure] channel location structure containing</span>
+<span class="comment">%                either locations of channels to interpolate or a full</span>
+<span class="comment">%                channel structure (missing channels in the current</span>
+<span class="comment">%                dataset are interpolated).</span>
+<span class="comment">%     method   - [string] method used for interpolation (default is 'spherical').</span>
+<span class="comment">%                'invdist' uses inverse distance on the scalp</span>
+<span class="comment">%                'spherical' uses superfast spherical interpolation.</span>
+<span class="comment">%                'spacetime' uses griddata3 to interpolate both in space</span>
+<span class="comment">%                and time (very slow and cannot be interupted).</span>
+<span class="comment">% Output:</span>
+<span class="comment">%     EEGOUT   - data set with bad electrode data replaced by</span>
+<span class="comment">%                interpolated data</span>
+<span class="comment">%</span>
+<span class="comment">% Author: Arnaud Delorme, CERCO, CNRS, Mai 2006-</span>
+
+<span class="comment">% Copyright (C) Arnaud Delorme, CERCO, 2006, arno@salk.edu</span>
+<span class="comment">%</span>
+<span class="comment">% This program is free software; you can redistribute it and/or modify</span>
+<span class="comment">% it under the terms of the GNU General Public License as published by</span>
+<span class="comment">% the Free Software Foundation; either version 2 of the License, or</span>
+<span class="comment">% (at your option) any later version.</span>
+<span class="comment">%</span>
+<span class="comment">% This program is distributed in the hope that it will be useful,</span>
+<span class="comment">% but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="comment">% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the</span>
+<span class="comment">% GNU General Public License for more details.</span>
+<span class="comment">%</span>
+<span class="comment">% You should have received a copy of the GNU General Public License</span>
+<span class="comment">% along with this program; if not, write to the Free Software</span>
+<span class="comment">% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA</span>
+
+<span class="comment">% $Log: eeg_interp.m,v $</span>
+<span class="comment">% Revision 1.7  2009/08/05 03:20:42  arno</span>
+<span class="comment">% new interpolation function</span>
+<span class="comment">%</span>
+<span class="comment">% Revision 1.6  2009/07/30 03:32:47  arno</span>
+<span class="comment">% fixed interpolating bad channels</span>
+<span class="comment">%</span>
+<span class="comment">% Revision 1.5  2009/07/02 19:30:33  arno</span>
+<span class="comment">% fix problem with empty channel</span>
+<span class="comment">%</span>
+<span class="comment">% Revision 1.4  2009/07/02 18:23:33  arno</span>
+<span class="comment">% fixing interpolation</span>
+<span class="comment">%</span>
+<span class="comment">% Revision 1.3  2009/04/21 21:48:53  arno</span>
+<span class="comment">% make default spherical in eeg_interp</span>
+<span class="comment">%</span>
+<span class="comment">% Revision 1.2  2008/04/16 17:34:45  arno</span>
+<span class="comment">% added spherical and 3-D interpolation</span>
+<span class="comment">%</span>
+<span class="comment">% Revision 1.1  2006/09/12 18:46:30  arno</span>
+<span class="comment">% Initial revision</span>
+<span class="comment">%</span>
+<span class="comment">% [CHAN1020,XYZ1020] = elec_1020select(eeg.electrodes);</span>
+<span class="keyword">function</span> EEG = h_eeg_interp_spl_m(EEG, badchans, ignore_chans)
+
+<span class="keyword">if</span> nargin &lt; 2
+    help <span class="string">eeg_interp</span>;
+    <span class="keyword">return</span>;
+<span class="keyword">end</span>;
+
+<span class="keyword">if</span> ~exist(<span class="string">'ignore_chans'</span>,<span class="string">'var'</span>)
+    ignore_chans=[];
+<span class="keyword">end</span>
+
+badchans = setdiff(badchans,ignore_chans);
+
+<span class="keyword">if</span> isempty(badchans)
+    <span class="keyword">return</span>;
+<span class="keyword">end</span>
+
+<span class="comment">% goodchans = setdiff(1:EEG.nbchan, badchans);</span>
+goodchans = setdiff(1:size(EEG.data,1), badchans);
+goodchans = setdiff(goodchans, ignore_chans);
+
+<span class="comment">% find non-empty good channels</span>
+<span class="comment">% ----------------------------</span>
+<span class="comment">% nonemptychans = find(~cellfun('isempty', { EEG.chanlocs.theta }));</span>
+<span class="comment">% goodchans = intersect(goodchans, nonemptychans);</span>
+<span class="comment">% badchans  = intersect(badchans, nonemptychans);</span>
+<span class="comment">% fprintf('Interpolating %d channels:', length(badchans));fprintf(' %d',badchans);fprintf('\n');</span>
+<span class="comment">% scan data points</span>
+<span class="comment">% ----------------</span>
+<span class="comment">% get theta, rad of electrodes</span>
+<span class="comment">% ----------------------------</span>
+<span class="comment">% xelec = [ EEG.chanlocs(goodchans).X ];</span>
+[CHAN1020,XYZ1020] = elec_1020select(EEG.electrodes(goodchans));
+<span class="comment">% xelec = [ EEG.chanlocs(goodchans).X ];</span>
+xelec = XYZ1020(:,1)';
+<span class="comment">% yelec = [ EEG.chanlocs(goodchans).Y ];</span>
+yelec = XYZ1020(:,2)';
+<span class="comment">% zelec = [ EEG.chanlocs(goodchans).Z ];</span>
+zelec = XYZ1020(:,3)';
+rad = sqrt(xelec.^2+yelec.^2+zelec.^2);
+xelec = xelec./rad;
+yelec = yelec./rad;
+zelec = zelec./rad;
+<span class="comment">% xbad = [ EEG.chanlocs(badchans).X ];</span>
+<span class="comment">% ybad = [ EEG.chanlocs(badchans).Y ];</span>
+<span class="comment">% zbad = [ EEG.chanlocs(badchans).Z ];</span>
+[CHAN1020,XYZ1020] = elec_1020select(EEG.electrodes(badchans));
+xbad = XYZ1020(:,1)';
+ybad = XYZ1020(:,2)';
+zbad = XYZ1020(:,3)';
+rad = sqrt(xbad.^2+ybad.^2+zbad.^2);
+xbad = xbad./rad;
+ybad = ybad./rad;
+zbad = zbad./rad;
+<span class="comment">% save all.mat</span>
+EEG.data(badchans,:) = spheric_spline( xelec, yelec, zelec, xbad, ybad, zbad, EEG.data(goodchans,:));
+<span class="comment">% EEG = eeg_checkset(EEG);</span>
+
+<span class="keyword">function</span> allres = spheric_spline( xelec, yelec, zelec, xbad, ybad, zbad, values)
+
+newchans = length(xbad);
+numpoints = size(values,2);
+
+Gelec = computeg(xelec,yelec,zelec,xelec,yelec,zelec);
+Gsph  = computeg(xbad,ybad,zbad,xelec,yelec,zelec);
+
+<span class="comment">% compute solution for parameters C</span>
+<span class="comment">% ---------------------------------</span>
+meanvalues = mean(values);
+values = values - repmat(meanvalues, [size(values,1) 1]); <span class="comment">% make mean zero</span>
+
+values = [values;zeros(1,numpoints)];
+C = pinv([Gelec;ones(1,length(Gelec))]) * values;
+clear <span class="string">values</span>;
+allres = zeros(newchans, numpoints);
+
+<span class="comment">% apply results</span>
+<span class="comment">% -------------</span>
+<span class="keyword">for</span> j = 1:size(Gsph,1)
+    allres(j,:) = sum(C .* repmat(Gsph(j,:)', [1 size(C,2)]));
+<span class="keyword">end</span>
+allres = allres + repmat(meanvalues, [size(allres,1) 1]);
+
+<span class="comment">% compute G function</span>
+<span class="comment">% ------------------</span>
+<span class="keyword">function</span> g = computeg(x,y,z,xelec,yelec,zelec)
+
+unitmat = ones(length(x(:)),length(xelec));
+EI = unitmat - sqrt((repmat(x(:),1,length(xelec)) - repmat(xelec,length(x(:)),1)).^2 +(repmat(y(:),1,length(xelec)) - repmat(yelec,length(x(:)),1)).^2 +(repmat(z(:),1,length(xelec)) - repmat(zelec,length(x(:)),1)).^2);
+
+g = zeros(length(x(:)),length(xelec));
+<span class="comment">%dsafds</span>
+m = 4; <span class="comment">% 3 is linear, 4 is best according to Perrin's curve</span>
+<span class="keyword">for</span> n = 1:7
+    L = legendre(n,EI);
+    g = g + ((2*n+1)/(n^m*(n+1)^m))*squeeze(L(1,:,:));
+<span class="keyword">end</span>
+g = g/(4*pi);
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.14<br></p></div><!--
+##### SOURCE BEGIN #####
+% Small edits to the EEGLAB file
+% Cleaned up and removed irrelevant sections.
+%
+% eeg_interp() - interpolate data channels
+%
+% Usage: EEGOUT = eeg_interp(EEG, badchans, method);
+%
+% Inputs:
+%     EEG      - EEGLAB dataset
+%     badchans - [integer array] indices of channels to interpolate.
+%                For instance, these channels might be bad.
+%                [chanlocs structure] channel location structure containing
+%                either locations of channels to interpolate or a full
+%                channel structure (missing channels in the current
+%                dataset are interpolated).
+%     method   - [string] method used for interpolation (default is 'spherical').
+%                'invdist' uses inverse distance on the scalp
+%                'spherical' uses superfast spherical interpolation.
+%                'spacetime' uses griddata3 to interpolate both in space
+%                and time (very slow and cannot be interupted).
+% Output:
+%     EEGOUT   - data set with bad electrode data replaced by
+%                interpolated data
+%
+% Author: Arnaud Delorme, CERCO, CNRS, Mai 2006-
+
+% Copyright (C) Arnaud Delorme, CERCO, 2006, arno@salk.edu
+%
+% This program is free software; you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation; either version 2 of the License, or
+% (at your option) any later version.
+%
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+%
+% You should have received a copy of the GNU General Public License
+% along with this program; if not, write to the Free Software
+% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+% $Log: eeg_interp.m,v $
+% Revision 1.7  2009/08/05 03:20:42  arno
+% new interpolation function
+%
+% Revision 1.6  2009/07/30 03:32:47  arno
+% fixed interpolating bad channels
+%
+% Revision 1.5  2009/07/02 19:30:33  arno
+% fix problem with empty channel
+%
+% Revision 1.4  2009/07/02 18:23:33  arno
+% fixing interpolation
+%
+% Revision 1.3  2009/04/21 21:48:53  arno
+% make default spherical in eeg_interp
+%
+% Revision 1.2  2008/04/16 17:34:45  arno
+% added spherical and 3-D interpolation
+%
+% Revision 1.1  2006/09/12 18:46:30  arno
+% Initial revision
+%
+% [CHAN1020,XYZ1020] = elec_1020select(eeg.electrodes);
+function EEG = h_eeg_interp_spl_m(EEG, badchans, ignore_chans)
+
+if nargin < 2
+    help eeg_interp;
+    return;
+end;
+
+if ~exist('ignore_chans','var')
+    ignore_chans=[];
+end
+
+badchans = setdiff(badchans,ignore_chans);
+
+if isempty(badchans)
+    return;
+end
+
+% goodchans = setdiff(1:EEG.nbchan, badchans);
+goodchans = setdiff(1:size(EEG.data,1), badchans);
+goodchans = setdiff(goodchans, ignore_chans);
+
+% find non-empty good channels
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+% nonemptychans = find(~cellfun('isempty', { EEG.chanlocs.theta }));
+% goodchans = intersect(goodchans, nonemptychans);
+% badchans  = intersect(badchans, nonemptychans);
+% fprintf('Interpolating %d channels:', length(badchans));fprintf(' %d',badchans);fprintf('\n');
+% scan data points
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+% get theta, rad of electrodes
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+% xelec = [ EEG.chanlocs(goodchans).X ];
+[CHAN1020,XYZ1020] = elec_1020select(EEG.electrodes(goodchans));
+% xelec = [ EEG.chanlocs(goodchans).X ];
+xelec = XYZ1020(:,1)';
+% yelec = [ EEG.chanlocs(goodchans).Y ];
+yelec = XYZ1020(:,2)';
+% zelec = [ EEG.chanlocs(goodchans).Z ];
+zelec = XYZ1020(:,3)';
+rad = sqrt(xelec.^2+yelec.^2+zelec.^2);
+xelec = xelec./rad;
+yelec = yelec./rad;
+zelec = zelec./rad;
+% xbad = [ EEG.chanlocs(badchans).X ];
+% ybad = [ EEG.chanlocs(badchans).Y ];
+% zbad = [ EEG.chanlocs(badchans).Z ];
+[CHAN1020,XYZ1020] = elec_1020select(EEG.electrodes(badchans));
+xbad = XYZ1020(:,1)';
+ybad = XYZ1020(:,2)';
+zbad = XYZ1020(:,3)';
+rad = sqrt(xbad.^2+ybad.^2+zbad.^2);
+xbad = xbad./rad;
+ybad = ybad./rad;
+zbad = zbad./rad;
+% save all.mat
+EEG.data(badchans,:) = spheric_spline( xelec, yelec, zelec, xbad, ybad, zbad, EEG.data(goodchans,:));
+% EEG = eeg_checkset(EEG);
+
+function allres = spheric_spline( xelec, yelec, zelec, xbad, ybad, zbad, values)
+
+newchans = length(xbad);
+numpoints = size(values,2);
+
+Gelec = computeg(xelec,yelec,zelec,xelec,yelec,zelec);
+Gsph  = computeg(xbad,ybad,zbad,xelec,yelec,zelec);
+
+% compute solution for parameters C
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-
+meanvalues = mean(values);
+values = values - repmat(meanvalues, [size(values,1) 1]); % make mean zero
+
+values = [values;zeros(1,numpoints)];
+C = pinv([Gelec;ones(1,length(Gelec))]) * values;
+clear values;
+allres = zeros(newchans, numpoints);
+
+% apply results
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-
+for j = 1:size(Gsph,1)
+    allres(j,:) = sum(C .* repmat(Gsph(j,:)', [1 size(C,2)]));
+end
+allres = allres + repmat(meanvalues, [size(allres,1) 1]);
+
+% compute G function
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+function g = computeg(x,y,z,xelec,yelec,zelec)
+
+unitmat = ones(length(x(:)),length(xelec));
+EI = unitmat - sqrt((repmat(x(:),1,length(xelec)) - repmat(xelec,length(x(:)),1)).^2 +(repmat(y(:),1,length(xelec)) - repmat(yelec,length(x(:)),1)).^2 +(repmat(z(:),1,length(xelec)) - repmat(zelec,length(x(:)),1)).^2);
+
+g = zeros(length(x(:)),length(xelec));
+%dsafds
+m = 4; % 3 is linear, 4 is best according to Perrin's curve
+for n = 1:7
+    L = legendre(n,EI);
+    g = g + ((2*n+1)/(n^m*(n+1)^m))*squeeze(L(1,:,:));
+end
+g = g/(4*pi);
+
+
+
+##### SOURCE END #####
+--></body></html>

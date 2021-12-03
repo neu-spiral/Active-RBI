@@ -1,0 +1,325 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>presentationParameters</title><meta name="generator" content="MATLAB 7.14"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2013-06-13"><meta name="DC.source" content="presentationParameters.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+
+  </style></head><body><div class="content"><h1>presentationParameters</h1><!--introduction--><p>Parameter file corresponding to presentation.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">General Screen Information</a></li><li><a href="#4">Presentation Durations and Duty Cyycles</a></li><li><a href="#13">Font and Style of the Text</a></li><li><a href="#16">Colors</a></li><li><a href="#23">Indicators</a></li></ul></div><h2>General Screen Information<a name="1"></a></h2><p>The index of the monitor to use in case multiple monitors are connected. Default (1)</p><pre class="codeinput">presentationStruct.presentationScreenIndex=1;
+</pre><p>Parameter to start the presentation as full screen or not.</p><div><ul><li>0 : Windowed</li><li>1 : Full screen</li></ul></div><pre class="codeinput">presentationStruct.fullScreenFlag=1;
+</pre><p>Parameter to lock the keyboard such that only Psychtoolbox reads the keyboard input. (1 (default): Lock, 0 : Do not lock)</p><pre class="codeinput">presentationStruct.lockKeyboard=1;
+</pre><h2>Presentation Durations and Duty Cyycles<a name="4"></a></h2><p>Duration (in seconds) and duty cycle of the target symbol for calibration</p><p>Default duration is 2 seconds and default duty cycle is 1, which means target symbol will be shown for 2 seconds with no blank screen following the target symbol.</p><pre class="codeinput">presentationStruct.Duration.Target=2;
+presentationStruct.DutyCycle.Target=1;
+</pre><p>Default duration is 5 seconds and default duty cycle is 1, which means copyTask target word will be shown for 5 seconds with no blank screen following the copyTaskt arget symbol before Initiation of first sequence of every new Sentence.</p><pre class="codeinput">presentationStruct.Duration.copyTaskTarget=5;
+presentationStruct.DutyCycle.copyTaskTarget=1;
+</pre><p>Duration (in seconds) and duty cycle of the fixation cross</p><p>Default duration is 1 second and default duty cycle is 1, which means fixation will be shown for 1 second with no blank screen following the fixation symbol.</p><pre class="codeinput">presentationStruct.Duration.Fixation=1;
+presentationStruct.DutyCycle.Fixation=1;
+</pre><p>Duration (in seconds) and duty cycle of the trials</p><p>Default duration is 0.2 second and default duty cycle is 0.75, which means trial symbol will be shown for 150 ms followed by a 50 ms blank screen. For the trials it is not safe to set the duty cycle to 1.</p><pre class="codeinput">presentationStruct.Duration.Trial=0.20;
+presentationStruct.DutyCycle.Trial=0.75;
+</pre><p>Duration (in seconds) and duty cycle of the blank screen to separate blocks, and number of trials per block to split a sequence into blocks.</p><pre class="codeinput">presentationStruct.Duration.BlankScreen=1;
+presentationStruct.DutyCycle.BlankScreen=1;
+presentationStruct.SequenceBreakInterval=14;
+</pre><p>Duration (in seconds) and duty cycle of the mastery task level complete sign.</p><pre class="codeinput">presentationStruct.Duration.LevelUpSign=3;
+presentationStruct.DutyCycle.LevelUpSign=1;
+</pre><p>Duration (in seconds) and duty cycle of the sequence end trigger pulse. It is only useful for trigger purposes to mark the end of a sequence.</p><pre class="codeinput">presentationStruct.Duration.SequenceEnd=0.3;
+presentationStruct.DutyCycle.SequenceEnd=1;
+</pre><p>Duration (in seconds) and duty cycle of the decision screen, which shows the decided symbol after a decision.</p><pre class="codeinput">presentationStruct.Duration.Decision=2;
+presentationStruct.DutyCycle.Decision=1;
+</pre><p>Duration (in seconds) and duty cycle of the pause screen which listens to keyboard to continue. These durations indicate the periodic flashes of the pause screen.</p><pre class="codeinput">presentationStruct.Duration.activePauseBar=1;
+presentationStruct.DutyCycle.activePauseBar=0.5;
+</pre><h2>Font and Style of the Text<a name="13"></a></h2><p>TextFont should be a string containing the font name. However some fonts might not be available or might not show up properly. Tested and confirmed fonts: 'Arial' (default), 'Calibri', 'Courier New'</p><pre class="codeinput">presentationStruct.TextFont=<span class="string">'Arial'</span>;
+</pre><p>TextStyle is a number indicating the style of the text in {0,1,...,7}</p><div><ul><li>0 : normal</li><li>1 : bold</li><li>2 : italic</li><li>4 : underline</li><li>3 = 1+2 : bold &amp; italic</li></ul></div><pre class="codeinput">presentationStruct.TextStyle=0; <span class="comment">%0=normal,1=bold,2=italic,4=underline, 1+2=bold&amp;italic</span>
+</pre><p>Text size of the stimulus (default = 300), including target, fixation and trials.</p><pre class="codeinput">presentationStruct.StimulusTextSize=300;
+</pre><h2>Colors<a name="16"></a></h2><p>Colors in RGB.</p><div><ul><li>[0,0,0] : Black</li><li>[255,255,255] : White</li><li>[0,0,255] : Blue</li><li>[255,0,0] : Red</li><li>[0,255,0] : Green</li></ul></div><p>Background color (default : black)</p><pre class="codeinput">presentationStruct.backgroundColor=[0,0,0];
+</pre><p>Stimulus color (default : white)</p><pre class="codeinput">presentationStruct.Color.Stimulus=[255, 255, 255];
+</pre><p>Target color (default : blue)</p><pre class="codeinput">presentationStruct.Color.Target=[0 0 255];
+</pre><p>CopyTask Target color (default : blue)</p><pre class="codeinput">presentationStruct.Color.copyTaskTarget=[50 50 255];
+</pre><p>Decision color (default green)</p><pre class="codeinput">presentationStruct.Color.Decision=[0 255 0];
+</pre><p>CopyTask Target font size (default : 100)</p><pre class="codeinput">presentationStruct.copyTaskTarget.TextSize=100;
+</pre><h2>Indicators<a name="23"></a></h2><p>Text to indicate a target, appearing on the left side of the stimulus, with adjustable text, enabling flag, color and size.</p><pre class="codeinput">presentationStruct.TargetIndicator.Text=<span class="string">'NEXT TARGET:               '</span>;
+presentationStruct.TargetIndicator.Enabled=1;
+presentationStruct.TargetIndicator.Color=[255 255 0];
+presentationStruct.TargetIndicator.TextSize=50;
+</pre><p>Text to indicate a decision, appearing on the left side of the stimulus, with adjustable text, enabling flag, color and size.</p><pre class="codeinput">presentationStruct.DecisionIndicator.Text=<span class="string">'DECISION:               '</span>;
+presentationStruct.DecisionIndicator.Enabled=1;
+presentationStruct.DecisionIndicator.Color=[0 255 0];
+presentationStruct.DecisionIndicator.TextSize=50;
+</pre><p>Parameters to adjust the feedback text appearing on the top of the screen.</p><div><ul><li>Neutral color represents the color scheme for neutral text (default : white)</li><li>Positive color represents the color scheme for correct selections (default : green)</li><li>Negative color represents the color scheme for incorrect selections (default : red)</li><li>TextSize and vSpacing adjusts the font size and vertical spacing, respectively.</li><li>Border represents the line which can be drawn after the feedback text.</li></ul></div><pre class="codeinput">presentationStruct.typingFeedbackBar.neutralColor=[255,255,255];
+presentationStruct.typingFeedbackBar.positiveColor=[0,255,0];
+presentationStruct.typingFeedbackBar.negativeColor=[255,0,0];
+presentationStruct.typingFeedbackBar.TextSize=40;
+presentationStruct.typingFeedbackBar.vSpacing=2;
+presentationStruct.typingFeedbackBar.BorderEnabled=1;
+presentationStruct.typingFeedbackBar.BorderInfo.width=10;
+presentationStruct.typingFeedbackBar.BorderInfo.color=[255,255,255];
+</pre><p>Parameters to adjust the pauseBar on the bottom of the screen.</p><pre class="codeinput">presentationStruct.pauseBar.inactiveText=<span class="string">'Press Space Bar or Enter to pause,\nEsc to quit'</span>;
+presentationStruct.pauseBar.inactiveRelativeXLocation=<span class="string">'center'</span>;
+presentationStruct.pauseBar.inactiveRelativeYLocation=0.8;
+presentationStruct.pauseBar.inactiveTextSize=20;
+presentationStruct.pauseBar.inactiveColor=[255 255 255];
+presentationStruct.pauseBar.vSpacing=1.5;
+presentationStruct.pauseBar.activeText=<span class="string">'Press Space Bar or Enter to continue,\nEsc to quit'</span>;
+presentationStruct.pauseBar.activeTextSize=30;
+presentationStruct.pauseBar.activeRelativeXLocation=<span class="string">'center'</span>;
+presentationStruct.pauseBar.activeRelativeYLocation=<span class="string">'center'</span>;
+presentationStruct.pauseBar.activeColor=[255 255 255];
+</pre><pre class="codeinput">presentationStruct.decisionProbabilityFeedback.isVisible = true; <span class="comment">% Boolean; determines if the decision probability feedback text is visible when a decision is made.</span>
+presentationStruct.decisionProbabilityFeedback.fontSize = 18; <span class="comment">% Integer; determines the size of the decision probability feedback text (and also affects the spacing between the lines).</span>
+presentationStruct.decisionProbabilityFeedback.generalColor = [0,255,0]; <span class="comment">% (1x3) array of integers between [0,255]; determines the color of the decision probability feedback text.</span>
+presentationStruct.decisionProbabilityFeedback.decidedColor = [0,255,255]; <span class="comment">% (1x3) array of integers between [0,255]; determines the color of a decided item in the decision probability feedback text.</span>
+presentationStruct.decisionProbabilityFeedback.indicator = <span class="string">'*'</span>; <span class="comment">% Char; symbol used to indicate magnitude of probability.</span>
+presentationStruct.decisionProbabilityFeedback.maxIndicators = 50; <span class="comment">% Positive integer; number of indicators that represents 100% probability.</span>
+presentationStruct.decisionProbabilityFeedback.x_shift = 0; <span class="comment">% Real; determines the percentage of horizontal shift of the decision probability feedback text, relative to the bounds of the screen. 0% will cause the left of the text to touch the left of the screen, while 100% will cause the right of the text to touch the right of the screen.</span>
+presentationStruct.decisionProbabilityFeedback.y_shift = 50; <span class="comment">% Real; determines the percentage of vertical shift of the decision probability feedback text, relative to the bounds of the screen. 0% will cause the top of the text to touch the top of the screen, while 100% will cause the bottom of the text to touch the bottom of the screen.</span>
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.14<br></p></div><!--
+##### SOURCE BEGIN #####
+%% presentationParameters
+% Parameter file corresponding to presentation.
+
+%% General Screen Information
+% The index of the monitor to use in case multiple monitors are connected. Default (1)
+presentationStruct.presentationScreenIndex=1;
+
+%%
+% Parameter to start the presentation as full screen or not. 
+% 
+% * 0 : Windowed
+% * 1 : Full screen
+%
+presentationStruct.fullScreenFlag=1;
+
+%% 
+% Parameter to lock the keyboard such that only Psychtoolbox reads the keyboard input. (1 (default): Lock, 0 : Do not lock)
+presentationStruct.lockKeyboard=1;
+
+%% Presentation Durations and Duty Cyycles
+% Duration (in seconds) and duty cycle of the target symbol for calibration
+%
+% Default duration is 2 seconds and default duty cycle is 1, which means target symbol will be shown
+% for 2 seconds with no blank screen following the target symbol.
+presentationStruct.Duration.Target=2;
+presentationStruct.DutyCycle.Target=1;
+
+%%
+% Default duration is 5 seconds and default duty cycle is 1, which means copyTask target word will be shown
+% for 5 seconds with no blank screen following the copyTaskt arget symbol before Initiation of first sequence
+% of every new Sentence.
+presentationStruct.Duration.copyTaskTarget=5;
+presentationStruct.DutyCycle.copyTaskTarget=1;
+
+
+%%
+% Duration (in seconds) and duty cycle of the fixation cross
+%
+% Default duration is 1 second and default duty cycle is 1, which means fixation will be shown
+% for 1 second with no blank screen following the fixation symbol.
+presentationStruct.Duration.Fixation=1;
+presentationStruct.DutyCycle.Fixation=1;
+
+%%
+% Duration (in seconds) and duty cycle of the trials
+%
+% Default duration is 0.2 second and default duty cycle is 0.75, which means trial symbol will be
+% shown for 150 ms followed by a 50 ms blank screen. For the trials it is not safe to set the
+% duty cycle to 1.
+presentationStruct.Duration.Trial=0.20;
+presentationStruct.DutyCycle.Trial=0.75;
+
+%% 
+% Duration (in seconds) and duty cycle of the blank screen to separate blocks, and number of trials
+% per block to split a sequence into blocks.
+presentationStruct.Duration.BlankScreen=1;
+presentationStruct.DutyCycle.BlankScreen=1;
+presentationStruct.SequenceBreakInterval=14;
+
+%%
+% Duration (in seconds) and duty cycle of the mastery task level complete sign.
+presentationStruct.Duration.LevelUpSign=3;
+presentationStruct.DutyCycle.LevelUpSign=1;
+
+%%
+% Duration (in seconds) and duty cycle of the sequence end trigger pulse. It is only useful for trigger purposes
+% to mark the end of a sequence.
+presentationStruct.Duration.SequenceEnd=0.3;
+presentationStruct.DutyCycle.SequenceEnd=1;
+
+%%
+% Duration (in seconds) and duty cycle of the decision screen, which shows the decided symbol after
+% a decision.
+presentationStruct.Duration.Decision=2;
+presentationStruct.DutyCycle.Decision=1;
+
+%%
+% Duration (in seconds) and duty cycle of the pause screen which listens to keyboard to continue. These
+% durations indicate the periodic flashes of the pause screen.
+presentationStruct.Duration.activePauseBar=1;
+presentationStruct.DutyCycle.activePauseBar=0.5;
+
+%% Font and Style of the Text
+% TextFont should be a string containing the font name. However some fonts might not be available or
+% might not show up properly.
+% Tested and confirmed fonts: 'Arial' (default), 'Calibri', 'Courier New'
+presentationStruct.TextFont='Arial'; 
+
+%%
+% TextStyle is a number indicating the style of the text in {0,1,...,7}
+%
+% * 0 : normal
+% * 1 : bold
+% * 2 : italic
+% * 4 : underline
+% * 3 = 1+2 : bold & italic
+% 
+presentationStruct.TextStyle=0; %0=normal,1=bold,2=italic,4=underline, 1+2=bold&italic
+
+%% 
+% Text size of the stimulus (default = 300), including target, fixation and trials.
+presentationStruct.StimulusTextSize=300;
+
+
+%% Colors 
+% Colors in RGB.
+% 
+% * [0,0,0] : Black
+% * [255,255,255] : White
+% * [0,0,255] : Blue
+% * [255,0,0] : Red
+% * [0,255,0] : Green
+%
+
+%% 
+% Background color (default : black)
+presentationStruct.backgroundColor=[0,0,0];
+
+%%
+% Stimulus color (default : white)
+presentationStruct.Color.Stimulus=[255, 255, 255]; 
+
+%%
+% Target color (default : blue)
+presentationStruct.Color.Target=[0 0 255];
+
+%%
+% CopyTask Target color (default : blue)
+presentationStruct.Color.copyTaskTarget=[50 50 255];
+
+%%
+% Decision color (default green)
+presentationStruct.Color.Decision=[0 255 0];
+
+%%
+% CopyTask Target font size (default : 100)
+presentationStruct.copyTaskTarget.TextSize=100;
+
+%% Indicators
+% Text to indicate a target, appearing on the left side of the stimulus, with adjustable text,
+% enabling flag, color and size.
+presentationStruct.TargetIndicator.Text='NEXT TARGET:               ';
+presentationStruct.TargetIndicator.Enabled=1;
+presentationStruct.TargetIndicator.Color=[255 255 0];
+presentationStruct.TargetIndicator.TextSize=50;
+
+%%
+% Text to indicate a decision, appearing on the left side of the stimulus, with adjustable text,
+% enabling flag, color and size.
+presentationStruct.DecisionIndicator.Text='DECISION:               ';
+presentationStruct.DecisionIndicator.Enabled=1;
+presentationStruct.DecisionIndicator.Color=[0 255 0];
+presentationStruct.DecisionIndicator.TextSize=50;
+
+%% 
+% Parameters to adjust the feedback text appearing on the top of the screen.
+%
+% * Neutral color represents the color scheme for neutral text (default : white)
+% * Positive color represents the color scheme for correct selections (default : green)
+% * Negative color represents the color scheme for incorrect selections (default : red)
+% * TextSize and vSpacing adjusts the font size and vertical spacing, respectively.
+% * Border represents the line which can be drawn after the feedback text.
+%
+presentationStruct.typingFeedbackBar.neutralColor=[255,255,255];
+presentationStruct.typingFeedbackBar.positiveColor=[0,255,0];
+presentationStruct.typingFeedbackBar.negativeColor=[255,0,0];
+presentationStruct.typingFeedbackBar.TextSize=40;
+presentationStruct.typingFeedbackBar.vSpacing=2;
+presentationStruct.typingFeedbackBar.BorderEnabled=1;
+presentationStruct.typingFeedbackBar.BorderInfo.width=10;
+presentationStruct.typingFeedbackBar.BorderInfo.color=[255,255,255];
+
+
+%%
+% Parameters to adjust the pauseBar on the bottom of the screen.
+presentationStruct.pauseBar.inactiveText='Press Space Bar or Enter to pause,\nEsc to quit';
+presentationStruct.pauseBar.inactiveRelativeXLocation='center';
+presentationStruct.pauseBar.inactiveRelativeYLocation=0.8;
+presentationStruct.pauseBar.inactiveTextSize=20;
+presentationStruct.pauseBar.inactiveColor=[255 255 255];
+presentationStruct.pauseBar.vSpacing=1.5;
+presentationStruct.pauseBar.activeText='Press Space Bar or Enter to continue,\nEsc to quit';
+presentationStruct.pauseBar.activeTextSize=30;
+presentationStruct.pauseBar.activeRelativeXLocation='center';
+presentationStruct.pauseBar.activeRelativeYLocation='center';
+presentationStruct.pauseBar.activeColor=[255 255 255];
+
+
+%%
+presentationStruct.decisionProbabilityFeedback.isVisible = true; % Boolean; determines if the decision probability feedback text is visible when a decision is made.
+presentationStruct.decisionProbabilityFeedback.fontSize = 18; % Integer; determines the size of the decision probability feedback text (and also affects the spacing between the lines).
+presentationStruct.decisionProbabilityFeedback.generalColor = [0,255,0]; % (1x3) array of integers between [0,255]; determines the color of the decision probability feedback text.
+presentationStruct.decisionProbabilityFeedback.decidedColor = [0,255,255]; % (1x3) array of integers between [0,255]; determines the color of a decided item in the decision probability feedback text.
+presentationStruct.decisionProbabilityFeedback.indicator = '*'; % Char; symbol used to indicate magnitude of probability.
+presentationStruct.decisionProbabilityFeedback.maxIndicators = 50; % Positive integer; number of indicators that represents 100% probability.
+presentationStruct.decisionProbabilityFeedback.x_shift = 0; % Real; determines the percentage of horizontal shift of the decision probability feedback text, relative to the bounds of the screen. 0% will cause the left of the text to touch the left of the screen, while 100% will cause the right of the text to touch the right of the screen.
+presentationStruct.decisionProbabilityFeedback.y_shift = 50; % Real; determines the percentage of vertical shift of the decision probability feedback text, relative to the bounds of the screen. 0% will cause the top of the text to touch the top of the screen, while 100% will cause the bottom of the text to touch the bottom of the screen.
+##### SOURCE END #####
+--></body></html>

@@ -1,0 +1,162 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>[success,amplifierStruct,fs,numberOfChannels]=initializeDAQnoAmp</title><meta name="generator" content="MATLAB 7.14"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2013-06-13"><meta name="DC.source" content="initializeDAQnoAmp.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+
+  </style></head><body><div class="content"><h1>[success,amplifierStruct,fs,numberOfChannels]=initializeDAQnoAmp</h1><pre class="codeinput"><span class="comment">%initializeDAQnoAmp function sets the variables for simulating data</span>
+<span class="comment">% aquisition when we are not using amplifiers(for example for offline</span>
+<span class="comment">% rerun of the session or when we are testing the code with no amplifiers). It</span>
+<span class="comment">% will set the amplifier parameters with respect to the presentation</span>
+<span class="comment">% parameters.</span>
+<span class="comment">%</span>
+<span class="comment">%   The outputs of the function</span>
+<span class="comment">%      success - This output is alwayes set to 1. In online process this</span>
+<span class="comment">%      parameter was responsible for determining if DAQ process has been</span>
+<span class="comment">%      successful or not but here we will alwayes set it to 1.</span>
+<span class="comment">%</span>
+<span class="comment">%      amplifierStruct - This output is a structure of amplifier parameters</span>
+<span class="comment">%      data.</span>
+<span class="comment">%</span>
+<span class="comment">%      fs - This output is a scaler which represents sampling frequency.</span>
+<span class="comment">%</span>
+<span class="comment">%      numberOfChannels - This output is a scaler which represents the</span>
+<span class="comment">%      number of channels. Here it will always set to 16.</span>
+</pre><pre class="codeinput"><span class="keyword">function</span> [success,amplifierStruct,fs,numberOfChannels]=initializeDAQnoAmp
+DAQParameters
+presentationParameters
+
+
+fs=daqStruct.fs;
+
+[daqFileList,sessionFolder]=uigetfile(<span class="string">'*.daq'</span>,<span class="string">'Please Select the Data Files to be Loaded or Press Escape to Continue with Randomly Generated Signals'</span>,<span class="string">'MultiSelect'</span>, <span class="string">'on'</span>,<span class="string">'Data\'</span>);
+<span class="keyword">if</span>(daqFileList==0)
+
+    numberOfChannels=16;
+    amplifierStruct.isFile=0;
+    amplifierStruct.numberOfChannels=16;
+    amplifierStruct.awaitingTriggers=handleVariable;
+    amplifierStruct.channelNames={<span class="string">'Fp1'</span>,<span class="string">'Fp2'</span>,<span class="string">'F3'</span>,<span class="string">'F4'</span>,<span class="string">'Fz'</span>,<span class="string">'Fc1'</span>,<span class="string">'Fc2'</span>,<span class="string">'Cz'</span>,<span class="string">'P1'</span>,<span class="string">'P2'</span>,<span class="string">'C1'</span>,<span class="string">'C2'</span>,<span class="string">'Cp3'</span>,<span class="string">'Cp4'</span>,<span class="string">'P5'</span>,<span class="string">'P6'</span>};
+<span class="keyword">else</span>
+    [amplifierStruct.rawData,amplifierStruct.triggerSignal,sampleRate,amplifierStruct.channelNames,filterInfo,daqInfos]=loadSessionData(daqFileList,sessionFolder);
+    amplifierStruct.isFile=1;
+    amplifierStruct.currentSampleIndex=handleVariable;
+    amplifierStruct.currentSampleIndex.data=1;
+    amplifierStruct.sampleInterval=fs;
+    numberOfChannels=size(amplifierStruct.rawData,2);
+    amplifierStruct.awaitingTriggers=handleVariable;
+
+<span class="keyword">end</span>
+
+amplifierStruct.fs=fs;
+amplifierStruct.Duration=presentationStruct.Duration;
+amplifierStruct.DutyCycle=presentationStruct.DutyCycle;
+success=1;
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.14<br></p></div><!--
+##### SOURCE BEGIN #####
+%% [success,amplifierStruct,fs,numberOfChannels]=initializeDAQnoAmp
+%initializeDAQnoAmp function sets the variables for simulating data
+% aquisition when we are not using amplifiers(for example for offline
+% rerun of the session or when we are testing the code with no amplifiers). It
+% will set the amplifier parameters with respect to the presentation
+% parameters.
+%
+%   The outputs of the function
+%      success - This output is alwayes set to 1. In online process this
+%      parameter was responsible for determining if DAQ process has been
+%      successful or not but here we will alwayes set it to 1.
+%
+%      amplifierStruct - This output is a structure of amplifier parameters
+%      data.
+%
+%      fs - This output is a scaler which represents sampling frequency.
+%
+%      numberOfChannels - This output is a scaler which represents the
+%      number of channels. Here it will always set to 16.
+
+
+%%
+function [success,amplifierStruct,fs,numberOfChannels]=initializeDAQnoAmp
+DAQParameters
+presentationParameters
+
+
+fs=daqStruct.fs;
+
+[daqFileList,sessionFolder]=uigetfile('*.daq','Please Select the Data Files to be Loaded or Press Escape to Continue with Randomly Generated Signals','MultiSelect', 'on','Data\');
+if(daqFileList==0)
+    
+    numberOfChannels=16;
+    amplifierStruct.isFile=0;
+    amplifierStruct.numberOfChannels=16;
+    amplifierStruct.awaitingTriggers=handleVariable;
+    amplifierStruct.channelNames={'Fp1','Fp2','F3','F4','Fz','Fc1','Fc2','Cz','P1','P2','C1','C2','Cp3','Cp4','P5','P6'};
+else
+    [amplifierStruct.rawData,amplifierStruct.triggerSignal,sampleRate,amplifierStruct.channelNames,filterInfo,daqInfos]=loadSessionData(daqFileList,sessionFolder);
+    amplifierStruct.isFile=1;
+    amplifierStruct.currentSampleIndex=handleVariable;
+    amplifierStruct.currentSampleIndex.data=1;
+    amplifierStruct.sampleInterval=fs;
+    numberOfChannels=size(amplifierStruct.rawData,2);
+    amplifierStruct.awaitingTriggers=handleVariable;
+    
+end
+
+amplifierStruct.fs=fs;
+amplifierStruct.Duration=presentationStruct.Duration;
+amplifierStruct.DutyCycle=presentationStruct.DutyCycle;
+success=1;
+##### SOURCE END #####
+--></body></html>

@@ -1,0 +1,217 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>initializeRSVPKeyboardPresentation</title><meta name="generator" content="MATLAB 7.14"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2013-06-13"><meta name="DC.source" content="initializeRSVPKeyboardPresentation.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+
+  </style></head><body><div class="content"><h1>initializeRSVPKeyboardPresentation</h1><!--introduction--><p>Initialization part of the RSVPKeyboardPresentation. It sets up the TCP/IP communication to receive information from the main side or to send stop command. It sets up the parameters and initializes the Psychtoolbox.</p><!--/introduction--><pre class="codeinput">addpath(genpath(<span class="string">'..\.'</span>));
+
+presentationParameters
+RSVPKeyboardParameters
+
+presentationInfo=presentationStruct;
+
+
+<span class="keyword">if</span>(~standaloneFlag)
+    [~,CommObjectStruct,BCIPacketStruct] = sender2receiverCommInitialize(<span class="string">'presentation'</span>,<span class="string">'main'</span>,false,RSVPKeyboardParams.IP_main,RSVPKeyboardParams.port_mainAndPresentation);
+<span class="keyword">end</span>
+
+presentationInfo.imageStructs=xls2Structs(<span class="string">'imageList.xls'</span>);
+
+presentationInfo.blankScreen.Type=<span class="string">'Blank'</span>;
+
+presentationQueue=linkedList;
+
+importantKeys.list={<span class="string">'esc'</span>,<span class="string">'space'</span>,<span class="string">'return'</span>};
+importantKeys.code=KbName(importantKeys.list);
+importantKeys.actionValue=[0,1,1];
+<span class="keyword">if</span>(presentationInfo.lockKeyboard)
+ListenChar(2);
+<span class="keyword">end</span>
+PsychHID(<span class="string">'KbQueueCreate'</span>);
+PsychHID(<span class="string">'KbQueueStart'</span>);
+
+AssertOpenGL;
+
+presentationInfo.screens=Screen(<span class="string">'Screens'</span>);
+<span class="keyword">if</span>(length(presentationInfo.screens)==1)
+    presentationInfo.screenNumber=presentationInfo.screens;
+<span class="keyword">else</span>
+    <span class="keyword">if</span>(presentationStruct.presentationScreenIndex&lt;=max(presentationInfo.screens))
+        presentationInfo.screenNumber=presentationStruct.presentationScreenIndex;
+    <span class="keyword">else</span>
+        presentationInfo.screenNumber=max(presentationInfo.screens);
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+<span class="comment">% This preference setting selects the high quality text renderer on</span>
+<span class="comment">% each operating system: It is not really needed, as the high quality</span>
+<span class="comment">% renderer is the default on all operating systems, so this is more of</span>
+<span class="comment">% a "better safe than sorry" setting.</span>
+Screen(<span class="string">'Preference'</span>, <span class="string">'TextRenderer'</span>, 1);
+
+presentationInfo.resolution=Screen(<span class="string">'Resolution'</span>, presentationInfo.screenNumber);
+
+Screen(<span class="string">'Preference'</span>, <span class="string">'VisualDebugLevel'</span>, 3);  <span class="comment">%Hides Psychtoolbox entry screen</span>
+
+<span class="keyword">if</span>(presentationStruct.fullScreenFlag==0)
+    presentationInfo.windowRect=[presentationInfo.resolution.width/4,presentationInfo.resolution.height/4,presentationInfo.resolution.width*3/4,presentationInfo.resolution.height*3/4];
+<span class="keyword">else</span>
+    presentationInfo.windowRect=[];
+    HideCursor(presentationInfo.screenNumber);
+<span class="keyword">end</span>
+
+[presentationInfo.window,presentationInfo.windowRect]= Screen(<span class="string">'OpenWindow'</span>,presentationInfo.screenNumber,presentationStruct.backgroundColor,presentationInfo.windowRect);
+
+presentationInfo.interFlipInterval = Screen(<span class="string">'GetFlipInterval'</span>,presentationInfo.window);
+Screen(<span class="string">'TextFont'</span>,presentationInfo.window, presentationInfo.TextFont);
+Screen(<span class="string">'TextStyle'</span>, presentationInfo.window, presentationInfo.TextStyle);
+presentationInfo.imageTextures=makeTextures(presentationInfo.imageStructs,presentationInfo.window);
+initializeParallelPortTriggerSender(RSVPKeyboardParams.parallelPortIOList);
+
+presentationInfo.TARGET_TRIGGER_OFFSET=RSVPKeyboardParams.TARGET_TRIGGER_OFFSET;
+
+<span class="comment">% presentationInfo.adjustedTargetDurations=getAdjustedDuration(presentationInfo.targetDuration,presentationInfo.interFlipInterval,presentationInfo.dutyCycle);</span>
+<span class="comment">% presentationInfo.adjustedFixationDurations=getAdjustedDuration(presentationInfo.fixationDuration,presentationInfo.interFlipInterval,presentationInfo.dutyCycle);</span>
+<span class="comment">% presentationInfo.adjustedTrialDurations=getAdjustedDuration(presentationInfo.trialDuration,presentationInfo.interFlipInterval,presentationInfo.dutyCycle);</span>
+
+<span class="comment">%sca</span>
+<span class="comment">% blankScreenNode=screenNode(presentationInfo.window,presentationInfo.interFlipInterval);</span>
+<span class="comment">% presentationQueue.insertEnd(listNode(blankScreenNode));</span>
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.14<br></p></div><!--
+##### SOURCE BEGIN #####
+%% initializeRSVPKeyboardPresentation
+% Initialization part of the RSVPKeyboardPresentation. It sets up the TCP/IP communication to
+% receive information from the main side or to send stop command. It sets up the parameters and
+% initializes the Psychtoolbox.
+%%
+
+addpath(genpath('..\.'));
+
+presentationParameters
+RSVPKeyboardParameters
+
+presentationInfo=presentationStruct;
+
+
+if(~standaloneFlag)
+    [~,CommObjectStruct,BCIPacketStruct] = sender2receiverCommInitialize('presentation','main',false,RSVPKeyboardParams.IP_main,RSVPKeyboardParams.port_mainAndPresentation);
+end
+
+presentationInfo.imageStructs=xls2Structs('imageList.xls');
+
+presentationInfo.blankScreen.Type='Blank';
+
+presentationQueue=linkedList;
+
+importantKeys.list={'esc','space','return'};
+importantKeys.code=KbName(importantKeys.list);
+importantKeys.actionValue=[0,1,1];
+if(presentationInfo.lockKeyboard)
+ListenChar(2);
+end
+PsychHID('KbQueueCreate');
+PsychHID('KbQueueStart');
+
+AssertOpenGL;
+
+presentationInfo.screens=Screen('Screens');
+if(length(presentationInfo.screens)==1)
+    presentationInfo.screenNumber=presentationInfo.screens;
+else
+    if(presentationStruct.presentationScreenIndex<=max(presentationInfo.screens))
+        presentationInfo.screenNumber=presentationStruct.presentationScreenIndex;
+    else
+        presentationInfo.screenNumber=max(presentationInfo.screens);
+    end
+end
+
+% This preference setting selects the high quality text renderer on
+% each operating system: It is not really needed, as the high quality
+% renderer is the default on all operating systems, so this is more of
+% a "better safe than sorry" setting.
+Screen('Preference', 'TextRenderer', 1);
+
+presentationInfo.resolution=Screen('Resolution', presentationInfo.screenNumber);
+
+Screen('Preference', 'VisualDebugLevel', 3);  %Hides Psychtoolbox entry screen
+
+if(presentationStruct.fullScreenFlag==0)
+    presentationInfo.windowRect=[presentationInfo.resolution.width/4,presentationInfo.resolution.height/4,presentationInfo.resolution.width*3/4,presentationInfo.resolution.height*3/4];
+else
+    presentationInfo.windowRect=[];
+    HideCursor(presentationInfo.screenNumber);
+end
+
+[presentationInfo.window,presentationInfo.windowRect]= Screen('OpenWindow',presentationInfo.screenNumber,presentationStruct.backgroundColor,presentationInfo.windowRect);
+
+presentationInfo.interFlipInterval = Screen('GetFlipInterval',presentationInfo.window);
+Screen('TextFont',presentationInfo.window, presentationInfo.TextFont);
+Screen('TextStyle', presentationInfo.window, presentationInfo.TextStyle);
+presentationInfo.imageTextures=makeTextures(presentationInfo.imageStructs,presentationInfo.window);
+initializeParallelPortTriggerSender(RSVPKeyboardParams.parallelPortIOList);
+
+presentationInfo.TARGET_TRIGGER_OFFSET=RSVPKeyboardParams.TARGET_TRIGGER_OFFSET;
+
+% presentationInfo.adjustedTargetDurations=getAdjustedDuration(presentationInfo.targetDuration,presentationInfo.interFlipInterval,presentationInfo.dutyCycle);
+% presentationInfo.adjustedFixationDurations=getAdjustedDuration(presentationInfo.fixationDuration,presentationInfo.interFlipInterval,presentationInfo.dutyCycle);
+% presentationInfo.adjustedTrialDurations=getAdjustedDuration(presentationInfo.trialDuration,presentationInfo.interFlipInterval,presentationInfo.dutyCycle);
+
+%sca
+% blankScreenNode=screenNode(presentationInfo.window,presentationInfo.interFlipInterval);
+% presentationQueue.insertEnd(listNode(blankScreenNode));
+
+##### SOURCE END #####
+--></body></html>

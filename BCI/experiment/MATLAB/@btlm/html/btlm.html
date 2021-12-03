@@ -1,0 +1,787 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>btlm</title><meta name="generator" content="MATLAB 7.14"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2013-06-13"><meta name="DC.source" content="btlm.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+
+  </style></head><body><div class="content"><pre class="codeinput"><span class="comment">%BTLM object interface to a binary typing language model.</span>
+<span class="comment">%</span>
+<span class="comment">%  Given a language model and a history of selected symbols, the</span>
+<span class="comment">%  BTLM object provides, for each symbol, the probability of that</span>
+<span class="comment">%  symbol occuring next.</span>
+<span class="comment">%</span>
+<span class="comment">%  obj = btlm</span>
+<span class="comment">%    Creates a new BTLM object.</span>
+<span class="comment">%</span>
+<span class="comment">%  obj = btlm(modelFile)</span>
+<span class="comment">%    Creates a new BTLM object and calls the initLocal method to</span>
+<span class="comment">%    load modelFile into the current process space.</span>
+<span class="comment">%</span>
+<span class="comment">%  obj = btlm(modelFile,wordFile)</span>
+<span class="comment">%    Creates a new BTLM object and calls the initLocal method to</span>
+<span class="comment">%    load modelFile and word-based language model wordFile into the</span>
+<span class="comment">%    current process space.</span>
+<span class="comment">%</span>
+<span class="comment">%  obj = btlm(hostname, port, password)</span>
+<span class="comment">%    Creates a new BTLM object and calls the initRemote method to</span>
+<span class="comment">%    attach it to a remote BTLM server.</span>
+<span class="comment">%</span>
+<span class="comment">%  Example: Select the most likely symbol and print the resulting</span>
+<span class="comment">%           string. "btlmserv modelFilename" is assumed to be</span>
+<span class="comment">%           running on the same machine.</span>
+<span class="comment">%</span>
+<span class="comment">%     a = btlm;       % create a new BTLM object</span>
+<span class="comment">%     a.initRemote;   % connect to the default server (localhost)</span>
+<span class="comment">%     a.alloc;        % allocate an initial language model state</span>
+<span class="comment">%     for i=1:64</span>
+<span class="comment">%       s=a.sortedSymbols;   % s{1} is the most likely next symbol</span>
+<span class="comment">%       fprintf('%s',s{1});</span>
+<span class="comment">%       a.update(s{1});      % select the top candidate</span>
+<span class="comment">%     end</span>
+<span class="comment">%     fprintf('\n');</span>
+<span class="comment">%     clear a;        % disconnect from the server and destroy the object</span>
+<span class="comment">%</span>
+<span class="comment">%  PROPERTIES</span>
+<span class="comment">%    model  - the name of the language model file</span>
+<span class="comment">%    state  - state ID of the last state allocated, -1 if no states</span>
+<span class="comment">%               have been allocated</span>
+<span class="comment">%    previousStates - list of state IDs allocated since the last reset</span>
+<span class="comment">%    symbol - cell array containing the symbol set used with the</span>
+<span class="comment">%               current language model.  Use obj.symbol{index} to map</span>
+<span class="comment">%               from symbol a symbol index to an actual symbol string</span>
+<span class="comment">%</span>
+<span class="comment">%  METHODS</span>
+<span class="comment">%    alloc         - allocates a new language model state</span>
+<span class="comment">%    index         - maps from symbol strings to symbol indices</span>
+<span class="comment">%    initLocal     - initialize the object with an in-process</span>
+<span class="comment">%                      language model</span>
+<span class="comment">%    initRemote    - initialize the object and attach it to a remote language</span>
+<span class="comment">%                      model server</span>
+<span class="comment">%    probs         - returns -log(prob(symbol{i})) for all symbols</span>
+<span class="comment">%                      in the model</span>
+<span class="comment">%    reset         - resets the object to its initial state</span>
+<span class="comment">%    shutdown      - requests server shutdown</span>
+<span class="comment">%    sortedIndices - returns the symbol indices for a given state</span>
+<span class="comment">%                      in decending order of likelihood of occuring next</span>
+<span class="comment">%    sortedSymbols - returns the symbols for a given state in</span>
+<span class="comment">%                      decending order of likelihood of occuring</span>
+<span class="comment">%                      next</span>
+<span class="comment">%    undo          - undoes/deletes most recent symbol update</span>
+<span class="comment">%    update        - updates the language model when a symbol has</span>
+<span class="comment">%                      been selected</span>
+<span class="comment">%    version       - returns BTLM library version: major.minor.patch</span>
+<span class="comment">%</span>
+<span class="comment">% HELP btlm.method for additional details.</span>
+
+<span class="keyword">classdef</span> btlm &lt; handle
+
+    <span class="keyword">properties</span> (Hidden)
+        id=uint64(0);
+        indexMap;
+        hasContainers=0;
+    <span class="keyword">end</span>
+
+    <span class="keyword">properties</span>
+        model=<span class="string">''</span>;
+        state=int32(-1);
+        previousStates=int32([])
+        symbol=<span class="string">''</span>;
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span>
+        <span class="keyword">function</span> obj = btlm(a, b, c)
+        <span class="comment">%  obj = btlm</span>
+        <span class="comment">%    Creates a new BTLM object.</span>
+        <span class="comment">%</span>
+        <span class="comment">%  obj = btlm(modelFile)</span>
+        <span class="comment">%    Creates a new BTLM object and calls the initLocal method to</span>
+        <span class="comment">%    load modelFile into the current process space.</span>
+        <span class="comment">%</span>
+        <span class="comment">%  obj = btlm(modelFile,wordFile)</span>
+        <span class="comment">%    Creates a new BTLM object and calls the initLocal method to</span>
+        <span class="comment">%    load modelFile and word-based language model wordFile into the</span>
+        <span class="comment">%    current process space.</span>
+        <span class="comment">%</span>
+        <span class="comment">%  obj = btlm(hostname, port, password)</span>
+        <span class="comment">%    Creates a new BTLM object and calls the initRemote method to</span>
+        <span class="comment">%    attach it to a remote BTLM server.</span>
+        <span class="comment">%</span>
+        <span class="comment">% Use 'clear obj' to release resources and dispose of the</span>
+        <span class="comment">% BTLM object.</span>
+            <span class="keyword">if</span> nargin==1
+              obj.initLocal(a);
+            <span class="keyword">elseif</span> nargin==2
+              obj.initLocal(a,b);
+            <span class="keyword">elseif</span> nargin==3
+              obj.initRemote(a,b,c);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+
+        <span class="keyword">function</span> delete(obj)
+        <span class="comment">% obj.delete</span>
+        <span class="comment">%   Class destructor called when references to the object</span>
+        <span class="comment">%   are cleared.  Releases all BTLM resources.</span>
+           <span class="keyword">if</span> obj.id ~= 0
+             pClose(obj);
+           <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+
+        <span class="keyword">function</span> newState = alloc(obj, K, P)
+        <span class="comment">% newState = obj.alloc(K, P)</span>
+        <span class="comment">%   Allocates a new language model state with optional</span>
+        <span class="comment">%   parameters K (default 1.0) and P (default 0.05).</span>
+        <span class="comment">%   Returns the new state handle and keeps a copy in</span>
+        <span class="comment">%   the obj.state parameter.</span>
+        <span class="comment">%</span>
+        <span class="comment">% Example: state=obj.alloc;</span>
+            assert(obj.id~=0, <span class="string">'object has not been initialized'</span>);
+            <span class="keyword">if</span> nargin&lt;2, K=1.00;, <span class="keyword">end</span>
+            <span class="keyword">if</span> nargin&lt;3, P=0.05;, <span class="keyword">end</span>
+            newState=pAlloc(obj,K,P);
+            obj.previousStates(end+1)=obj.state;
+            obj.state=newState;
+        <span class="keyword">end</span>
+
+
+        <span class="keyword">function</span> idx = index(obj, symbol)
+        <span class="comment">% idx = obj.index(symbol)</span>
+        <span class="comment">%   Returns the symbol index associated with the symbol</span>
+        <span class="comment">%   string.</span>
+        <span class="comment">%</span>
+        <span class="comment">% Example: idx=obj.index('t');</span>
+            <span class="keyword">if</span> obj.hasContainers
+                idx=obj.indexMap(symbol);
+            <span class="keyword">else</span>
+                idx=strmatch(symbol, obj.symbol,<span class="string">'exact'</span>);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+
+        <span class="keyword">function</span> initLocal(obj, modelpath, wordpath)
+        <span class="comment">% obj.initLocal(modelPath, wordPath)</span>
+        <span class="comment">%   Initializes the BTLM object to use an in-process</span>
+        <span class="comment">%   language model (and optional word-based language model,</span>
+        <span class="comment">%   if the wordPath argument is given.)</span>
+        <span class="comment">%</span>
+        <span class="comment">% Example: obj.initLocal('../models/nyt.200.36char.m3.fromfst.mod');</span>
+            assert(obj.id==0, <span class="string">'object has already been initialized'</span>);
+            <span class="keyword">if</span>(nargin==2)
+                pInitLocal(obj, modelpath);
+            <span class="keyword">else</span>
+                pInitLocal(obj, modelpath, wordpath);
+            <span class="keyword">end</span>
+            pInitProperties(obj);
+        <span class="keyword">end</span>
+
+
+        <span class="keyword">function</span> initRemote(obj, host, port, pass)
+        <span class="comment">% obj.initRemote(hostname, port, password)</span>
+        <span class="comment">%   Initializes the BTLM object and connects it to the BTLM</span>
+        <span class="comment">%   server at hostname:port using password for</span>
+        <span class="comment">%   authentication.</span>
+        <span class="comment">%   If hostname, port or password are absent or an empty</span>
+        <span class="comment">%   string, the default values (as determined by the BTLM</span>
+        <span class="comment">%   library) are used instead.</span>
+        <span class="comment">%   The default hostname is 'localhost' and the port is</span>
+        <span class="comment">%   '7331'</span>
+        <span class="comment">%</span>
+        <span class="comment">% Example: obj.initRemote('slurm.csee.ogi.edu','1234');</span>
+        <span class="comment">%   Connects to the BTLM server on slurm.csee.ogi.edu:1234</span>
+        <span class="comment">%   with the default password.</span>
+            assert(obj.id==0, <span class="string">'object has already been initialized'</span>);
+            <span class="keyword">if</span> nargin&lt;2, host=<span class="string">''</span>;, <span class="keyword">end</span>
+            <span class="keyword">if</span> nargin&lt;3, port=<span class="string">''</span>;, <span class="keyword">end</span>
+            <span class="keyword">if</span> nargin&lt;4, pass=<span class="string">''</span>;, <span class="keyword">end</span>
+            pInitRemote(obj, host, port, pass);
+            pInitProperties(obj);
+        <span class="keyword">end</span>
+
+
+        <span class="keyword">function</span> logprob = probs(obj, state)
+        <span class="comment">% logprob = probs(state)</span>
+        <span class="comment">%   Returns an Nx1 array of double that holds</span>
+        <span class="comment">%   -log(prob(symbol{i})) where 1&lt;=i&lt;=N and the model has N</span>
+        <span class="comment">%   symbols.  These are the probabilities that symbol{i}</span>
+        <span class="comment">%   will occur next, given the state history.</span>
+        <span class="comment">%   If state is not specified, obj.state (i.e. the current</span>
+        <span class="comment">%   state) is used instead.</span>
+        <span class="comment">%</span>
+        <span class="comment">% Example:</span>
+        <span class="comment">%   p=obj.probs;</span>
+        <span class="comment">%   sum(exp(-p))</span>
+        <span class="comment">%</span>
+        <span class="comment">% The result of the summation should be 1.0.</span>
+            assert(obj.id~=0, <span class="string">'object has not been initialized'</span>);
+            <span class="keyword">if</span> nargin==1, state=obj.state;, <span class="keyword">end</span>
+            logprob=pGetLogProbs(obj,state);
+        <span class="keyword">end</span>
+
+
+        <span class="keyword">function</span> reset(obj)
+        <span class="comment">% obj.reset</span>
+        <span class="comment">%   Resets the object to its initialized state.</span>
+        <span class="comment">%   This is functionally equivalent to clearing and</span>
+        <span class="comment">%   recreating the object, but with less overhead.</span>
+        <span class="comment">%</span>
+        <span class="comment">% Example: obj.reset;</span>
+            assert(obj.id~=0, <span class="string">'object has not been initialized'</span>);
+            pReset(obj);
+            obj.state=int32(-1);
+            obj.previousStates=int32([]);
+        <span class="keyword">end</span>
+
+
+        <span class="keyword">function</span> shutdown(obj)
+        <span class="comment">% obj.shutdown</span>
+        <span class="comment">%   Sends a shutdown request to the attached BTLM server.</span>
+        <span class="comment">%   The server will shut down once no client connections</span>
+        <span class="comment">%   are active.</span>
+        <span class="comment">%</span>
+        <span class="comment">% Example: obj.shutdown</span>
+            assert(obj.id~=0, <span class="string">'object has not been initialized'</span>);
+            pShutdown(obj);
+        <span class="keyword">end</span>
+
+
+        <span class="keyword">function</span> indices = sortedIndices(obj, state)
+        <span class="comment">% indices = obj.sortedIndices(state)</span>
+        <span class="comment">%   Returns the symbol indices for a given language model</span>
+        <span class="comment">%   state in decending order of the likelihood of occuring</span>
+        <span class="comment">%   next.</span>
+        <span class="comment">%   The state argument is optional, if it is not supplied,</span>
+        <span class="comment">%   the current state (obj.state) will be used instead.</span>
+        <span class="comment">%</span>
+        <span class="comment">% Example:</span>
+        <span class="comment">%   a=btlm;</span>
+        <span class="comment">%   a.initRemote;</span>
+        <span class="comment">%   a.alloc;</span>
+        <span class="comment">%   idx=a.sortedIndices;</span>
+        <span class="comment">%</span>
+        <span class="comment">% At this point idx(1) contains the index of the symbol</span>
+        <span class="comment">% most likely to occur at the start of a sequence.</span>
+            assert(obj.id~=0, <span class="string">'object has not been initialized'</span>);
+            <span class="keyword">if</span> nargin==1
+                assert(obj.state&gt;=0, [<span class="string">'no states have been '</span> <span class="keyword">...</span>
+                                    <span class="string">'allocated'</span>]);
+                state=obj.state;
+            <span class="keyword">end</span>
+            indices=pGetSortedIndices(obj, state);
+        <span class="keyword">end</span>
+
+
+        <span class="keyword">function</span> symbols = sortedSymbols(obj, state)
+        <span class="comment">% symbols = obj.sortedSymbols(state)</span>
+        <span class="comment">%   Returns a cell array containing the symbols of the</span>
+        <span class="comment">%   language model in decending order of the likelihood of</span>
+        <span class="comment">%   occuring next.</span>
+        <span class="comment">%   The state argument is optional, if not supplied, the</span>
+        <span class="comment">%   current state (obj.state) will be used instead.</span>
+        <span class="comment">%</span>
+        <span class="comment">% Example:</span>
+        <span class="comment">%   a=btlm;</span>
+        <span class="comment">%   a.initRemote;</span>
+        <span class="comment">%   a.alloc;</span>
+        <span class="comment">%   sym=a.sortedSymbols;</span>
+        <span class="comment">%   sym{1}</span>
+        <span class="comment">%</span>
+        <span class="comment">% At this point sym{1} contains the symbol most likely to</span>
+        <span class="comment">% occur at the start of a sequence.</span>
+            assert(obj.id~=0, <span class="string">'object has not been initialized'</span>);
+            <span class="keyword">if</span> nargin==1,
+                assert(obj.state&gt;=0, [<span class="string">'no states have been '</span> <span class="keyword">...</span>
+                                    <span class="string">'allocated'</span>]);
+                state=obj.state;
+            <span class="keyword">end</span>
+            indices=pGetSortedIndices(obj, state);
+            <span class="keyword">for</span> i=1:length(indices)
+                symbols{i,:}=obj.symbol{indices(i)};
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+
+        <span class="keyword">function</span> newState = undo(obj)
+        <span class="comment">% newState = obj.undo()</span>
+        <span class="comment">%   Sets obj.state to the previous model state ID and</span>
+        <span class="comment">%   returns this value. This effectively undoes/deletes the</span>
+        <span class="comment">%   most recent symbol update.</span>
+        <span class="comment">%</span>
+        <span class="comment">% Example:</span>
+        <span class="comment">%   a=btlm;</span>
+        <span class="comment">%   a.initRemote;</span>
+        <span class="comment">%   a.alloc;</span>
+        <span class="comment">%   a.update('t');</span>
+        <span class="comment">%   a.sortedSymbols</span>
+        <span class="comment">%   a.update('h');</span>
+        <span class="comment">%   a.sortedSymbols</span>
+        <span class="comment">%   a.undo;</span>
+        <span class="comment">%   a.sortedSymbols</span>
+            assert(length(obj.previousStates)&gt;0,[<span class="string">'no states have '</span> <span class="keyword">...</span>
+                                <span class="string">'been allocated'</span>]);
+            obj.state=obj.previousStates(end);
+            obj.previousStates=obj.previousStates(1:end-1);
+            <span class="comment">%obj.state</span>
+        <span class="keyword">end</span>
+
+
+        <span class="keyword">function</span> [newState K P] = update(obj, symbol, state)
+        <span class="comment">% [newState K P] = obj.update(symbol, state)</span>
+        <span class="comment">%   Updates the language model and adds symbol to the</span>
+        <span class="comment">%   selection history.  Returns a new language model state</span>
+        <span class="comment">%   and saves this state to obj.state.</span>
+        <span class="comment">%   Symbol is either a symbol index or an actual symbol</span>
+        <span class="comment">%   string.</span>
+        <span class="comment">%   The state input parameter is optional, if not supplied,</span>
+        <span class="comment">%   the current state (obj.state) will be used instead.</span>
+        <span class="comment">%   K and P are language model parameters, typically 1.0</span>
+        <span class="comment">%   and 0.05.</span>
+        <span class="comment">%</span>
+        <span class="comment">% Example:</span>
+        <span class="comment">%   a=btlm;</span>
+        <span class="comment">%   a.initRemote;</span>
+        <span class="comment">%   a.alloc;</span>
+        <span class="comment">%   a.update('t');</span>
+        <span class="comment">%   sym=a.sortedSymbols;</span>
+        <span class="comment">%</span>
+        <span class="comment">% sym{1} will now contain the symbol most likely to follow a</span>
+        <span class="comment">% 't' at the start of a sequence.</span>
+            assert(obj.id~=0, <span class="string">'object has not been initialized'</span>);
+            <span class="keyword">if</span> ~isnumeric(symbol), symbol=obj.index(symbol);, <span class="keyword">end</span>
+            <span class="keyword">if</span> nargin==2, state=obj.state;, <span class="keyword">end</span>
+            [newState K P]=pUpdate(obj, state, symbol);
+            obj.previousStates(end+1)=obj.state;
+            obj.state=newState;
+        <span class="keyword">end</span>
+
+
+        <span class="keyword">function</span> version = version(obj)
+        <span class="comment">% string = obj.version</span>
+        <span class="comment">%   Returns the BTLM library version number in the form:</span>
+        <span class="comment">%    major.minor.patch</span>
+            version = pVersion();
+        <span class="keyword">end</span>
+
+
+    <span class="keyword">end</span>
+
+<span class="keyword">end</span>
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.14<br></p></div><!--
+##### SOURCE BEGIN #####
+%BTLM object interface to a binary typing language model.
+%
+%  Given a language model and a history of selected symbols, the
+%  BTLM object provides, for each symbol, the probability of that
+%  symbol occuring next.
+%
+%  obj = btlm
+%    Creates a new BTLM object.
+%
+%  obj = btlm(modelFile)
+%    Creates a new BTLM object and calls the initLocal method to
+%    load modelFile into the current process space.
+%
+%  obj = btlm(modelFile,wordFile)
+%    Creates a new BTLM object and calls the initLocal method to
+%    load modelFile and word-based language model wordFile into the
+%    current process space.
+%
+%  obj = btlm(hostname, port, password)
+%    Creates a new BTLM object and calls the initRemote method to
+%    attach it to a remote BTLM server.
+%
+%  Example: Select the most likely symbol and print the resulting
+%           string. "btlmserv modelFilename" is assumed to be
+%           running on the same machine.
+%
+%     a = btlm;       % create a new BTLM object
+%     a.initRemote;   % connect to the default server (localhost)
+%     a.alloc;        % allocate an initial language model state
+%     for i=1:64
+%       s=a.sortedSymbols;   % s{1} is the most likely next symbol
+%       fprintf('%s',s{1});
+%       a.update(s{1});      % select the top candidate
+%     end
+%     fprintf('\n');
+%     clear a;        % disconnect from the server and destroy the object
+%
+%  PROPERTIES
+%    model  - the name of the language model file
+%    state  - state ID of the last state allocated, -1 if no states
+%               have been allocated
+%    previousStates - list of state IDs allocated since the last reset
+%    symbol - cell array containing the symbol set used with the
+%               current language model.  Use obj.symbol{index} to map
+%               from symbol a symbol index to an actual symbol string
+%
+%  METHODS
+%    alloc         - allocates a new language model state
+%    index         - maps from symbol strings to symbol indices
+%    initLocal     - initialize the object with an in-process
+%                      language model
+%    initRemote    - initialize the object and attach it to a remote language
+%                      model server
+%    probs         - returns -log(prob(symbol{i})) for all symbols
+%                      in the model
+%    reset         - resets the object to its initial state
+%    shutdown      - requests server shutdown
+%    sortedIndices - returns the symbol indices for a given state
+%                      in decending order of likelihood of occuring next
+%    sortedSymbols - returns the symbols for a given state in
+%                      decending order of likelihood of occuring
+%                      next
+%    undo          - undoes/deletes most recent symbol update
+%    update        - updates the language model when a symbol has
+%                      been selected
+%    version       - returns BTLM library version: major.minor.patch
+%
+% HELP btlm.method for additional details.
+
+classdef btlm < handle
+
+    properties (Hidden)
+        id=uint64(0);
+        indexMap;
+        hasContainers=0;
+    end
+    
+    properties
+        model='';
+        state=int32(-1);
+        previousStates=int32([])
+        symbol='';
+    end
+    
+    methods
+        function obj = btlm(a, b, c)
+        %  obj = btlm
+        %    Creates a new BTLM object.
+        %
+        %  obj = btlm(modelFile)
+        %    Creates a new BTLM object and calls the initLocal method to
+        %    load modelFile into the current process space.
+        %
+        %  obj = btlm(modelFile,wordFile)
+        %    Creates a new BTLM object and calls the initLocal method to
+        %    load modelFile and word-based language model wordFile into the
+        %    current process space.
+        %
+        %  obj = btlm(hostname, port, password)
+        %    Creates a new BTLM object and calls the initRemote method to
+        %    attach it to a remote BTLM server.        
+        %
+        % Use 'clear obj' to release resources and dispose of the
+        % BTLM object.
+            if nargin==1
+              obj.initLocal(a);
+            elseif nargin==2
+              obj.initLocal(a,b);
+            elseif nargin==3
+              obj.initRemote(a,b,c);
+            end
+        end
+        
+        
+        function delete(obj)
+        % obj.delete
+        %   Class destructor called when references to the object
+        %   are cleared.  Releases all BTLM resources.
+           if obj.id ~= 0
+             pClose(obj);
+           end
+        end
+        
+        
+        function newState = alloc(obj, K, P)
+        % newState = obj.alloc(K, P)
+        %   Allocates a new language model state with optional
+        %   parameters K (default 1.0) and P (default 0.05).
+        %   Returns the new state handle and keeps a copy in
+        %   the obj.state parameter.
+        %
+        % Example: state=obj.alloc;
+            assert(obj.id~=0, 'object has not been initialized');
+            if nargin<2, K=1.00;, end
+            if nargin<3, P=0.05;, end
+            newState=pAlloc(obj,K,P);
+            obj.previousStates(end+1)=obj.state;
+            obj.state=newState;
+        end
+        
+        
+        function idx = index(obj, symbol)
+        % idx = obj.index(symbol)
+        %   Returns the symbol index associated with the symbol
+        %   string.
+        %
+        % Example: idx=obj.index('t');
+            if obj.hasContainers
+                idx=obj.indexMap(symbol);
+            else
+                idx=strmatch(symbol, obj.symbol,'exact');
+            end
+        end
+        
+        
+        function initLocal(obj, modelpath, wordpath)
+        % obj.initLocal(modelPath, wordPath)
+        %   Initializes the BTLM object to use an in-process
+        %   language model (and optional word-based language model,
+        %   if the wordPath argument is given.)
+        %
+        % Example: obj.initLocal('../models/nyt.200.36char.m3.fromfst.mod');
+            assert(obj.id==0, 'object has already been initialized');
+            if(nargin==2)
+                pInitLocal(obj, modelpath);
+            else
+                pInitLocal(obj, modelpath, wordpath);
+            end
+            pInitProperties(obj);
+        end
+        
+        
+        function initRemote(obj, host, port, pass)
+        % obj.initRemote(hostname, port, password)
+        %   Initializes the BTLM object and connects it to the BTLM
+        %   server at hostname:port using password for
+        %   authentication.
+        %   If hostname, port or password are absent or an empty
+        %   string, the default values (as determined by the BTLM
+        %   library) are used instead.
+        %   The default hostname is 'localhost' and the port is
+        %   '7331'
+        %
+        % Example: obj.initRemote('slurm.csee.ogi.edu','1234');
+        %   Connects to the BTLM server on slurm.csee.ogi.edu:1234
+        %   with the default password.
+            assert(obj.id==0, 'object has already been initialized');
+            if nargin<2, host='';, end
+            if nargin<3, port='';, end
+            if nargin<4, pass='';, end
+            pInitRemote(obj, host, port, pass);
+            pInitProperties(obj);
+        end
+        
+        
+        function logprob = probs(obj, state)
+        % logprob = probs(state)
+        %   Returns an Nx1 array of double that holds
+        %   -log(prob(symbol{i})) where 1<=i<=N and the model has N
+        %   symbols.  These are the probabilities that symbol{i}
+        %   will occur next, given the state history.
+        %   If state is not specified, obj.state (i.e. the current
+        %   state) is used instead.
+        %
+        % Example:
+        %   p=obj.probs;
+        %   sum(exp(-p))
+        %
+        % The result of the summation should be 1.0.
+            assert(obj.id~=0, 'object has not been initialized');
+            if nargin==1, state=obj.state;, end
+            logprob=pGetLogProbs(obj,state);
+        end
+
+
+        function reset(obj)
+        % obj.reset
+        %   Resets the object to its initialized state.
+        %   This is functionally equivalent to clearing and
+        %   recreating the object, but with less overhead.
+        %
+        % Example: obj.reset;
+            assert(obj.id~=0, 'object has not been initialized');
+            pReset(obj);
+            obj.state=int32(-1);
+            obj.previousStates=int32([]);
+        end
+
+
+        function shutdown(obj)
+        % obj.shutdown
+        %   Sends a shutdown request to the attached BTLM server.
+        %   The server will shut down once no client connections
+        %   are active.
+        %
+        % Example: obj.shutdown
+            assert(obj.id~=0, 'object has not been initialized');
+            pShutdown(obj);
+        end
+        
+        
+        function indices = sortedIndices(obj, state)
+        % indices = obj.sortedIndices(state)
+        %   Returns the symbol indices for a given language model
+        %   state in decending order of the likelihood of occuring
+        %   next.
+        %   The state argument is optional, if it is not supplied,
+        %   the current state (obj.state) will be used instead.
+        %
+        % Example:
+        %   a=btlm;
+        %   a.initRemote;
+        %   a.alloc;
+        %   idx=a.sortedIndices;
+        %
+        % At this point idx(1) contains the index of the symbol
+        % most likely to occur at the start of a sequence.
+            assert(obj.id~=0, 'object has not been initialized');
+            if nargin==1
+                assert(obj.state>=0, ['no states have been ' ...
+                                    'allocated']);
+                state=obj.state;
+            end
+            indices=pGetSortedIndices(obj, state);
+        end
+        
+        
+        function symbols = sortedSymbols(obj, state)
+        % symbols = obj.sortedSymbols(state)
+        %   Returns a cell array containing the symbols of the
+        %   language model in decending order of the likelihood of
+        %   occuring next.
+        %   The state argument is optional, if not supplied, the
+        %   current state (obj.state) will be used instead.
+        %
+        % Example:
+        %   a=btlm;
+        %   a.initRemote;
+        %   a.alloc;
+        %   sym=a.sortedSymbols;
+        %   sym{1}
+        %
+        % At this point sym{1} contains the symbol most likely to
+        % occur at the start of a sequence.
+            assert(obj.id~=0, 'object has not been initialized');
+            if nargin==1,
+                assert(obj.state>=0, ['no states have been ' ...
+                                    'allocated']);
+                state=obj.state;
+            end
+            indices=pGetSortedIndices(obj, state);
+            for i=1:length(indices)
+                symbols{i,:}=obj.symbol{indices(i)};
+            end
+        end
+        
+        
+        function newState = undo(obj)
+        % newState = obj.undo()
+        %   Sets obj.state to the previous model state ID and
+        %   returns this value. This effectively undoes/deletes the
+        %   most recent symbol update.
+        %
+        % Example:
+        %   a=btlm;
+        %   a.initRemote;
+        %   a.alloc;
+        %   a.update('t');
+        %   a.sortedSymbols
+        %   a.update('h');
+        %   a.sortedSymbols
+        %   a.undo;
+        %   a.sortedSymbols
+            assert(length(obj.previousStates)>0,['no states have ' ...
+                                'been allocated']);
+            obj.state=obj.previousStates(end);
+            obj.previousStates=obj.previousStates(1:end-1);
+            %obj.state
+        end
+        
+        
+        function [newState K P] = update(obj, symbol, state)
+        % [newState K P] = obj.update(symbol, state)
+        %   Updates the language model and adds symbol to the
+        %   selection history.  Returns a new language model state
+        %   and saves this state to obj.state.
+        %   Symbol is either a symbol index or an actual symbol
+        %   string.
+        %   The state input parameter is optional, if not supplied,
+        %   the current state (obj.state) will be used instead.
+        %   K and P are language model parameters, typically 1.0
+        %   and 0.05.
+        %
+        % Example:
+        %   a=btlm;
+        %   a.initRemote;
+        %   a.alloc;
+        %   a.update('t');
+        %   sym=a.sortedSymbols;
+        %
+        % sym{1} will now contain the symbol most likely to follow a
+        % 't' at the start of a sequence.
+            assert(obj.id~=0, 'object has not been initialized');
+            if ~isnumeric(symbol), symbol=obj.index(symbol);, end
+            if nargin==2, state=obj.state;, end
+            [newState K P]=pUpdate(obj, state, symbol);
+            obj.previousStates(end+1)=obj.state;
+            obj.state=newState;
+        end
+        
+        
+        function version = version(obj)
+        % string = obj.version
+        %   Returns the BTLM library version number in the form:
+        %    major.minor.patch
+            version = pVersion();
+        end
+        
+        
+    end
+    
+end
+
+##### SOURCE END #####
+--></body></html>

@@ -1,0 +1,242 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>loadSessionData</title><meta name="generator" content="MATLAB 7.14"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2013-06-13"><meta name="DC.source" content="loadSessionData.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">[rawData,triggerSignal,sampleRate,channelNames,filterInfo,daqInfos]=loadSessionData(daqFileList)</a></li><li><a href="#3">Obtaining the information about the session folder.</a></li><li><a href="#4">Obtaining information about the amplfiers and data acquisition set up</a></li><li><a href="#5">Reading the daq files for each amplifier and saving the eeg and trigger data</a></li></ul></div><h2>[rawData,triggerSignal,sampleRate,channelNames,filterInfo,daqInfos]=loadSessionData(daqFileList)<a name="1"></a></h2><pre class="codeinput"><span class="comment">%loadSessionData(sessionFolder) loads offline the data obtained in a</span>
+<span class="comment">%   session. The daq files (data acquisition files) recorded for each amplifier are read through this</span>
+<span class="comment">%   function.</span>
+<span class="comment">%</span>
+<span class="comment">%   [rawData,triggerSignal,sampleRate,channelNames,filterInfo,daqInfos]=loadSessionData(daqFileList)</span>
+<span class="comment">%   reads loads the data obtained durind a session.</span>
+<span class="comment">%</span>
+<span class="comment">%       The inputs of the function</span>
+<span class="comment">%            daqFileList - The list of file paths to be loaded as a cell of strings. If</span>
+<span class="comment">%            a list is not pre-specified, a pop up window asks you to</span>
+<span class="comment">%            locate the files.</span>
+<span class="comment">%</span>
+<span class="comment">%       The outputs of the function</span>
+<span class="comment">%           rawData - A matrix containing the eeg data. Each column</span>
+<span class="comment">%           corresponds to a different channel.</span>
+<span class="comment">%           triggerSignal - A vector containing the trigger data.</span>
+<span class="comment">%           sampleRate - The sampling frequency.</span>
+<span class="comment">%           channelNames - A vector containing the channel names used in the experiment.</span>
+<span class="comment">%           filterInfo - A structure containing the information about the</span>
+<span class="comment">%           filter used in the amplifiers during the data acquisition. The</span>
+<span class="comment">%           followings are the elements of this structure.</span>
+<span class="comment">%                * filterInfo.BPLow - The lower cut off frequency of the</span>
+<span class="comment">%                bandpass filter.</span>
+<span class="comment">%                * filterInfo.BPHigh - The higher cutoff frequency of the</span>
+<span class="comment">%                bandpass filter.</span>
+<span class="comment">%                * filterInfo.Notch - The frequency of the notch filter.</span>
+<span class="comment">%           daqInfos - A structure containing the information about the</span>
+<span class="comment">%           data acquisiton file and the process. For more information</span>
+<span class="comment">%           please see daqread in the data acquisition toolbox.</span>
+<span class="comment">%</span>
+<span class="comment">%</span>
+</pre><pre class="codeinput"><span class="keyword">function</span> [rawData,triggerSignal,sampleRate,channelNames,filterInfo,daqInfos,sessionFolder]=loadSessionData(daqFileList,sessionFolder)
+</pre><h2>Obtaining the information about the session folder.<a name="3"></a></h2><pre class="codeinput"><span class="keyword">if</span>(nargin&lt;1)
+    [daqFileList,sessionFolder]=uigetfile(<span class="string">'*.daq'</span>,<span class="string">'Please Select the Data Recording Files'</span>,<span class="string">'MultiSelect'</span>, <span class="string">'on'</span>,<span class="string">'Data\'</span>);
+<span class="keyword">end</span>
+<span class="keyword">if</span>(~iscell(daqFileList))
+    daqFileList={daqFileList};
+<span class="keyword">end</span>
+</pre><h2>Obtaining information about the amplfiers and data acquisition set up<a name="4"></a></h2><pre class="codeinput">noOfAmplifiers=size(daqFileList,1);
+chanInfos=cell(noOfAmplifiers,1);
+noOfSamplesAcquired=zeros(noOfAmplifiers,1);
+
+daqInfos=cell(noOfAmplifiers,1);
+<span class="keyword">for</span>(filei=1:noOfAmplifiers)
+    filepath=[sessionFolder daqFileList{filei}];
+    daqInfos{filei} = daqread(filepath, <span class="string">'info'</span>);
+    chanInfos{filei} = daqInfos{filei}.ObjInfo.Channel;
+    noOfSamplesAcquired(filei)=daqInfos{filei}.ObjInfo.SamplesAcquired;
+<span class="keyword">end</span>
+
+channelCounts=cellfun(<span class="string">'length'</span>,chanInfos);
+totalChannelCount=sum(channelCounts)-1;
+
+channelNames=cell(1,totalChannelCount);
+
+minNoOfSamplesAcquired=min(noOfSamplesAcquired);
+rawData=zeros(minNoOfSamplesAcquired,totalChannelCount);
+
+ampIndex=1;
+filterInfo.BPLow=chanInfos{ampIndex}(1).BPLow;
+filterInfo.BPHigh=chanInfos{ampIndex}(1).BPHigh;
+filterInfo.Notch=chanInfos{ampIndex}(1).Notch;
+sampleRate=daqInfos{ampIndex}.ObjInfo.SampleRate;
+</pre><h2>Reading the daq files for each amplifier and saving the eeg and trigger data<a name="5"></a></h2><pre class="codeinput">filepath=[sessionFolder daqFileList{ampIndex}];
+temp=daqread(filepath);
+channelIndex=0;
+<span class="keyword">for</span>(ampChannelIndex=1:channelCounts(ampIndex)-1)
+    channelNames{channelIndex+ampChannelIndex}=chanInfos{ampIndex}(ampChannelIndex).ChannelName;
+<span class="keyword">end</span>
+
+rawData(:,1:(channelCounts(ampIndex)-1))=temp(1:minNoOfSamplesAcquired,1:(channelCounts(ampIndex)-1));
+triggerSignal=round(temp(1:minNoOfSamplesAcquired,channelCounts(ampIndex))*1e6);
+channelIndex=channelCounts(ampIndex)-1;
+<span class="keyword">for</span>(ampIndex=2:noOfAmplifiers)
+    filepath=[sessionFolder daqFileList{ampIndex}];
+    temp=daqread(filepath);
+    rawData(:,channelIndex+1:(channelIndex+channelCounts(ampIndex)))=temp(1:minNoOfSamplesAcquired,:);
+    <span class="keyword">for</span>(ampChannelIndex=1:channelCounts(ampIndex))
+        channelNames{channelIndex+ampChannelIndex}=chanInfos{ampIndex}(ampChannelIndex).ChannelName;
+    <span class="keyword">end</span>
+    channelIndex=channelIndex+channelCounts(ampIndex);
+<span class="keyword">end</span>
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.14<br></p></div><!--
+##### SOURCE BEGIN #####
+%% [rawData,triggerSignal,sampleRate,channelNames,filterInfo,daqInfos]=loadSessionData(daqFileList)
+%loadSessionData(sessionFolder) loads offline the data obtained in a
+%   session. The daq files (data acquisition files) recorded for each amplifier are read through this
+%   function. 
+% 
+%   [rawData,triggerSignal,sampleRate,channelNames,filterInfo,daqInfos]=loadSessionData(daqFileList)
+%   reads loads the data obtained durind a session. 
+%
+%       The inputs of the function 
+%            daqFileList - The list of file paths to be loaded as a cell of strings. If
+%            a list is not pre-specified, a pop up window asks you to
+%            locate the files.
+%
+%       The outputs of the function
+%           rawData - A matrix containing the eeg data. Each column
+%           corresponds to a different channel.
+%           triggerSignal - A vector containing the trigger data.
+%           sampleRate - The sampling frequency.
+%           channelNames - A vector containing the channel names used in the experiment.
+%           filterInfo - A structure containing the information about the
+%           filter used in the amplifiers during the data acquisition. The
+%           followings are the elements of this structure.
+%                * filterInfo.BPLow - The lower cut off frequency of the
+%                bandpass filter. 
+%                * filterInfo.BPHigh - The higher cutoff frequency of the
+%                bandpass filter.
+%                * filterInfo.Notch - The frequency of the notch filter. 
+%           daqInfos - A structure containing the information about the
+%           data acquisiton file and the process. For more information
+%           please see daqread in the data acquisition toolbox.
+%               
+%           
+%%
+
+
+
+
+function [rawData,triggerSignal,sampleRate,channelNames,filterInfo,daqInfos,sessionFolder]=loadSessionData(daqFileList,sessionFolder)
+%% Obtaining the information about the session folder.
+
+
+if(nargin<1)
+    [daqFileList,sessionFolder]=uigetfile('*.daq','Please Select the Data Recording Files','MultiSelect', 'on','Data\');
+end
+if(~iscell(daqFileList))
+    daqFileList={daqFileList};
+end
+
+%% Obtaining information about the amplfiers and data acquisition set up
+
+noOfAmplifiers=size(daqFileList,1);
+chanInfos=cell(noOfAmplifiers,1);
+noOfSamplesAcquired=zeros(noOfAmplifiers,1);
+
+daqInfos=cell(noOfAmplifiers,1);
+for(filei=1:noOfAmplifiers)
+    filepath=[sessionFolder daqFileList{filei}];
+    daqInfos{filei} = daqread(filepath, 'info');
+    chanInfos{filei} = daqInfos{filei}.ObjInfo.Channel;
+    noOfSamplesAcquired(filei)=daqInfos{filei}.ObjInfo.SamplesAcquired;
+end
+
+channelCounts=cellfun('length',chanInfos);
+totalChannelCount=sum(channelCounts)-1;
+
+channelNames=cell(1,totalChannelCount);
+
+minNoOfSamplesAcquired=min(noOfSamplesAcquired);
+rawData=zeros(minNoOfSamplesAcquired,totalChannelCount);
+
+ampIndex=1;
+filterInfo.BPLow=chanInfos{ampIndex}(1).BPLow;
+filterInfo.BPHigh=chanInfos{ampIndex}(1).BPHigh;
+filterInfo.Notch=chanInfos{ampIndex}(1).Notch;
+sampleRate=daqInfos{ampIndex}.ObjInfo.SampleRate;
+
+%% Reading the daq files for each amplifier and saving the eeg and trigger data 
+
+filepath=[sessionFolder daqFileList{ampIndex}];
+temp=daqread(filepath);
+channelIndex=0;
+for(ampChannelIndex=1:channelCounts(ampIndex)-1)
+    channelNames{channelIndex+ampChannelIndex}=chanInfos{ampIndex}(ampChannelIndex).ChannelName;
+end
+
+rawData(:,1:(channelCounts(ampIndex)-1))=temp(1:minNoOfSamplesAcquired,1:(channelCounts(ampIndex)-1));
+triggerSignal=round(temp(1:minNoOfSamplesAcquired,channelCounts(ampIndex))*1e6);
+channelIndex=channelCounts(ampIndex)-1;
+for(ampIndex=2:noOfAmplifiers)
+    filepath=[sessionFolder daqFileList{ampIndex}];
+    temp=daqread(filepath);
+    rawData(:,channelIndex+1:(channelIndex+channelCounts(ampIndex)))=temp(1:minNoOfSamplesAcquired,:);
+    for(ampChannelIndex=1:channelCounts(ampIndex))
+        channelNames{channelIndex+ampChannelIndex}=chanInfos{ampIndex}(ampChannelIndex).ChannelName;
+    end
+    channelIndex=channelIndex+channelCounts(ampIndex);
+end
+
+##### SOURCE END #####
+--></body></html>

@@ -1,0 +1,206 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>readChannelInfo</title><meta name="generator" content="MATLAB 7.14"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2013-06-13"><meta name="DC.source" content="readChannelInfo.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">[success,ampChannelList]=readChannelInfo(filename)</a></li><li><a href="#4">Initializing the ampChannelList structure</a></li><li><a href="#5">Importing the data and saving the channel indices, channel types and electrode locations in ampChannelList structure.</a></li></ul></div><h2>[success,ampChannelList]=readChannelInfo(filename)<a name="1"></a></h2><pre class="codeinput"><span class="comment">%readChannelInfo(filename) reads the channel information of the amplifiers</span>
+<span class="comment">%   from a csv (comma separated value) file. This function is called in</span>
+<span class="comment">%   setupAmplifierParameters function.</span>
+<span class="comment">%</span>
+<span class="comment">%   [success,ampChannelList]=readChannelInfo(filename)</span>
+<span class="comment">%</span>
+<span class="comment">%   The inputs of the function</span>
+<span class="comment">%</span>
+<span class="comment">%      filename - A string containing the name and the directory of the csv file to be read.</span>
+<span class="comment">%</span>
+<span class="comment">%   The outputs of the function</span>
+<span class="comment">%</span>
+<span class="comment">%       success (0/1) -  A flag to show the success of the operation</span>
+<span class="comment">%</span>
+<span class="comment">%       ampChannelList - A structure that contains the information about</span>
+<span class="comment">%       the channels connected to the amplifiers. The members of this</span>
+<span class="comment">%       structure used in this function are the followings.</span>
+<span class="comment">%</span>
+<span class="comment">%           * ampChannelList.channelIndices - A list that contains the</span>
+<span class="comment">%           indices of channels connected to each amplifier (integer).</span>
+<span class="comment">%           * ampChannelList.electrodeLocations - A list that contains the</span>
+<span class="comment">%           physiological locations of the electrodes that are connected to</span>
+<span class="comment">%           amplifiers (string).</span>
+<span class="comment">%           * ampChannelList.channelType- A list that contains the type of</span>
+<span class="comment">%           the channels connected to the amplifiers (EEG, EMG, etc.)</span>
+<span class="comment">%</span>
+<span class="comment">%  See also setupAmplifierParameters</span>
+</pre><pre class="codeinput"><span class="keyword">function</span> [success,ampChannelList]=readChannelInfo(filename)
+</pre><pre class="codeinput">TOTAL_NUMBER_OF_CHANNELS=64; <span class="comment">% 64 is the maximum number of channels that could be used by gtec amplifiers.</span>
+</pre><h2>Initializing the ampChannelList structure<a name="4"></a></h2><pre class="codeinput">ampChannelList.channelIndices=zeros(TOTAL_NUMBER_OF_CHANNELS,1);
+ampChannelList.electrodeLocations=cell(TOTAL_NUMBER_OF_CHANNELS,1);
+ampChannelList.channelType=cell(TOTAL_NUMBER_OF_CHANNELS,1);
+<span class="keyword">try</span>
+</pre><h2>Importing the data and saving the channel indices, channel types and electrode locations in ampChannelList structure.<a name="5"></a></h2><pre class="codeinput">    rawChannelListCell=importdata(filename);
+
+    currentLine=1;
+    channelCounter=1;
+    <span class="keyword">while</span> currentLine&lt;=length(rawChannelListCell)
+        <span class="keyword">if</span> (strncmpi(rawChannelListCell{currentLine},<span class="string">'Master'</span>,6) || (strncmpi(rawChannelListCell{currentLine},<span class="string">'Slave'</span>,5)))
+            <span class="keyword">for</span> lineNo=currentLine+2:currentLine+17
+                temp=textscan(rawChannelListCell{lineNo},<span class="string">'%d%s%s'</span>,<span class="string">'Delimiter'</span>,<span class="string">','</span>);
+                ampChannelList.channelIndices(channelCounter)=temp{1};
+                ampChannelList.electrodeLocations{channelCounter}=temp{2}{1};
+                ampChannelList.channelType{channelCounter}=temp{3}{1};
+                channelCounter=channelCounter+1;
+            <span class="keyword">end</span>
+            currentLine=lineNo+1;
+
+        <span class="keyword">else</span>
+            currentLine=currentLine+1;
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+    success=1;
+</pre><pre class="codeinput"><span class="keyword">catch</span> ME
+    logError(ME);
+    disp([<span class="string">'Error: '</span> ME.message]);
+    success=0;
+<span class="keyword">end</span>
+
+<span class="keyword">if</span>(channelCounter&lt;TOTAL_NUMBER_OF_CHANNELS)
+    tempStr=[<span class="string">'Error: Incorrect formatting of '</span> filename];
+    logError(tempStr)
+    disp(tempStr);
+    success=0;
+<span class="keyword">end</span>
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.14<br></p></div><!--
+##### SOURCE BEGIN #####
+%% [success,ampChannelList]=readChannelInfo(filename)
+%readChannelInfo(filename) reads the channel information of the amplifiers
+%   from a csv (comma separated value) file. This function is called in
+%   setupAmplifierParameters function. 
+%   
+%   [success,ampChannelList]=readChannelInfo(filename)
+%
+%   The inputs of the function 
+%   
+%      filename - A string containing the name and the directory of the csv file to be read.
+%
+%   The outputs of the function
+%   
+%       success (0/1) -  A flag to show the success of the operation
+%
+%       ampChannelList - A structure that contains the information about
+%       the channels connected to the amplifiers. The members of this
+%       structure used in this function are the followings.
+%
+%           * ampChannelList.channelIndices - A list that contains the
+%           indices of channels connected to each amplifier (integer).
+%           * ampChannelList.electrodeLocations - A list that contains the
+%           physiological locations of the electrodes that are connected to
+%           amplifiers (string). 
+%           * ampChannelList.channelType- A list that contains the type of
+%           the channels connected to the amplifiers (EEG, EMG, etc.)
+%
+%  See also setupAmplifierParameters
+%%
+
+
+
+function [success,ampChannelList]=readChannelInfo(filename)
+
+
+TOTAL_NUMBER_OF_CHANNELS=64; % 64 is the maximum number of channels that could be used by gtec amplifiers. 
+%% Initializing the ampChannelList structure
+
+
+ampChannelList.channelIndices=zeros(TOTAL_NUMBER_OF_CHANNELS,1);
+ampChannelList.electrodeLocations=cell(TOTAL_NUMBER_OF_CHANNELS,1);
+ampChannelList.channelType=cell(TOTAL_NUMBER_OF_CHANNELS,1);
+try
+    %% Importing the data and saving the channel indices, channel types and electrode locations in ampChannelList structure.
+   
+    
+    rawChannelListCell=importdata(filename);
+    
+    currentLine=1;
+    channelCounter=1;
+    while currentLine<=length(rawChannelListCell)
+        if (strncmpi(rawChannelListCell{currentLine},'Master',6) || (strncmpi(rawChannelListCell{currentLine},'Slave',5)))
+            for lineNo=currentLine+2:currentLine+17
+                temp=textscan(rawChannelListCell{lineNo},'%d%s%s','Delimiter',',');
+                ampChannelList.channelIndices(channelCounter)=temp{1};
+                ampChannelList.electrodeLocations{channelCounter}=temp{2}{1};
+                ampChannelList.channelType{channelCounter}=temp{3}{1};
+                channelCounter=channelCounter+1;
+            end
+            currentLine=lineNo+1;
+            
+        else
+            currentLine=currentLine+1;
+        end
+    end
+    success=1;
+catch ME
+    logError(ME);
+    disp(['Error: ' ME.message]);
+    success=0;
+end
+
+if(channelCounter<TOTAL_NUMBER_OF_CHANNELS)
+    tempStr=['Error: Incorrect formatting of ' filename];
+    logError(tempStr)
+    disp(tempStr);
+    success=0;
+end
+
+##### SOURCE END #####
+--></body></html>

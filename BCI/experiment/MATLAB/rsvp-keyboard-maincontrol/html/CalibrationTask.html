@@ -1,0 +1,276 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>CalibrationTask</title><meta name="generator" content="MATLAB 7.14"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2013-06-13"><meta name="DC.source" content="CalibrationTask.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+
+  </style></head><body><div class="content"><h1>CalibrationTask</h1><!--introduction--><p>CalibrationTask inherits RSVPKeyboardTask and it controls the calibration session. It decides on the next trials to show, if the session is complete, prepares the feedback screen to send to the presentation and saves information to be saved.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#3">Methods of the CalibrationTask class</a></li><li><a href="#4">self=CalibrationTask(symbolStructArray, RSVPKeyboardParams, scoreStruct, operationMode)</a></li><li><a href="#5">updateDecisionState(self,results)</a></li><li><a href="#6">reformatPresentationData(self)</a></li><li><a href="#7">checkTaskUpdateCriteria(self)</a></li><li><a href="#8">nextSequence=decideNextTrials(self)</a></li><li><a href="#9">sessionInfo=saveTaskHistory(self,saveLocation)</a></li><li><a href="#11">pInitializeTaskUpdateCriteria(self,calibrationParams)</a></li></ul></div><pre class="codeinput"><span class="keyword">classdef</span> CalibrationTask &lt; RSVPKeyboardTask
+</pre><pre class="codeinput">    properties
+    <span class="keyword">end</span>
+</pre><h2>Methods of the CalibrationTask class<a name="3"></a></h2><pre class="codeinput">    methods
+</pre><h2>self=CalibrationTask(symbolStructArray, RSVPKeyboardParams, scoreStruct, operationMode)<a name="4"></a></h2><p>Constructor for the CalibrationTask. The inputs of the constructor   symbolStructArray - a struct vector containing list of symbols   or images used in presentations. Loaded using xls2Structs   function called on imageList.xls.</p><pre class="language-matlab">RSVPKeyboardParams - RSVPKeyboard parameters <span class="string">from</span> <span class="string">the</span>
+parameter <span class="string">file</span> <span class="string">RSVPKeyboardParameters.m.</span>
+</pre><pre class="language-matlab">scoreStruct - A calibration <span class="string">file</span> <span class="string">containing</span> <span class="string">the</span> <span class="string">kernel</span> <span class="string">density</span>
+estimators. It can <span class="string">be</span> <span class="string">used</span> <span class="string">for</span> <span class="string">calibration</span> <span class="string">as</span> <span class="string">well</span> <span class="string">in</span> <span class="string">the</span> <span class="string">future.</span> <span class="string">It</span> <span class="string">should</span>
+be <span class="string">empty</span> <span class="string">for</span> <span class="string">now.</span>
+</pre><pre class="language-matlab">operationMode - Mode of <span class="string">operation.</span>
+                0 : session
+                1 : simulation
+</pre><pre class="codeinput">        <span class="keyword">function</span> self=CalibrationTask(symbolStructArray, RSVPKeyboardParams, scoreStruct, operationMode)
+            <span class="keyword">if</span>(~exist(<span class="string">'scoreStruct'</span>,<span class="string">'var'</span>))
+                scoreStruct=[];
+            <span class="keyword">end</span>
+            <span class="keyword">if</span>(~exist(<span class="string">'operationMode'</span>,<span class="string">'var'</span>))
+                operationMode=0;
+            <span class="keyword">end</span>
+
+            self=self@RSVPKeyboardTask(symbolStructArray,RSVPKeyboardParams,scoreStruct,operationMode);
+            self.pInitializeTaskUpdateCriteria(RSVPKeyboardParams.Calibration);
+            self.nextSequenceInfoStruct.NumberofTrials=RSVPKeyboardParams.Calibration.NumberofTrials;
+        <span class="keyword">end</span>
+</pre><h2>updateDecisionState(self,results)<a name="5"></a></h2><p>updateDecisionState updates the decisionClass object which makes decisions using the results obtained from the feature extraction stage.</p><p>Input:       results - a structure containing one dimensional features       corresponding to each trial</p><pre>     results.trialLabels - the labels of the trials (vector of
+     indices)</pre><pre>     results.decideNextFlag - a boolean indicator indicates if a
+     new sequence is expected to be shown.</pre><pre>     results.completedSequenceCount - the number of sequences
+     completed and contained in the results structure</pre><pre>     results.duration - the duration of the sequence(s)</pre><pre class="codeinput">        <span class="keyword">function</span> updateDecisionState(self,results)
+            [decision,epochEndedFlag]=self.decisionObj.makeDecision(results);
+            self.pUpdateCurrentInfo(results,decision,epochEndedFlag);
+            self.reformatPresentationData();
+            self.checkTaskUpdateCriteria();
+        <span class="keyword">end</span>
+</pre><h2>reformatPresentationData(self)<a name="6"></a></h2><p>reformatPresentationData updates the feedback text to be used in presentation.</p><pre class="codeinput">        <span class="keyword">function</span> reformatPresentationData(self)
+            <span class="keyword">if</span>(~self.operationMode)
+                self.currentInfo.decision.feedback{1}.Text=[num2str(self.currentInfo.globalSequenceCounter+1) <span class="string">'/'</span> num2str(self.taskUpdateCriteria.maximumNumberofSequences)];
+                self.currentInfo.decision.feedback{1}.Type=<span class="string">'neutral'</span>;
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+</pre><h2>checkTaskUpdateCriteria(self)<a name="7"></a></h2><p>Check if the calibration session is completed.</p><pre class="codeinput">        <span class="keyword">function</span> checkTaskUpdateCriteria(self)
+            self.checkTaskUpdateCriteria@RSVPKeyboardTask();
+        <span class="keyword">end</span>
+</pre><h2>nextSequence=decideNextTrials(self)<a name="8"></a></h2><p>Decide on the next sequence to present.</p><p>Output:       nextSequence - a structure containing the information on       the next sequence.</p><pre>         nextSequence.trials - the ordered list of trial indices
+         (vector)</pre><pre>         nextSequence.target - the index corresponding to the
+         target symbol</pre><pre class="codeinput">        <span class="keyword">function</span> nextSequence=decideNextTrials(self)
+            fullSet=self.decisionObj.trialIDs;
+            nextSequence.trials=fullSet(randperm(length(fullSet),self.nextSequenceInfoStruct.NumberofTrials));
+            nextSequence.target=nextSequence.trials(randperm(length(nextSequence.trials),1));
+        <span class="keyword">end</span>
+</pre><h2>sessionInfo=saveTaskHistory(self,saveLocation)<a name="9"></a></h2><p>Saves the history and information of the task to the output variable and to file if a file to save is given.</p><p>Input:       saveLocation - file address to save the information into,       it can be omitted.</p><p>Output:        sessionInfo - variable form of the information which is to        be saved</p><pre class="codeinput">        <span class="keyword">function</span> sessionInfo=saveTaskHistory(self,saveLocation)
+            sessionInfo.taskHistory.epochList=self.decisionObj.epochList.toCell();
+            sessionInfo.taskHistory.typedText=self.languageModelWrapperObject.getText;
+
+            sessionInfo.typingDuration=self.currentInfo.typingDuration;
+            sessionInfo.globalSequenceCounter=self.currentInfo.globalSequenceCounter;
+            sessionInfo.totalSessionDuration=toc(self.currentInfo.globalTic);
+            sessionInfo.sessionType=class(self);
+
+            <span class="keyword">if</span>(exist(<span class="string">'saveLocation'</span>,<span class="string">'var'</span>))
+                save([saveLocation <span class="string">'\taskHistory.mat'</span>],<span class="string">'sessionInfo'</span>);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+</pre><pre class="codeinput">    <span class="keyword">end</span>
+    methods (Access = protected)
+</pre><h2>pInitializeTaskUpdateCriteria(self,calibrationParams)<a name="11"></a></h2><p>Initializes the task update criteria, which is the ending criteria for the calibration task.</p><pre class="codeinput">        <span class="keyword">function</span> pInitializeTaskUpdateCriteria(self,calibrationParams)
+            self.pInitializeTaskUpdateCriteria@RSVPKeyboardTask();
+            self.taskUpdateCriteria.maximumNumberofSequences=calibrationParams.NumberofSequences;
+        <span class="keyword">end</span>
+</pre><pre class="codeinput">    <span class="keyword">end</span>
+</pre><pre class="codeinput"><span class="keyword">end</span>
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.14<br></p></div><!--
+##### SOURCE BEGIN #####
+%% CalibrationTask
+% CalibrationTask inherits RSVPKeyboardTask and it controls the calibration
+% session. It decides on the next trials to show, if the session is
+% complete, prepares the feedback screen to send to the presentation and
+% saves information to be saved.
+%
+%%
+classdef CalibrationTask < RSVPKeyboardTask
+    properties
+    end
+    %% Methods of the CalibrationTask class
+    methods
+        %% self=CalibrationTask(symbolStructArray, RSVPKeyboardParams, scoreStruct, operationMode)
+        % Constructor for the CalibrationTask.
+        % The inputs of the constructor
+        %   symbolStructArray - a struct vector containing list of symbols
+        %   or images used in presentations. Loaded using xls2Structs
+        %   function called on imageList.xls.
+        %
+        %   RSVPKeyboardParams - RSVPKeyboard parameters from the
+        %   parameter file RSVPKeyboardParameters.m.
+        %
+        %   scoreStruct - A calibration file containing the kernel density
+        %   estimators. It can be used for calibration as well in the future. It should
+        %   be empty for now.
+        %
+        %   operationMode - Mode of operation.
+        %                   0 : session
+        %                   1 : simulation_dir
+        %
+        function self=CalibrationTask(symbolStructArray, RSVPKeyboardParams, scoreStruct, operationMode)
+            if(~exist('scoreStruct','var'))
+                scoreStruct=[];
+            end
+            if(~exist('operationMode','var'))
+                operationMode=0;
+            end
+            
+            self=self@RSVPKeyboardTask(symbolStructArray,RSVPKeyboardParams,scoreStruct,operationMode);
+            self.pInitializeTaskUpdateCriteria(RSVPKeyboardParams.Calibration);
+            self.nextSequenceInfoStruct.NumberofTrials=RSVPKeyboardParams.Calibration.NumberofTrials;
+        end
+        
+        %% updateDecisionState(self,results)
+        % updateDecisionState updates the decisionClass object which makes
+        % decisions using the results obtained from the feature extraction
+        % stage.
+        %
+        % Input:
+        %       results - a structure containing one dimensional features
+        %       corresponding to each trial
+        %
+        %       results.trialLabels - the labels of the trials (vector of
+        %       indices)
+        %
+        %       results.decideNextFlag - a boolean indicator indicates if a
+        %       new sequence is expected to be shown.
+        %
+        %       results.completedSequenceCount - the number of sequences
+        %       completed and contained in the results structure
+        %
+        %       results.duration - the duration of the sequence(s)
+        %
+        function updateDecisionState(self,results)
+            [decision,epochEndedFlag]=self.decisionObj.makeDecision(results);
+            self.pUpdateCurrentInfo(results,decision,epochEndedFlag);
+            self.reformatPresentationData();
+            self.checkTaskUpdateCriteria();
+        end
+        
+        %% reformatPresentationData(self)
+        % reformatPresentationData updates the feedback text to be used in presentation. 
+        function reformatPresentationData(self)
+            if(~self.operationMode)
+                self.currentInfo.decision.feedback{1}.Text=[num2str(self.currentInfo.globalSequenceCounter+1) '/' num2str(self.taskUpdateCriteria.maximumNumberofSequences)];
+                self.currentInfo.decision.feedback{1}.Type='neutral';
+            end     
+        end
+        
+        %% checkTaskUpdateCriteria(self)
+        % Check if the calibration session is completed.
+        function checkTaskUpdateCriteria(self)
+            self.checkTaskUpdateCriteria@RSVPKeyboardTask();
+        end
+        
+        %% nextSequence=decideNextTrials(self)
+        % Decide on the next sequence to present.
+        % 
+        %
+        % Output:
+        %       nextSequence - a structure containing the information on
+        %       the next sequence.
+        %
+        %           nextSequence.trials - the ordered list of trial indices
+        %           (vector)
+        %
+        %           nextSequence.target - the index corresponding to the
+        %           target symbol
+        %
+        function nextSequence=decideNextTrials(self)
+            fullSet=self.decisionObj.trialIDs;
+            nextSequence.trials=fullSet(randperm(length(fullSet),self.nextSequenceInfoStruct.NumberofTrials));
+            nextSequence.target=nextSequence.trials(randperm(length(nextSequence.trials),1));
+        end
+        
+        %% sessionInfo=saveTaskHistory(self,saveLocation)
+        % Saves the history and information of the task to the output
+        % variable and to file if a file to save is given.
+        % 
+        % Input:
+        %       saveLocation - file address to save the information into,
+        %       it can be omitted.
+        %
+        %
+        % Output:
+        %        sessionInfo - variable form of the information which is to
+        %        be saved
+        %
+        function sessionInfo=saveTaskHistory(self,saveLocation)
+            sessionInfo.taskHistory.epochList=self.decisionObj.epochList.toCell();
+            sessionInfo.taskHistory.typedText=self.languageModelWrapperObject.getText;
+            
+            sessionInfo.typingDuration=self.currentInfo.typingDuration;
+            sessionInfo.globalSequenceCounter=self.currentInfo.globalSequenceCounter;
+            sessionInfo.totalSessionDuration=toc(self.currentInfo.globalTic);
+            sessionInfo.sessionType=class(self);
+            
+            if(exist('saveLocation','var'))
+                save([saveLocation '\taskHistory.mat'],'sessionInfo');
+            end
+        end
+        
+    end
+    methods (Access = protected)
+        %% pInitializeTaskUpdateCriteria(self,calibrationParams)
+        % Initializes the task update criteria, which is the ending
+        % criteria for the calibration task.
+        function pInitializeTaskUpdateCriteria(self,calibrationParams)
+            self.pInitializeTaskUpdateCriteria@RSVPKeyboardTask();
+            self.taskUpdateCriteria.maximumNumberofSequences=calibrationParams.NumberofSequences;
+        end
+        
+    end
+end
+##### SOURCE END #####
+--></body></html>

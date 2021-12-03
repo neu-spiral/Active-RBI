@@ -1,0 +1,13 @@
+2016-10-14 10:09:45
+instrument:fopen:opfailed
+Unsuccessful open: Connection refused: connect
+Error in C:\Program Files (x86)\MATLAB\R2015b\toolbox\shared\instrument\@icinterface\fopen.m (line 83)
+Error in C:\Users\Paula\Desktop\rsvp-keyboard-frppaulaDSI\bci-frameworkRSVPKeyboard\Communications\sender2receiverCommInitialize.m (line 178)
+Error in C:\Users\Paula\Desktop\rsvp-keyboard-frppaulaDSI\bci-frameworkRSVPKeyboard\SignalMonitoringGUI\RemoteSignalMonitorGUI.m (line 286)
+
+2016-10-14 10:11:44
+instrument:fopen:opfailed
+Unsuccessful open: Connection refused: connect
+Error in C:\Program Files (x86)\MATLAB\R2015b\toolbox\shared\instrument\@icinterface\fopen.m (line 83)
+Error in C:\Users\Paula\Desktop\rsvp-keyboard-frppaulaDSI\bci-frameworkRSVPKeyboard\Communications\sender2receiverCommInitialize.m (line 178)
+Error in C:\Users\Paula\Desktop\rsvp-keyboard-frppaulaDSI\bci-frameworkRSVPKeyboard\SignalMonitoringGUI\RemoteSignalMonitorGUI.m (line 286)

@@ -1,0 +1,391 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>languageModelWrapper Class</title><meta name="generator" content="MATLAB 7.14"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2013-06-13"><meta name="DC.source" content="languageModelWrapper.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+
+  </style></head><body><div class="content"><h1>languageModelWrapper Class</h1><!--introduction--><p>languageModelWrapper is a Matlab interface for the language model. It sets up the language model probabilities to be used in fusion. In addition to original language model, it can handle additional symbols and perform modifications on the original probability mass.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#2">Properties of the languageModelWrapper Class</a></li></ul></div><pre class="codeinput"><span class="keyword">classdef</span> languageModelWrapper &lt; handle
+</pre><h2>Properties of the languageModelWrapper Class<a name="2"></a></h2><pre class="codeinput">    properties
+</pre><p>languageModelClient is the btlm object. It is the Matlab interface for the language model.</p><pre class="codeinput">        languageModelClient
+</pre><p>trialIDs is the vector of symbol IDs corresponding to trial symbols.</p><pre class="codeinput">        trialIDs
+</pre><p>trialNames is the cell vector of symbol names corresponding to trial symbols.</p><pre class="codeinput">        trialNames
+</pre><p>trialTexts is the cell vector of symbol text. It contains the outcome text corresponding to each symbol.</p><pre class="codeinput">        trialTexts
+</pre><pre class="codeinput">        trialLanguageModelSymbols
+        languageModelWrapperParameters
+        languageModelClientTrialIndices
+
+        lastPosteriorProbs
+        lastDecided
+        lastDeleted
+
+        specialSymbolIndices
+        typingQueue
+</pre><pre class="codeinput">    <span class="keyword">end</span>
+
+    methods
+        <span class="keyword">function</span> self=languageModelWrapper(languageModelClient,imageStructs,languageModelWrapperParameters)
+            self.languageModelClient=languageModelClient;
+
+            trialStructIndices=([imageStructs.IsTrial]==1);
+
+            self.trialNames={imageStructs(trialStructIndices).Name};
+            self.trialIDs=[imageStructs(trialStructIndices).ID];
+            self.trialLanguageModelSymbols={imageStructs(trialStructIndices).LanguageModelSymbol};
+            self.trialTexts={imageStructs(trialStructIndices).Text};
+
+            languageModelSymbols=languageModelClient.symbol;
+            self.languageModelClientTrialIndices=zeros(1,length(self.trialIDs));
+
+            <span class="comment">%self.nonLanguageModelTrialIndices=zeros(1,length(self.trialIDs));</span>
+            self.specialSymbolIndices=find(strcmp(self.trialLanguageModelSymbols,<span class="string">'*'</span>));
+            <span class="keyword">for</span>(trialIndex=1:length(self.trialIDs))
+                temp=find(strcmp(self.trialLanguageModelSymbols(trialIndex),languageModelSymbols));
+                <span class="keyword">if</span>(~isempty(temp))
+
+                    self.languageModelClientTrialIndices(trialIndex)=temp;
+                <span class="keyword">end</span>
+                <span class="comment">% self.languageModelClientTrialIndices(trialIndex)=</span>
+            <span class="keyword">end</span>
+
+            self.languageModelWrapperParameters=languageModelWrapperParameters;
+
+            self.lastPosteriorProbs=ones(1,length(self.trialIDs))/length(self.trialIDs);
+            self.lastDecided=0;
+            self.typingQueue=linkedList;
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> p=getProbs(self)
+            p=zeros(length(self.trialIDs),1);
+            tempProbsLM=exp(-self.languageModelClient.probs*self.languageModelWrapperParameters.LANGUAGEMODELSCALINGHACK);
+            <span class="comment">%p(self.trialLanguageModelSymbols)</span>
+
+            <span class="keyword">if</span>(self.typingQueue.elementCount~=0) <span class="comment">%No text</span>
+                <span class="keyword">if</span>(strcmp(self.languageModelWrapperParameters.specialProbCalcType,<span class="string">'fixed'</span>))
+                    <span class="keyword">for</span>(specialIndex=1:length(self.specialSymbolIndices))
+                        p(self.specialSymbolIndices(specialIndex))=self.languageModelWrapperParameters.fixedProbability.(self.trialNames{self.specialSymbolIndices(specialIndex)});
+                    <span class="keyword">end</span>
+                <span class="keyword">elseif</span>(strcmp(self.languageModelWrapperParameters.specialProbCalcType,<span class="string">'adaptive'</span>))
+                    deleteSymbolIndex=find(strcmp(self.trialNames,<span class="string">'DeleteCharacter'</span>));
+                    tempDeleteSymProb=1-max(self.lastPosteriorProbs);
+                    <span class="keyword">if</span>(~strcmp(self.trialNames{self.lastDecided},<span class="string">'DeleteCharacter'</span>))
+                        <span class="keyword">if</span>(tempDeleteSymProb &gt;= self.languageModelWrapperParameters.adaptiveProbability.DeleteCharacter.upperLimit)
+                            p(deleteSymbolIndex)=self.languageModelWrapperParameters.adaptiveProbability.DeleteCharacter.upperLimit;
+                        <span class="keyword">elseif</span>(tempDeleteSymProb &lt;= self.languageModelWrapperParameters.adaptiveProbability.DeleteCharacter.lowerLimit)
+                            p(deleteSymbolIndex)=self.languageModelWrapperParameters.adaptiveProbability.DeleteCharacter.lowerLimit;
+                        <span class="keyword">else</span>
+                            p(deleteSymbolIndex)=tempDeleteSymProb;
+                        <span class="keyword">end</span>
+                    <span class="keyword">elseif</span>(strcmp(self.trialNames{self.lastDecided},<span class="string">'DeleteCharacter'</span>))
+                        p(deleteSymbolIndex)=self.languageModelWrapperParameters.adaptiveProbability.DeleteCharacter.lowerLimit;
+                    <span class="keyword">end</span>
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+
+                <span class="keyword">if</span>(self.lastDecided==0 || ~strcmp(self.trialNames{self.lastDecided},<span class="string">'DeleteCharacter'</span>))
+
+<span class="comment">%                     for(specialIndex=1:length(self.specialSymbolIndices))</span>
+<span class="comment">%                         p(self.specialSymbolIndices(specialIndex))=self.languageModelWrapperParameters.fixedProbability.(self.trialNames{self.specialSymbolIndices(specialIndex)});</span>
+<span class="comment">%                     end</span>
+
+                    tempProbsnonSpecial=tempProbsLM(self.languageModelClientTrialIndices(self.languageModelClientTrialIndices&gt;0));
+                    p(self.languageModelClientTrialIndices&gt;0)=tempProbsnonSpecial/sum(tempProbsnonSpecial)*(1-sum(p));
+
+                <span class="keyword">else</span>
+                    tempProbsnonSpecial=tempProbsLM(self.languageModelClientTrialIndices(self.languageModelClientTrialIndices&gt;0));
+                    nonSpecialLoc=self.languageModelClientTrialIndices&gt;0;
+
+                    multiplierP=repmat(self.lastPosteriorProbs(self.lastDecided),size(p));
+
+                    multiplierP(self.specialSymbolIndices)=1;
+                    multiplierP(self.lastDeleted)=1-self.lastPosteriorProbs(self.lastDecided);
+
+                    tempProbsnonSpecial=tempProbsnonSpecial.*multiplierP(nonSpecialLoc);
+
+                    p(nonSpecialLoc)=tempProbsnonSpecial./sum(tempProbsnonSpecial)*(1-sum(p));
+
+
+
+
+                <span class="keyword">end</span>
+
+
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> update(self,decision)
+            self.lastPosteriorProbs=decision.posteriorProbs;
+            self.lastDecided=decision.decided;
+
+            <span class="keyword">if</span>(self.languageModelClientTrialIndices(decision.decided)&gt;0)
+                self.languageModelClient.update(self.trialLanguageModelSymbols{decision.decided});
+                self.typingQueue.insertEnd(listNode(decision.decided));
+                <span class="comment">%self.text=[self.text self.trialTexts{decision.decided}];</span>
+            <span class="keyword">else</span>
+                <span class="keyword">if</span>(strcmp(self.trialNames{decision.decided},<span class="string">'DeleteCharacter'</span>))
+                    self.languageModelClient.undo();
+                    self.lastDeleted=self.typingQueue.Tail.Data;
+                    self.typingQueue.remove(self.typingQueue.Tail);
+                    <span class="comment">%self.text=self.text(1:end-1);</span>
+                <span class="keyword">end</span>
+
+
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> text=getText(self)
+             text=cell2mat(self.trialTexts(cell2mat(self.typingQueue.toCell)));
+             <span class="keyword">if</span>(isempty(text))
+                 text=<span class="string">''</span>;
+             <span class="keyword">end</span>
+
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> reset(self)
+            self.languageModelClient.reset;
+            self.languageModelClient.alloc;
+            self.lastPosteriorProbs=ones(1,length(self.trialIDs))/length(self.trialIDs);
+            self.lastDecided=0;
+            self.lastDeleted=0;
+            self.typingQueue=linkedList;
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> initializeState(self,text)
+           self.reset;
+           <span class="keyword">for</span>(characterIndex=1:length(text))
+               self.languageModelClient.update(self.trialLanguageModelSymbols{strcmp(self.trialTexts,text(characterIndex))});
+           <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+    <span class="keyword">end</span>
+</pre><pre class="codeinput"><span class="keyword">end</span>
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.14<br></p></div><!--
+##### SOURCE BEGIN #####
+%% languageModelWrapper Class
+% languageModelWrapper is a Matlab interface for the language model. It sets up the language model
+% probabilities to be used in fusion. In addition to original language model, it can handle
+% additional symbols and perform modifications on the original probability mass.
+%%
+
+classdef languageModelWrapper < handle
+    %% Properties of the languageModelWrapper Class
+    properties
+        %%
+        % languageModelClient is the btlm object. It is the Matlab interface for the language model.
+        languageModelClient
+        
+        %%
+        % trialIDs is the vector of symbol IDs corresponding to trial symbols.
+        trialIDs
+        
+        %%
+        % trialNames is the cell vector of symbol names corresponding to trial symbols.
+        trialNames
+        
+        %%
+        % trialTexts is the cell vector of symbol text. It contains the outcome text corresponding
+        % to each symbol.
+        trialTexts
+        
+        %%
+        % 
+        trialLanguageModelSymbols
+        languageModelWrapperParameters
+        languageModelClientTrialIndices
+        
+        lastPosteriorProbs
+        lastDecided
+        lastDeleted
+        
+        specialSymbolIndices
+        typingQueue        
+    end
+    
+    methods
+        function self=languageModelWrapper(languageModelClient,imageStructs,languageModelWrapperParameters)
+            self.languageModelClient=languageModelClient;
+            
+            trialStructIndices=([imageStructs.IsTrial]==1);
+            
+            self.trialNames={imageStructs(trialStructIndices).Name};
+            self.trialIDs=[imageStructs(trialStructIndices).ID];
+            self.trialLanguageModelSymbols={imageStructs(trialStructIndices).LanguageModelSymbol};
+            self.trialTexts={imageStructs(trialStructIndices).Text};
+            
+            languageModelSymbols=languageModelClient.symbol;
+            self.languageModelClientTrialIndices=zeros(1,length(self.trialIDs));
+            
+            %self.nonLanguageModelTrialIndices=zeros(1,length(self.trialIDs));
+            self.specialSymbolIndices=find(strcmp(self.trialLanguageModelSymbols,'*'));
+            for(trialIndex=1:length(self.trialIDs))
+                temp=find(strcmp(self.trialLanguageModelSymbols(trialIndex),languageModelSymbols));
+                if(~isempty(temp))
+                    
+                    self.languageModelClientTrialIndices(trialIndex)=temp;
+                end
+                % self.languageModelClientTrialIndices(trialIndex)=
+            end
+            
+            self.languageModelWrapperParameters=languageModelWrapperParameters;
+            
+            self.lastPosteriorProbs=ones(1,length(self.trialIDs))/length(self.trialIDs);
+            self.lastDecided=0;
+            self.typingQueue=linkedList;
+        end
+        
+        function p=getProbs(self)
+            p=zeros(length(self.trialIDs),1);
+            tempProbsLM=exp(-self.languageModelClient.probs*self.languageModelWrapperParameters.LANGUAGEMODELSCALINGHACK);
+            %p(self.trialLanguageModelSymbols)
+            
+            if(self.typingQueue.elementCount~=0) %No text
+                if(strcmp(self.languageModelWrapperParameters.specialProbCalcType,'fixed'))
+                    for(specialIndex=1:length(self.specialSymbolIndices))
+                        p(self.specialSymbolIndices(specialIndex))=self.languageModelWrapperParameters.fixedProbability.(self.trialNames{self.specialSymbolIndices(specialIndex)});
+                    end
+                elseif(strcmp(self.languageModelWrapperParameters.specialProbCalcType,'adaptive'))
+                    deleteSymbolIndex=find(strcmp(self.trialNames,'DeleteCharacter'));
+                    tempDeleteSymProb=1-max(self.lastPosteriorProbs);
+                    if(~strcmp(self.trialNames{self.lastDecided},'DeleteCharacter'))
+                        if(tempDeleteSymProb >= self.languageModelWrapperParameters.adaptiveProbability.DeleteCharacter.upperLimit)
+                            p(deleteSymbolIndex)=self.languageModelWrapperParameters.adaptiveProbability.DeleteCharacter.upperLimit;
+                        elseif(tempDeleteSymProb <= self.languageModelWrapperParameters.adaptiveProbability.DeleteCharacter.lowerLimit)
+                            p(deleteSymbolIndex)=self.languageModelWrapperParameters.adaptiveProbability.DeleteCharacter.lowerLimit;
+                        else
+                            p(deleteSymbolIndex)=tempDeleteSymProb;
+                        end
+                    elseif(strcmp(self.trialNames{self.lastDecided},'DeleteCharacter'))
+                        p(deleteSymbolIndex)=self.languageModelWrapperParameters.adaptiveProbability.DeleteCharacter.lowerLimit;
+                    end
+                end
+            end
+                
+                if(self.lastDecided==0 || ~strcmp(self.trialNames{self.lastDecided},'DeleteCharacter'))
+                    
+%                     for(specialIndex=1:length(self.specialSymbolIndices))
+%                         p(self.specialSymbolIndices(specialIndex))=self.languageModelWrapperParameters.fixedProbability.(self.trialNames{self.specialSymbolIndices(specialIndex)});
+%                     end
+                    
+                    tempProbsnonSpecial=tempProbsLM(self.languageModelClientTrialIndices(self.languageModelClientTrialIndices>0));
+                    p(self.languageModelClientTrialIndices>0)=tempProbsnonSpecial/sum(tempProbsnonSpecial)*(1-sum(p));
+            
+                else
+                    tempProbsnonSpecial=tempProbsLM(self.languageModelClientTrialIndices(self.languageModelClientTrialIndices>0));
+                    nonSpecialLoc=self.languageModelClientTrialIndices>0;
+                    
+                    multiplierP=repmat(self.lastPosteriorProbs(self.lastDecided),size(p));
+                    
+                    multiplierP(self.specialSymbolIndices)=1;
+                    multiplierP(self.lastDeleted)=1-self.lastPosteriorProbs(self.lastDecided);
+                    
+                    tempProbsnonSpecial=tempProbsnonSpecial.*multiplierP(nonSpecialLoc);
+                    
+                    p(nonSpecialLoc)=tempProbsnonSpecial./sum(tempProbsnonSpecial)*(1-sum(p));
+                    
+                    
+                    
+                    
+                end
+            
+            
+        end
+        
+        function update(self,decision)
+            self.lastPosteriorProbs=decision.posteriorProbs;
+            self.lastDecided=decision.decided;
+            
+            if(self.languageModelClientTrialIndices(decision.decided)>0)
+                self.languageModelClient.update(self.trialLanguageModelSymbols{decision.decided});
+                self.typingQueue.insertEnd(listNode(decision.decided));
+                %self.text=[self.text self.trialTexts{decision.decided}];
+            else
+                if(strcmp(self.trialNames{decision.decided},'DeleteCharacter'))
+                    self.languageModelClient.undo();
+                    self.lastDeleted=self.typingQueue.Tail.Data;
+                    self.typingQueue.remove(self.typingQueue.Tail);
+                    %self.text=self.text(1:end-1);
+                end
+                
+                
+            end
+        end
+        
+        function text=getText(self)
+             text=cell2mat(self.trialTexts(cell2mat(self.typingQueue.toCell)));
+             if(isempty(text))
+                 text='';
+             end
+                 
+        end
+        
+        function reset(self)
+            self.languageModelClient.reset;
+            self.languageModelClient.alloc;
+            self.lastPosteriorProbs=ones(1,length(self.trialIDs))/length(self.trialIDs);
+            self.lastDecided=0;
+            self.lastDeleted=0;
+            self.typingQueue=linkedList;
+        end
+        
+        function initializeState(self,text)
+           self.reset;
+           for(characterIndex=1:length(text))
+               self.languageModelClient.update(self.trialLanguageModelSymbols{strcmp(self.trialTexts,text(characterIndex))});
+           end
+        end
+        
+    end
+end
+
+##### SOURCE END #####
+--></body></html>

@@ -1,0 +1,242 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>startAmps</title><meta name="generator" content="MATLAB 7.14"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2013-06-13"><meta name="DC.source" content="startAmps.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">[success]=startAmps(amplifierStruct,dataFilename,logToDiskMode)</a></li><li><a href="#4">Test if amplifier(s) are running already</a></li><li><a href="#6">Check to see if the file exists. If it does, increment the file name by one.</a></li><li><a href="#7">Start amplifier(s)</a></li></ul></div><h2>[success]=startAmps(amplifierStruct,dataFilename,logToDiskMode)<a name="1"></a></h2><pre class="codeinput"><span class="comment">%Sets amplifier(s) operating mode and starts data acquisition.</span>
+<span class="comment">%   startAmps, sets the amplifier mode to "Normal" and sets the filename</span>
+<span class="comment">%   for storing the data on the disk.</span>
+<span class="comment">%</span>
+<span class="comment">%   Note: When more than one amplifier is connected the Master amplifier</span>
+<span class="comment">%         should be started last.</span>
+<span class="comment">%</span>
+<span class="comment">%   [success]=startAmps(amplifierStruct,dataFilename,mode)</span>
+<span class="comment">%   inputs:</span>
+<span class="comment">%       amplifierStruct - a structure which contains the amplifier(s)</span>
+<span class="comment">%                       objects</span>
+<span class="comment">%</span>
+<span class="comment">%       dataFilename - a filename which is used to record data to Disk</span>
+<span class="comment">%</span>
+<span class="comment">%       postfix - an additional string to append to the end of the file</span>
+<span class="comment">%</span>
+<span class="comment">%   returns:</span>
+<span class="comment">%       success (0/1) - a flag to show the success of the operation</span>
+<span class="comment">%</span>
+</pre><pre class="codeinput"><span class="keyword">function</span> [success]=startAmps(amplifierStruct,dataFilename,postfix)
+
+    <span class="keyword">if</span> ~exist(<span class="string">'postfix'</span>,<span class="string">'var'</span>)
+
+        postfix = <span class="string">''</span>;
+
+    <span class="keyword">else</span>
+
+        <span class="keyword">if</span> ~isempty(postfix)
+
+            postfix = [<span class="string">'_'</span>,postfix];
+
+        <span class="keyword">end</span>
+
+    <span class="keyword">end</span>
+
+    <span class="keyword">try</span>
+</pre><h2>Test if amplifier(s) are running already<a name="4"></a></h2><pre class="codeinput">        <span class="keyword">if</span> strcmpi(amplifierStruct.ai(1).Running,<span class="string">'on'</span>)
+
+            warning(<span class="string">'startAmps called while amplifier(s) are still running.'</span>);
+<span class="comment">%             [success]=stopAmps(amplifierStruct);</span>
+<span class="comment">%             ME = (['Amplifier(s) were still running.',...</span>
+<span class="comment">%                 ' The recording stopped and will start with the new filename(s).']);</span>
+<span class="comment">%             warning(ME);</span>
+<span class="comment">%             logError(ME,0);</span>
+
+        <span class="keyword">else</span>
+</pre><h2>Check to see if the file exists. If it does, increment the file name by one.<a name="6"></a></h2><pre class="codeinput">            addpath(genpath(<span class="string">'.'</span>));
+            <span class="keyword">for</span> index = 0:999
+
+                <span class="keyword">if</span> ~exist([dataFilename,<span class="string">'_Amp1_Run'</span>,sprintf(<span class="string">'%03i'</span>,index),postfix,<span class="string">'.daq'</span>],<span class="string">'file'</span>)
+
+                    <span class="keyword">break</span>;
+
+                <span class="keyword">end</span>
+
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> index == 999
+
+                <span class="keyword">if</span> exist([dataFilename,<span class="string">'_Amp1_Run999.daq'</span>],<span class="string">'file'</span>)
+
+                    error(<span class="string">'Too many DAQ files created.'</span>);
+
+                <span class="keyword">end</span>
+
+            <span class="keyword">end</span>
+</pre><h2>Start amplifier(s)<a name="7"></a></h2><p>Master amplifier should start at last.</p><pre class="codeinput">            <span class="keyword">for</span> ampIndex = amplifierStruct.numberOfAmplifiers:-1:1
+
+                set(amplifierStruct.ai(ampIndex),<span class="string">'LogFileName'</span>,[dataFilename,<span class="string">'_Amp'</span>,num2str(ampIndex),<span class="string">'_Run'</span>,sprintf(<span class="string">'%03i'</span>,index),postfix]);
+                start(amplifierStruct.ai(ampIndex));
+
+            <span class="keyword">end</span>
+            disp(<span class="string">'Recording started'</span>);
+</pre><pre class="codeinput">        <span class="keyword">end</span>
+
+        success = 1;
+</pre><pre class="codeinput">    <span class="keyword">catch</span> ME
+
+        logError(ME);
+        success = 0;
+
+    <span class="keyword">end</span>
+
+<span class="keyword">end</span>
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.14<br></p></div><!--
+##### SOURCE BEGIN #####
+%% [success]=startAmps(amplifierStruct,dataFilename,logToDiskMode)
+%Sets amplifier(s) operating mode and starts data acquisition.
+%   startAmps, sets the amplifier mode to "Normal" and sets the filename
+%   for storing the data on the disk.
+%
+%   Note: When more than one amplifier is connected the Master amplifier 
+%         should be started last.
+%
+%   [success]=startAmps(amplifierStruct,dataFilename,mode)
+%   inputs:
+%       amplifierStruct - a structure which contains the amplifier(s)
+%                       objects
+%       
+%       dataFilename - a filename which is used to record data to Disk
+%
+%       postfix - an additional string to append to the end of the file
+%
+%   returns:
+%       success (0/1) - a flag to show the success of the operation
+%   
+%%
+
+function [success]=startAmps(amplifierStruct,dataFilename,postfix)
+
+    if ~exist('postfix','var')
+        
+        postfix = '';
+        
+    else
+        
+        if ~isempty(postfix)
+            
+            postfix = ['_',postfix];
+            
+        end
+        
+    end
+
+    try
+        
+        %% Test if amplifier(s) are running already    
+        if strcmpi(amplifierStruct.ai(1).Running,'on')
+            
+            warning('startAmps called while amplifier(s) are still running.');
+%             [success]=stopAmps(amplifierStruct);
+%             ME = (['Amplifier(s) were still running.',...
+%                 ' The recording stopped and will start with the new filename(s).']);        
+%             warning(ME);
+%             logError(ME,0);
+
+        else
+
+            %% Check to see if the file exists. If it does, increment the file name by one.
+            addpath(genpath('.'));
+            for index = 0:999
+                
+                if ~exist([dataFilename,'_Amp1_Run',sprintf('%03i',index),postfix,'.daq'],'file')
+
+                    break;
+                    
+                end
+                
+            end
+            
+            if index == 999
+                
+                if exist([dataFilename,'_Amp1_Run999.daq'],'file')
+                    
+                    error('Too many DAQ files created.');
+                    
+                end
+                
+            end
+            
+            %% Start amplifier(s)
+            % Master amplifier should start at last.
+            for ampIndex = amplifierStruct.numberOfAmplifiers:-1:1
+
+                set(amplifierStruct.ai(ampIndex),'LogFileName',[dataFilename,'_Amp',num2str(ampIndex),'_Run',sprintf('%03i',index),postfix]);
+                start(amplifierStruct.ai(ampIndex));
+
+            end
+            disp('Recording started');
+
+        end
+        
+        success = 1;
+        
+    catch ME
+        
+        logError(ME);
+        success = 0;
+        
+    end
+    
+end
+##### SOURCE END #####
+--></body></html>

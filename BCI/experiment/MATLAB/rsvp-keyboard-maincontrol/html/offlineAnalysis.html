@@ -1,0 +1,331 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>[featureExtractionProcessFlow,simulationResults,statistics2display]=offlineAnalysis(calibrationEnabled,fileName,fileDirectory)</title><meta name="generator" content="MATLAB 7.14"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2013-06-13"><meta name="DC.source" content="offlineAnalysis.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+
+  </style></head><body><div class="content"><h1>[featureExtractionProcessFlow,simulationResults,statistics2display]=offlineAnalysis(calibrationEnabled,fileName,fileDirectory)</h1><!--introduction--><pre>offlineAnalysis(calibrationEnabled,sessionFilename) loads recorded data, calculates scores and
+AUC using cross validation, estimates probability density functions for target and non-target
+scores via kernel density estimation and their accepted thresholds. It calibrates the classifier
+which is contained in a processFlow object. It saves these information in calibratioFile.mat at
+the same directory.</pre><pre>If it is enabled from RSVPKeyboardParameters, it also conducts a simulation study to estimate the
+typing performances in a copyphrase scenario. For simulations, EEG scores are sampled and used from the
+conditional kernel density estimators.</pre><pre class="language-matlab">The <span class="string">inputs</span> <span class="string">of</span> <span class="string">the</span> <span class="string">function</span>
+   calibrationEnabled - (0/1) boolean <span class="string">flag</span> <span class="string">-</span> <span class="string">If</span> <span class="string">1:</span> <span class="string">result</span> <span class="string">of</span>
+                        calibration <span class="string">will</span> <span class="string">be</span> <span class="string">saved</span> <span class="string">in</span> <span class="string">a</span> <span class="string">mat</span> <span class="string">file.</span> <span class="string">If</span> <span class="string">0:</span>
+                        just <span class="string">calculate</span> <span class="string">and</span> <span class="string">display</span> <span class="string">AUC</span> <span class="string">without</span> <span class="string">saving</span>
+                        the <span class="string">results.</span> <span class="string">(Default is 1)</span>
+</pre><pre>     fileName and fileDirectory - session file name and directory, if it is not specified file
+     selection dialog pops-up to make user select a file</pre><pre class="language-matlab">The <span class="string">outputs</span> <span class="string">of</span> <span class="string">the</span> <span class="string">function</span>
+    featureExtractionProcessFlow - can be <span class="string">scoreStruct</span> <span class="string">or</span> <span class="string">empty</span> <span class="string">depends</span>
+                                  on <span class="string">the</span> <span class="string">calibrationEnabled</span> <span class="string">flag</span>
+</pre><pre>     simulationResults - structure containing the results of the simulation</pre><pre>           simulationResults.successfullyCompletedFlag - h+2 dimensional tensor containing
+           booleans indicating the successful completion (h is the number of hyperparameters to
+           search over). First dimension is for different Monte Carlo simulations, second
+           dimension is for different phrases, the rest of the dimensions are for the
+           hyperparameters being searched over.</pre><pre>           simulationResults.sequenceCounter - the number of sequences that was shown for each
+           phrase (same dimensionality as simulationResults.successfullyCompletedFlag)</pre><pre>           simulationResults.typingDuration - the estimated duration for each phrase (same dimensionality as simulationResults.successfullyCompletedFlag)</pre><pre>           simulationResults.targetPhraseLength - one dimensional vector containing the length of
+           phrases to be used in simulation.</pre><pre>     statistics2display - the structure containing the information to present in the offlineAnalysisScreen</pre><pre>           statistics2display.probabilityofSuccessfulPhraseCompletion - probability of successful
+           phrase completion for each scenario from the hyperparameters.</pre><pre>           statistics2display.meanTotalTypingDuration - mean total estimated typing duration
+           calculated for each scenario according to hyperparameters.</pre><pre>           statistics2display.meanNumberOfSequencesPerTarget - mean number of sequences per
+           target calculated for each scenario according to hyperparameters.</pre><pre>See also crossValidationObject, calculateAuc, kde1d ,scoreThreshold,...</pre><!--/introduction--><pre class="codeinput"><span class="keyword">function</span> [featureExtractionProcessFlow,simulationResults,statistics2display]=offlineAnalysis(calibrationEnabled,fileName,fileDirectory)
+<span class="keyword">if</span>(nargin&lt;1)
+    calibrationEnabled=1;
+<span class="keyword">end</span>
+
+
+
+addpath(genpath(<span class="string">'.'</span>));
+disp(<span class="string">'Loading data...'</span>);
+<span class="keyword">if</span>(~exist(<span class="string">'fileName'</span>,<span class="string">'var'</span>))
+   disp(<span class="string">'Please select the file to be used in offline analysis'</span>);
+   [fileName,fileDirectory]=uigetfile({<span class="string">'*.daq'</span>,<span class="string">'Raw data (.daq)'</span>;<span class="string">'*.mat'</span>,<span class="string">'Preprocessed Data (.mat)'</span>},<span class="string">'Please select the file to be used in offline analysis'</span>,<span class="string">'MultiSelect'</span>, <span class="string">'on'</span>,<span class="string">'Data\'</span>);
+<span class="keyword">end</span>
+filetype=fileName(end-2:end);
+<span class="keyword">switch</span> filetype
+    <span class="keyword">case</span> <span class="string">'daq'</span>
+        [rawData,triggerSignal,fs,channelNames,filterInfo,daqInfos,sessionFolder]=loadSessionData(fileName,fileDirectory);
+        disp(<span class="string">'Data is loaded'</span>);
+
+        disp(<span class="string">'Calculating AUC...'</span>);
+        initializeOfflineAnalysis
+
+        [afterFrontendFilterData,afterFrontendFilterTrigger]=applyFrontendFilter(rawData,triggerSignal,frontendFilteringFlag,frontendFilter);
+        clear <span class="string">rawData</span>
+
+        [~,completedSequenceCount,trialSampleTimeIndices,trialTargetness,trialLabels]=triggerDecoder(afterFrontendFilterTrigger,triggerPartitioner);
+        <span class="comment">%trialSampleTimeIndices=trialSampleTimeIndices+frontendFilter.groupDelay;</span>
+        clear <span class="string">triggerSignal</span>
+
+        trialSampleTimeIndices=[trialSampleTimeIndices size(afterFrontendFilterTrigger,1)];
+        <span class="keyword">if</span> (RSVPKeyboardParams.artifactFiltering.enabled)
+            artifactRemovalDataInput.electrodes=channelNames;
+            artifactFilteringParameters;
+            cleanEEG1=afterFrontendFilterData;
+            I=0:length(trialLabels)/completedSequenceCount:length(trialLabels);
+            eyeBlinkFlagAll=[];
+            <span class="keyword">for</span>  i=1:length(I)-1
+                <span class="comment">%                 tic</span>
+                artifactRemovalDataInput.data=afterFrontendFilterData(trialSampleTimeIndices(I(i)+1):(trialSampleTimeIndices(I(i+1)+1)-1),:);
+                triggerNdx=trialSampleTimeIndices((I(i)+1):I(i+1))-(trialSampleTimeIndices(I(i)+1)-1);
+                [cleanEEG,artifactInfoMat,eyeBlinkFlag] = artifactRemoval(artifactRemovalDataInput,fs,triggerNdx,artifactFilteringParams,length(channelNames));
+                eyeBlinkFlagAll=[eyeBlinkFlagAll eyeBlinkFlag];
+                cleanEEG1(trialSampleTimeIndices(I(i)+1):(trialSampleTimeIndices(I(i+1)+1)-1),:)=cleanEEG;
+                <span class="comment">%                 toc</span>
+            <span class="keyword">end</span>
+            afterFrontendFilterData=real(cleanEEG1);
+        <span class="keyword">end</span>
+        trialSampleTimeIndices=trialSampleTimeIndices(1:end-1);
+
+        wn=(0:(triggerPartitioner.windowLengthinSamples-1))';
+        trialData=permute(reshape(afterFrontendFilterData(bsxfun(@plus,trialSampleTimeIndices,wn),:),[length(wn),length(trialSampleTimeIndices),size(afterFrontendFilterData,2)]),[1 3 2]);
+        clear <span class="string">afterFrontendFilterData</span>
+
+        scores=crossValidationObject.apply(featureExtractionProcessFlow,trialData,trialTargetness);
+
+        [meanAuc,stdAuc]=calculateAuc(scores,trialTargetness,crossValidationObject.crossValidationPartitioning,crossValidationObject.K);
+
+        disp([<span class="string">'AUC calculation is completed. AUC is '</span>  num2str(meanAuc) <span class="string">'.'</span>]);
+
+
+        nontargetScores=scores(trialTargetness==0);
+        targetScores=scores(trialTargetness==1);
+        scoreStruct.conditionalpdf4targetKDE=kde1d(targetScores);
+        scoreStruct.conditionalpdf4nontargetKDE=kde1d(nontargetScores);
+        scoreStruct.probThresholdTarget=scoreThreshold(targetScores,scoreStruct.conditionalpdf4targetKDE.kernelWidth,0.99);
+        scoreStruct.probThresholdNontarget=scoreThreshold(nontargetScores,scoreStruct.conditionalpdf4nontargetKDE.kernelWidth,0.99);
+        scoreStruct.AUC=meanAuc;
+
+        <span class="keyword">if</span>(calibrationEnabled)
+            featureExtractionProcessFlow.learn(trialData,trialTargetness);
+            save([sessionFolder <span class="string">'\calibrationFile.mat'</span>],<span class="string">'featureExtractionProcessFlow'</span>,<span class="string">'scoreStruct'</span>);
+        <span class="keyword">else</span>
+            featureExtractionProcessFlow=[];
+        <span class="keyword">end</span>
+
+    <span class="keyword">case</span> <span class="string">'mat'</span>
+        load([fileDirectory <span class="string">'\'</span> fileName],<span class="string">'scoreStruct'</span>);
+        RSVPKeyboardParameters
+        imageStructs = xls2Structs(<span class="string">'imageList.xls'</span>);
+        featureExtractionProcessFlow=[];
+<span class="keyword">end</span>
+
+<span class="keyword">if</span>(RSVPKeyboardParams.Simulation.Enabled)
+    simulationResults=simulateTypingPerformance(scoreStruct,imageStructs,<span class="string">'CopyPhraseTask'</span>,RSVPKeyboardParams);
+    statistics2display=calculateSimulationResultStatistics(simulationResults);
+<span class="keyword">else</span>
+    simulationResults=[];
+    statistics2display=[];
+<span class="keyword">end</span>
+
+generateOfflineAnalysisScreen
+<span class="comment">%</span>
+<span class="comment">% % saveas(offlineAnalysisScreenfig,[fileName fileDirectory], 'fig')</span>
+<span class="comment">%                 close(offlineAnalysisScreenfig);</span>
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.14<br></p></div><!--
+##### SOURCE BEGIN #####
+%% [featureExtractionProcessFlow,simulationResults,statistics2display]=offlineAnalysis(calibrationEnabled,fileName,fileDirectory)
+%  offlineAnalysis(calibrationEnabled,sessionFilename) loads recorded data, calculates scores and
+%  AUC using cross validation, estimates probability density functions for target and non-target
+%  scores via kernel density estimation and their accepted thresholds. It calibrates the classifier
+%  which is contained in a processFlow object. It saves these information in calibratioFile.mat at
+%  the same directory.
+%
+%  If it is enabled from RSVPKeyboardParameters, it also conducts a simulation_dir study to estimate the
+%  typing performances in a copyphrase scenario. For simulations, EEG scores are sampled and used from the
+%  conditional kernel density estimators. 
+%
+%   The inputs of the function
+%      calibrationEnabled - (0/1) boolean flag - If 1: result of
+%                           calibration will be saved in a mat file. If 0: 
+%                           just calculate and display AUC without saving 
+%                           the results. (Default is 1)
+%      
+%       fileName and fileDirectory - session file name and directory, if it is not specified file
+%       selection dialog pops-up to make user select a file
+%
+%   The outputs of the function
+%       featureExtractionProcessFlow - can be scoreStruct or empty depends
+%                                     on the calibrationEnabled flag
+%
+%       simulationResults - structure containing the results of the simulation_dir
+%
+%             simulationResults.successfullyCompletedFlag - h+2 dimensional tensor containing
+%             booleans indicating the successful completion (h is the number of hyperparameters to
+%             search over). First dimension is for different Monte Carlo simulations, second
+%             dimension is for different phrases, the rest of the dimensions are for the
+%             hyperparameters being searched over.
+%
+%             simulationResults.sequenceCounter - the number of sequences that was shown for each
+%             phrase (same dimensionality as simulationResults.successfullyCompletedFlag)
+%
+%             simulationResults.typingDuration - the estimated duration for each phrase (same dimensionality as simulationResults.successfullyCompletedFlag)
+%
+%             simulationResults.targetPhraseLength - one dimensional vector containing the length of
+%             phrases to be used in simulation_dir.
+%             
+%       statistics2display - the structure containing the information to present in the offlineAnalysisScreen
+%               
+%             statistics2display.probabilityofSuccessfulPhraseCompletion - probability of successful
+%             phrase completion for each scenario from the hyperparameters.
+%
+%             statistics2display.meanTotalTypingDuration - mean total estimated typing duration
+%             calculated for each scenario according to hyperparameters.
+%
+%             statistics2display.meanNumberOfSequencesPerTarget - mean number of sequences per
+%             target calculated for each scenario according to hyperparameters.
+%
+%  See also crossValidationObject, calculateAuc, kde1d ,scoreThreshold,...
+%%
+function [featureExtractionProcessFlow,simulationResults,statistics2display]=offlineAnalysis(calibrationEnabled,fileName,fileDirectory)
+if(nargin<1)
+    calibrationEnabled=1;
+end
+
+
+
+addpath(genpath('.'));
+disp('Loading data...');
+if(~exist('fileName','var'))
+   disp('Please select the file to be used in offline analysis');
+   [fileName,fileDirectory]=uigetfile({'*.daq','Raw data (.daq)';'*.mat','Preprocessed Data (.mat)'},'Please select the file to be used in offline analysis','MultiSelect', 'on','Data\'); 
+end
+filetype=fileName(end-2:end);
+switch filetype
+    case 'daq'
+        [rawData,triggerSignal,fs,channelNames,filterInfo,daqInfos,sessionFolder]=loadSessionData(fileName,fileDirectory);
+        disp('Data is loaded');
+        
+        disp('Calculating AUC...');
+        initializeOfflineAnalysis
+        
+        [afterFrontendFilterData,afterFrontendFilterTrigger]=applyFrontendFilter(rawData,triggerSignal,frontendFilteringFlag,frontendFilter);
+        clear rawData
+        
+        [~,completedSequenceCount,trialSampleTimeIndices,trialTargetness,trialLabels]=triggerDecoder(afterFrontendFilterTrigger,triggerPartitioner);
+        %trialSampleTimeIndices=trialSampleTimeIndices+frontendFilter.groupDelay;
+        clear triggerSignal
+        
+        trialSampleTimeIndices=[trialSampleTimeIndices size(afterFrontendFilterTrigger,1)];
+        if (RSVPKeyboardParams.artifactFiltering.enabled)
+            artifactRemovalDataInput.electrodes=channelNames;
+            artifactFilteringParameters;
+            cleanEEG1=afterFrontendFilterData;
+            I=0:length(trialLabels)/completedSequenceCount:length(trialLabels);
+            eyeBlinkFlagAll=[];
+            for  i=1:length(I)-1
+                %                 tic
+                artifactRemovalDataInput.data=afterFrontendFilterData(trialSampleTimeIndices(I(i)+1):(trialSampleTimeIndices(I(i+1)+1)-1),:);
+                triggerNdx=trialSampleTimeIndices((I(i)+1):I(i+1))-(trialSampleTimeIndices(I(i)+1)-1);
+                [cleanEEG,artifactInfoMat,eyeBlinkFlag] = artifactRemoval(artifactRemovalDataInput,fs,triggerNdx,artifactFilteringParams,length(channelNames));
+                eyeBlinkFlagAll=[eyeBlinkFlagAll eyeBlinkFlag];
+                cleanEEG1(trialSampleTimeIndices(I(i)+1):(trialSampleTimeIndices(I(i+1)+1)-1),:)=cleanEEG;
+                %                 toc
+            end
+            afterFrontendFilterData=real(cleanEEG1);
+        end
+        trialSampleTimeIndices=trialSampleTimeIndices(1:end-1);
+        
+        wn=(0:(triggerPartitioner.windowLengthinSamples-1))';
+        trialData=permute(reshape(afterFrontendFilterData(bsxfun(@plus,trialSampleTimeIndices,wn),:),[length(wn),length(trialSampleTimeIndices),size(afterFrontendFilterData,2)]),[1 3 2]);
+        clear afterFrontendFilterData
+        
+        scores=crossValidationObject.apply(featureExtractionProcessFlow,trialData,trialTargetness);
+        
+        [meanAuc,stdAuc]=calculateAuc(scores,trialTargetness,crossValidationObject.crossValidationPartitioning,crossValidationObject.K);
+        
+        disp(['AUC calculation is completed. AUC is '  num2str(meanAuc) '.']);
+        
+        
+        nontargetScores=scores(trialTargetness==0);
+        targetScores=scores(trialTargetness==1);
+        scoreStruct.conditionalpdf4targetKDE=kde1d(targetScores);
+        scoreStruct.conditionalpdf4nontargetKDE=kde1d(nontargetScores);
+        scoreStruct.probThresholdTarget=scoreThreshold(targetScores,scoreStruct.conditionalpdf4targetKDE.kernelWidth,0.99);
+        scoreStruct.probThresholdNontarget=scoreThreshold(nontargetScores,scoreStruct.conditionalpdf4nontargetKDE.kernelWidth,0.99);
+        scoreStruct.AUC=meanAuc;
+        
+        if(calibrationEnabled)
+            featureExtractionProcessFlow.learn(trialData,trialTargetness);
+            save([sessionFolder '\calibrationFile.mat'],'featureExtractionProcessFlow','scoreStruct');
+        else
+            featureExtractionProcessFlow=[];
+        end
+        
+    case 'mat'
+        load([fileDirectory '\' fileName],'scoreStruct');
+        RSVPKeyboardParameters
+        imageStructs = xls2Structs('imageList.xls');
+        featureExtractionProcessFlow=[];
+end
+
+if(RSVPKeyboardParams.Simulation.Enabled)
+    simulationResults=simulateTypingPerformance(scoreStruct,imageStructs,'CopyPhraseTask',RSVPKeyboardParams);
+    statistics2display=calculateSimulationResultStatistics(simulationResults);
+else
+    simulationResults=[];
+    statistics2display=[];
+end
+
+generateOfflineAnalysisScreen
+% 
+% % saveas(offlineAnalysisScreenfig,[fileName fileDirectory], 'fig')
+%                 close(offlineAnalysisScreenfig);
+
+
+
+
+##### SOURCE END #####
+--></body></html>

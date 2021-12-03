@@ -1,0 +1,517 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>DecisionClass</title><meta name="generator" content="MATLAB 7.14"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2013-06-13"><meta name="DC.source" content="DecisionClass.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+
+  </style></head><body><div class="content"><h1>DecisionClass</h1><!--introduction--><p>DecisionClas is the class that handles decision making. It uses the features extracted from featureExtraction (results structure) and language model (via languageModelWrapper class), and makes decisions after applying the corresponding fusion. It also keeps track of decisions.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#2">Properties of the DecisionClass</a></li><li><a href="#3">Methods of DecisionClass</a></li><li><a href="#4">self = DecisionClass(languageModelWrapperObject,scoreStruct,decisionStoppingParams)</a></li><li><a href="#5">[tempDecision,epochEndedFlag]=makeDecision(self,results)</a></li><li><a href="#6">getLanguageModelProbabilities(self)</a></li><li><a href="#7">resetEpochList(self)</a></li><li><a href="#9">pInitializeCurrentInfo(self)</a></li><li><a href="#10">pFinalizeEpoch(self,decision)</a></li><li><a href="#11">pSetupDecisionStoppingCriteria(self,decisionStoppingParams)</a></li><li><a href="#12">pSaveCurrentInfo(self)</a></li><li><a href="#13">output=pReformatCurrentInfo2Save(self)</a></li><li><a href="#14">updateCurrentInfo(self,results)</a></li><li><a href="#15">addTrials(self,results)</a></li><li><a href="#16">computePosteriorProbs(self)</a></li><li><a href="#17">epochEndedFlag=checkDecisionStoppingCriteria(self)</a></li></ul></div><pre class="codeinput"><span class="keyword">classdef</span> DecisionClass &lt; handle
+</pre><h2>Properties of the DecisionClass<a name="2"></a></h2><pre class="codeinput">    properties
+        <span class="comment">% decisionHistory keeps a history of the decisions. It is a</span>
+        <span class="comment">% linkedList of currentInfo structure.</span>
+        decisionHistory
+
+        <span class="comment">% epochList is a linkedList of decisions. It has the same structure</span>
+        <span class="comment">% as decisionHistory, however it might be resetted in CopyTask if</span>
+        <span class="comment">% the phrase changes.</span>
+        epochList
+
+        <span class="comment">% decisionStoppingCriteria is a struct of criteria indicating when a</span>
+        <span class="comment">% decision should be made. It contains the fields of Typing from</span>
+        <span class="comment">% RSVPKeyboard parameters, e.g confidenceThreshold,</span>
+        <span class="comment">% confidenceFunction, maximumNumberofSequences.</span>
+        decisionStoppingCriteria
+
+        <span class="comment">% languageModelWrapperObject is a languageModelWrapper object handles</span>
+        <span class="comment">% access to the language model.</span>
+        languageModelWrapperObject
+
+        <span class="comment">% trialIDs is vector of symbol IDs which are allowed to be</span>
+        <span class="comment">% stimulus.</span>
+        trialIDs
+
+        <span class="comment">% scoreStruct - A calibration file containing the kernel density</span>
+        <span class="comment">% estimators.</span>
+        scoreStruct
+
+        <span class="comment">% currentInfo is a structure that keeps the current status. Examples</span>
+        <span class="comment">% of its fields are decided, LMprobs, posteriorProbs,</span>
+        <span class="comment">% localSequenceCounter.</span>
+        currentInfo
+    <span class="keyword">end</span>
+</pre><h2>Methods of DecisionClass<a name="3"></a></h2><pre class="codeinput">    methods
+</pre><h2>self = DecisionClass(languageModelWrapperObject,scoreStruct,decisionStoppingParams)<a name="4"></a></h2><p>Constructor for the DecisionClass. This constructor is called from RSVPKeyboardTask class to control the decision making. The inputs of the constructor   languageModelWrapperObject - languageModelWrapper object handles   access to the language model.</p><pre class="language-matlab">scoreStruct - A calibration <span class="string">file</span> <span class="string">containing</span> <span class="string">the</span> <span class="string">kernel</span> <span class="string">density</span>
+estimators.
+</pre><pre class="language-matlab">decisionStoppingCriteria - struct of <span class="string">criteria</span> <span class="string">of</span> <span class="string">when</span> <span class="string">a</span> <span class="string">decision</span>
+should <span class="string">be</span> <span class="string">made.</span> <span class="string">It</span> <span class="string">contains</span> <span class="string">the</span> <span class="string">fields</span> <span class="string">of</span> <span class="string">Typing</span> <span class="string">from</span>
+RSVPKeyboard <span class="string">parameters</span>, e.g confidenceThreshold,
+confidenceFunction, maximumNumberofSequences.
+</pre><pre class="codeinput">        <span class="keyword">function</span> self = DecisionClass(languageModelWrapperObject,scoreStruct,decisionStoppingParams)
+            self.languageModelWrapperObject=languageModelWrapperObject;
+            <span class="keyword">if</span>(exist(<span class="string">'scoreStruct'</span>,<span class="string">'var'</span>))
+                self.scoreStruct=scoreStruct;
+            <span class="keyword">else</span>
+                self.scoreStruct=[];
+            <span class="keyword">end</span>
+
+            self.trialIDs = self.languageModelWrapperObject.trialIDs;
+            self.pInitializeCurrentInfo();
+            self.pSetupDecisionStoppingCriteria(decisionStoppingParams);
+
+            self.decisionHistory=linkedList;
+            self.epochList=linkedList;
+        <span class="keyword">end</span>
+</pre><h2>[tempDecision,epochEndedFlag]=makeDecision(self,results)<a name="5"></a></h2><p>makeDecision updates the current status using the results structure, checks the decision making criteria, if the epoch ended it makes a decision.</p><p>Input:       results - a structure containing one dimensional features       corresponding to each trial</p><pre>     results.trialLabels - the labels of the trials (vector of
+     indices)</pre><pre>     results.decideNextFlag - a boolean indicator indicates if a
+     new sequence is expected to be shown.</pre><pre>     results.completedSequenceCount - the number of sequences
+     completed and contained in the results structure</pre><pre>     results.duration - the duration of the sequence(s)</pre><p>Outputs:       tempDecision - a structure containing the decision       information.</p><pre>     tempDecision.decided - index of the decided symbol or empty
+     if epoch didn't end.</pre><pre>     epochEndedFlag - boolean indicating if the epoch finished, i.e
+     a decision is made, or not.</pre><pre class="codeinput">        <span class="keyword">function</span> [tempDecision,epochEndedFlag]=makeDecision(self,results)
+            self.updateCurrentInfo(results);
+            epochEndedFlag=self.checkDecisionStoppingCriteria();
+            <span class="keyword">if</span>(epochEndedFlag)
+                tempDecision.posteriorProbs=self.currentInfo.posteriorProbs;
+                [~, tempDecision.decided]=max(tempDecision.posteriorProbs);
+
+                self.currentInfo.decided=tempDecision.decided;
+
+                self.pSaveCurrentInfo();
+
+                self.pFinalizeEpoch(tempDecision);
+
+                self.pInitializeCurrentInfo();
+            <span class="keyword">else</span>
+                tempDecision.posteriorProbs=self.currentInfo.posteriorProbs;
+                tempDecision.decided=[];
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+</pre><h2>getLanguageModelProbabilities(self)<a name="6"></a></h2><p>getLanguageModelProbabilities queries the language model probabilities via languageModelWrapper object and updates currentInfo property.</p><pre class="codeinput">        <span class="keyword">function</span> getLanguageModelProbabilities(self)
+            self.currentInfo.LMprobs = self.languageModelWrapperObject.getProbs();
+            self.currentInfo.posteriorProbs=self.currentInfo.LMprobs;
+        <span class="keyword">end</span>
+</pre><h2>resetEpochList(self)<a name="7"></a></h2><p>Resets the epochList property</p><pre class="codeinput">        <span class="keyword">function</span> resetEpochList(self)
+            self.epochList=linkedList;
+
+        <span class="keyword">end</span>
+</pre><pre class="codeinput">    <span class="keyword">end</span>
+
+    methods (Access = private)
+</pre><h2>pInitializeCurrentInfo(self)<a name="9"></a></h2><p>Initializes the epoch's information container, currentInfo property, at the beginning of an epoch.</p><pre class="codeinput">        <span class="keyword">function</span> pInitializeCurrentInfo(self)
+            self.currentInfo.localSequenceCounter = 0;
+            self.getLanguageModelProbabilities();
+            self.currentInfo.decided=[];
+            self.currentInfo.trialLogCondpdf4Target(length(self.trialIDs))=linkedList;
+            self.currentInfo.trialLogCondpdf4Nontarget(length(self.trialIDs))=linkedList;
+            self.currentInfo.repetitionCounts=zeros(length(self.trialIDs),1);
+        <span class="keyword">end</span>
+</pre><h2>pFinalizeEpoch(self,decision)<a name="10"></a></h2><p>After an epoch ends, it updates the language model and clears the linkedList objects.</p><pre class="codeinput">        <span class="keyword">function</span> pFinalizeEpoch(self,decision)
+            <span class="keyword">for</span>(symbolIndex=1:length(self.trialIDs))
+                self.currentInfo.trialLogCondpdf4Target(symbolIndex).empty();
+                self.currentInfo.trialLogCondpdf4Nontarget(symbolIndex).empty();
+            <span class="keyword">end</span>
+            self.languageModelWrapperObject.update(decision);
+        <span class="keyword">end</span>
+</pre><h2>pSetupDecisionStoppingCriteria(self,decisionStoppingParams)<a name="11"></a></h2><p>Initializes decision stopping criteria according to the input structure which should be passed from RSVPKeyboardParams.Typing</p><pre class="codeinput">        <span class="keyword">function</span> pSetupDecisionStoppingCriteria(self,decisionStoppingParams)
+            self.decisionStoppingCriteria=decisionStoppingParams;
+        <span class="keyword">end</span>
+</pre><h2>pSaveCurrentInfo(self)<a name="12"></a></h2><p>Reformats currentInfo and updates corresponding histories. (decisionHistory an epocList)</p><pre class="codeinput">        <span class="keyword">function</span> pSaveCurrentInfo(self)
+            output=self.pReformatCurrentInfo2Save();
+            self.decisionHistory.insertEnd(output);
+            self.epochList.insertEnd(output);
+        <span class="keyword">end</span>
+</pre><h2>output=pReformatCurrentInfo2Save(self)<a name="13"></a></h2><p>Reformats currentInfo by converting linkedList objects to cell vectors.</p><p>output - structure containing the same information as currentInfo, with linkedLists replaced by cell vectors.</p><pre class="codeinput">        <span class="keyword">function</span> output=pReformatCurrentInfo2Save(self)
+            output = self.currentInfo;
+            output.trialLogCondpdf4Target=cell(length(self.trialIDs),1);
+            output.trialLogCondpdf4Nontarget=cell(length(self.trialIDs),1);
+            <span class="keyword">for</span>(symbolIndex=1:length(self.trialIDs))
+                output.trialLogCondpdf4Target{symbolIndex} = cell2mat(self.currentInfo.trialLogCondpdf4Target(symbolIndex).toCell);
+                output.trialLogCondpdf4Nontarget{symbolIndex} = cell2mat(self.currentInfo.trialLogCondpdf4Nontarget(symbolIndex).toCell);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+</pre><h2>updateCurrentInfo(self,results)<a name="14"></a></h2><p>Using the scores obtained from ERP classification, the probabilistic information is updated.</p><p>Input:       results - a structure containing one dimensional features       corresponding to each trial</p><pre>     results.trialLabels - the labels of the trials (vector of
+     indices)</pre><pre>     results.decideNextFlag - a boolean indicator indicates if a
+     new sequence is expected to be shown.</pre><pre>     results.completedSequenceCount - the number of sequences
+     completed and contained in the results structure</pre><pre>     results.duration - the duration of the sequence(s)</pre><pre class="codeinput">        <span class="keyword">function</span> updateCurrentInfo(self,results)
+            <span class="keyword">if</span>(~isempty(self.scoreStruct))
+                self.addTrials(results);
+            <span class="keyword">end</span>
+            self.computePosteriorProbs();
+        <span class="keyword">end</span>
+</pre><h2>addTrials(self,results)<a name="15"></a></h2><p>Using the scores in results structure, conditional pdf estimate history is updated.</p><pre class="codeinput">        <span class="keyword">function</span> addTrials(self,results)
+            <span class="keyword">if</span>(results.completedSequenceCount&gt;0)
+                <span class="keyword">for</span>(trialIndex=1:length(results.trialLabels))
+                    currentTrialID=results.trialLabels(trialIndex);
+
+                    pT=self.scoreStruct.conditionalpdf4targetKDE.probs(results.scores(trialIndex));
+                    pN=self.scoreStruct.conditionalpdf4nontargetKDE.probs(results.scores(trialIndex));
+                    <span class="keyword">if</span>(results.trialLabels(trialIndex)&lt;=length(self.trialIDs))
+                        self.currentInfo.repetitionCounts(currentTrialID)=self.currentInfo.repetitionCounts(currentTrialID)+1;
+                        <span class="keyword">if</span>(self.scoreStruct.probThresholdTarget &lt; pT || self.scoreStruct.probThresholdNontarget &lt; pN)
+
+                            self.currentInfo.trialLogCondpdf4Target(currentTrialID).insertEnd(log(pT));
+                            self.currentInfo.trialLogCondpdf4Nontarget(currentTrialID).insertEnd(log(pN));
+                        <span class="keyword">end</span>
+                    <span class="keyword">end</span>
+                <span class="keyword">end</span>
+                self.currentInfo.localSequenceCounter=self.currentInfo.localSequenceCounter+results.completedSequenceCount;
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+</pre><h2>computePosteriorProbs(self)<a name="16"></a></h2><p>Using the current conditional pdf estimate history and the language model probabilities, the fusion is made and posterior probabilities are calculated. The result is stored in currentInfo property.</p><pre class="codeinput">        <span class="keyword">function</span> computePosteriorProbs(self)
+            logP=zeros(length(self.trialIDs),1);
+            <span class="keyword">for</span>(symbolIndex=1:length(self.trialIDs))
+                logP(symbolIndex)=sum(cell2mat(self.currentInfo.trialLogCondpdf4Target(symbolIndex).toCell)-cell2mat(self.currentInfo.trialLogCondpdf4Nontarget(symbolIndex).toCell))+<span class="keyword">...</span>
+                    log(self.currentInfo.LMprobs(symbolIndex))-log(1-self.currentInfo.LMprobs(symbolIndex));
+            <span class="keyword">end</span>
+            logP(logP==Inf)=log(realmax(<span class="string">'double'</span>));
+
+            posteriorProbs=exp(logP-max(logP));
+            self.currentInfo.posteriorProbs=posteriorProbs/sum(posteriorProbs);
+        <span class="keyword">end</span>
+</pre><h2>epochEndedFlag=checkDecisionStoppingCriteria(self)<a name="17"></a></h2><p>Check if the epoch ended, by checking decision stoppping criteria with the currentInfo.</p><p>Output:       epochEndedFlag - boolean indicating if the epoch finished, i.e       a decision is made, or not.</p><pre class="codeinput">        <span class="keyword">function</span> epochEndedFlag=checkDecisionStoppingCriteria(self)
+            epochEndedFlag=false;
+
+            epochEndedFlag = epochEndedFlag | (self.currentInfo.localSequenceCounter &gt;= self.decisionStoppingCriteria.MaximumNumberofSequences);
+
+            epochEndedFlag = epochEndedFlag | (feval(self.decisionStoppingCriteria.ConfidenceFunction,self.currentInfo.posteriorProbs)&gt;self.decisionStoppingCriteria.ConfidenceThreshold);
+
+            epochEndedFlag = epochEndedFlag &amp; (self.currentInfo.localSequenceCounter &gt;= self.decisionStoppingCriteria.MinimumNumberofSequences);
+        <span class="keyword">end</span>
+</pre><pre class="codeinput">    <span class="keyword">end</span>
+</pre><pre class="codeinput"><span class="keyword">end</span>
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.14<br></p></div><!--
+##### SOURCE BEGIN #####
+%% DecisionClass
+% DecisionClas is the class that handles decision making. It uses the
+% features extracted from featureExtraction (results structure) and
+% language model (via languageModelWrapper class), and makes decisions
+% after applying the corresponding fusion. It also keeps track of
+% decisions.
+%%
+
+classdef DecisionClass < handle
+    %% Properties of the DecisionClass
+    properties
+        % decisionHistory keeps a history of the decisions. It is a
+        % linkedList of currentInfo structure.
+        decisionHistory
+        
+        % epochList is a linkedList of decisions. It has the same structure
+        % as decisionHistory, however it might be resetted in CopyTask if
+        % the phrase changes.
+        epochList
+        
+        % decisionStoppingCriteria is a struct of criteria indicating when a
+        % decision should be made. It contains the fields of Typing from
+        % RSVPKeyboard parameters, e.g confidenceThreshold,
+        % confidenceFunction, maximumNumberofSequences.
+        decisionStoppingCriteria
+        
+        % languageModelWrapperObject is a languageModelWrapper object handles
+        % access to the language model.
+        languageModelWrapperObject
+        
+        % trialIDs is vector of symbol IDs which are allowed to be
+        % stimulus.
+        trialIDs
+        
+        % scoreStruct - A calibration file containing the kernel density
+        % estimators. 
+        scoreStruct
+        
+        % currentInfo is a structure that keeps the current status. Examples
+        % of its fields are decided, LMprobs, posteriorProbs,
+        % localSequenceCounter.
+        currentInfo
+    end
+    
+    %% Methods of DecisionClass
+    methods
+        %% self = DecisionClass(languageModelWrapperObject,scoreStruct,decisionStoppingParams)
+        % Constructor for the DecisionClass. This constructor is called
+        % from RSVPKeyboardTask class to control the decision making.
+        % The inputs of the constructor
+        %   languageModelWrapperObject - languageModelWrapper object handles
+        %   access to the language model.
+        %
+        %   scoreStruct - A calibration file containing the kernel density
+        %   estimators. 
+        %
+        %   decisionStoppingCriteria - struct of criteria of when a decision 
+        %   should be made. It contains the fields of Typing from
+        %   RSVPKeyboard parameters, e.g confidenceThreshold,
+        %   confidenceFunction, maximumNumberofSequences.
+        function self = DecisionClass(languageModelWrapperObject,scoreStruct,decisionStoppingParams)
+            self.languageModelWrapperObject=languageModelWrapperObject;
+            if(exist('scoreStruct','var'))
+                self.scoreStruct=scoreStruct;
+            else
+                self.scoreStruct=[];
+            end
+            
+            self.trialIDs = self.languageModelWrapperObject.trialIDs;
+            self.pInitializeCurrentInfo(); 
+            self.pSetupDecisionStoppingCriteria(decisionStoppingParams);
+            
+            self.decisionHistory=linkedList;
+            self.epochList=linkedList;
+        end
+        
+        %% [tempDecision,epochEndedFlag]=makeDecision(self,results)
+        % makeDecision updates the current status using the results structure,
+        % checks the decision making criteria, if the epoch ended it 
+        % makes a decision.
+        %
+        % Input:
+        %       results - a structure containing one dimensional features
+        %       corresponding to each trial
+        %
+        %       results.trialLabels - the labels of the trials (vector of
+        %       indices)
+        %
+        %       results.decideNextFlag - a boolean indicator indicates if a
+        %       new sequence is expected to be shown.
+        %
+        %       results.completedSequenceCount - the number of sequences
+        %       completed and contained in the results structure
+        %
+        %       results.duration - the duration of the sequence(s)
+        %
+        % Outputs:
+        %       tempDecision - a structure containing the decision
+        %       information.
+        %       
+        %       tempDecision.decided - index of the decided symbol or empty
+        %       if epoch didn't end.
+        %
+        %       epochEndedFlag - boolean indicating if the epoch finished, i.e
+        %       a decision is made, or not.
+        %
+        function [tempDecision,epochEndedFlag]=makeDecision(self,results)
+            self.updateCurrentInfo(results);
+            epochEndedFlag=self.checkDecisionStoppingCriteria();
+            if(epochEndedFlag)
+                tempDecision.posteriorProbs=self.currentInfo.posteriorProbs;
+                [~, tempDecision.decided]=max(tempDecision.posteriorProbs);
+                
+                self.currentInfo.decided=tempDecision.decided;
+                
+                self.pSaveCurrentInfo();
+                
+                self.pFinalizeEpoch(tempDecision);
+                
+                self.pInitializeCurrentInfo();
+            else
+                tempDecision.posteriorProbs=self.currentInfo.posteriorProbs;
+                tempDecision.decided=[];
+            end
+        end
+        
+        %% getLanguageModelProbabilities(self)
+        % getLanguageModelProbabilities queries the language model
+        % probabilities via languageModelWrapper object and updates
+        % currentInfo property.
+        function getLanguageModelProbabilities(self)
+            self.currentInfo.LMprobs = self.languageModelWrapperObject.getProbs();
+            self.currentInfo.posteriorProbs=self.currentInfo.LMprobs;
+        end
+        
+        %% resetEpochList(self)
+        % Resets the epochList property
+        function resetEpochList(self)
+            self.epochList=linkedList;
+            
+        end
+    end
+    
+    methods (Access = private)
+        %% pInitializeCurrentInfo(self)
+        % Initializes the epoch's information container, currentInfo
+        % property, at the beginning of an epoch.
+        function pInitializeCurrentInfo(self)
+            self.currentInfo.localSequenceCounter = 0;
+            self.getLanguageModelProbabilities();
+            self.currentInfo.decided=[];
+            self.currentInfo.trialLogCondpdf4Target(length(self.trialIDs))=linkedList;
+            self.currentInfo.trialLogCondpdf4Nontarget(length(self.trialIDs))=linkedList;
+            self.currentInfo.repetitionCounts=zeros(length(self.trialIDs),1);
+        end
+        
+        %% pFinalizeEpoch(self,decision)
+        % After an epoch ends, it updates the language model and clears the
+        % linkedList objects.
+        function pFinalizeEpoch(self,decision)
+            for(symbolIndex=1:length(self.trialIDs))
+                self.currentInfo.trialLogCondpdf4Target(symbolIndex).empty();
+                self.currentInfo.trialLogCondpdf4Nontarget(symbolIndex).empty();
+            end
+            self.languageModelWrapperObject.update(decision);
+        end
+        
+        %% pSetupDecisionStoppingCriteria(self,decisionStoppingParams)
+        % Initializes decision stopping criteria according to the input
+        % structure which should be passed from RSVPKeyboardParams.Typing
+        function pSetupDecisionStoppingCriteria(self,decisionStoppingParams)
+            self.decisionStoppingCriteria=decisionStoppingParams;
+        end
+        
+        %% pSaveCurrentInfo(self)
+        % Reformats currentInfo and updates corresponding histories.
+        % (decisionHistory an epocList)
+        function pSaveCurrentInfo(self)
+            output=self.pReformatCurrentInfo2Save();
+            self.decisionHistory.insertEnd(output);
+            self.epochList.insertEnd(output);
+        end
+        
+        %% output=pReformatCurrentInfo2Save(self)
+        % Reformats currentInfo by converting linkedList objects to cell
+        % vectors.
+        %
+        % output - structure containing the same information as
+        % currentInfo, with linkedLists replaced by cell vectors.
+        function output=pReformatCurrentInfo2Save(self)
+            output = self.currentInfo;
+            output.trialLogCondpdf4Target=cell(length(self.trialIDs),1);
+            output.trialLogCondpdf4Nontarget=cell(length(self.trialIDs),1);
+            for(symbolIndex=1:length(self.trialIDs))
+                output.trialLogCondpdf4Target{symbolIndex} = cell2mat(self.currentInfo.trialLogCondpdf4Target(symbolIndex).toCell);
+                output.trialLogCondpdf4Nontarget{symbolIndex} = cell2mat(self.currentInfo.trialLogCondpdf4Nontarget(symbolIndex).toCell);
+            end
+        end
+        
+        %% updateCurrentInfo(self,results)
+        % Using the scores obtained from ERP classification, the
+        % probabilistic information is updated.
+        %
+        % Input:
+        %       results - a structure containing one dimensional features
+        %       corresponding to each trial
+        %
+        %       results.trialLabels - the labels of the trials (vector of
+        %       indices)
+        %
+        %       results.decideNextFlag - a boolean indicator indicates if a
+        %       new sequence is expected to be shown.
+        %
+        %       results.completedSequenceCount - the number of sequences
+        %       completed and contained in the results structure
+        %
+        %       results.duration - the duration of the sequence(s)
+        function updateCurrentInfo(self,results)
+            if(~isempty(self.scoreStruct))
+                self.addTrials(results);
+            end
+            self.computePosteriorProbs();
+        end
+        
+        %% addTrials(self,results)
+        % Using the scores in results structure, conditional pdf estimate
+        % history is updated.
+        function addTrials(self,results)
+            if(results.completedSequenceCount>0)
+                for(trialIndex=1:length(results.trialLabels))
+                    currentTrialID=results.trialLabels(trialIndex);
+                    
+                    pT=self.scoreStruct.conditionalpdf4targetKDE.probs(results.scores(trialIndex));
+                    pN=self.scoreStruct.conditionalpdf4nontargetKDE.probs(results.scores(trialIndex));
+                    if(results.trialLabels(trialIndex)<=length(self.trialIDs))
+                        self.currentInfo.repetitionCounts(currentTrialID)=self.currentInfo.repetitionCounts(currentTrialID)+1;
+                        if(self.scoreStruct.probThresholdTarget < pT || self.scoreStruct.probThresholdNontarget < pN)
+                            
+                            self.currentInfo.trialLogCondpdf4Target(currentTrialID).insertEnd(log(pT));
+                            self.currentInfo.trialLogCondpdf4Nontarget(currentTrialID).insertEnd(log(pN));
+                        end
+                    end
+                end
+                self.currentInfo.localSequenceCounter=self.currentInfo.localSequenceCounter+results.completedSequenceCount;
+            end
+        end
+        
+        %% computePosteriorProbs(self)
+        % Using the current conditional pdf estimate history and the
+        % language model probabilities, the fusion is made and posterior
+        % probabilities are calculated. The result is stored in currentInfo
+        % property.
+        function computePosteriorProbs(self)
+            logP=zeros(length(self.trialIDs),1);
+            for(symbolIndex=1:length(self.trialIDs))
+                logP(symbolIndex)=sum(cell2mat(self.currentInfo.trialLogCondpdf4Target(symbolIndex).toCell)-cell2mat(self.currentInfo.trialLogCondpdf4Nontarget(symbolIndex).toCell))+...
+                    log(self.currentInfo.LMprobs(symbolIndex))-log(1-self.currentInfo.LMprobs(symbolIndex));
+            end
+            logP(logP==Inf)=log(realmax('double'));
+            
+            posteriorProbs=exp(logP-max(logP));
+            self.currentInfo.posteriorProbs=posteriorProbs/sum(posteriorProbs);
+        end
+        
+        %% epochEndedFlag=checkDecisionStoppingCriteria(self)
+        % Check if the epoch ended, by checking decision stoppping criteria
+        % with the currentInfo.
+        % 
+        % Output:
+        %       epochEndedFlag - boolean indicating if the epoch finished, i.e
+        %       a decision is made, or not.
+        function epochEndedFlag=checkDecisionStoppingCriteria(self)
+            epochEndedFlag=false;
+            
+            epochEndedFlag = epochEndedFlag | (self.currentInfo.localSequenceCounter >= self.decisionStoppingCriteria.MaximumNumberofSequences);
+            
+            epochEndedFlag = epochEndedFlag | (feval(self.decisionStoppingCriteria.ConfidenceFunction,self.currentInfo.posteriorProbs)>self.decisionStoppingCriteria.ConfidenceThreshold);
+            
+            epochEndedFlag = epochEndedFlag & (self.currentInfo.localSequenceCounter >= self.decisionStoppingCriteria.MinimumNumberofSequences);
+        end
+    end   
+end
+##### SOURCE END #####
+--></body></html>

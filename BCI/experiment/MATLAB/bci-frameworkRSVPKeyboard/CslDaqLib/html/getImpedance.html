@@ -1,0 +1,189 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>getImpedance</title><meta name="generator" content="MATLAB 7.14"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2013-06-13"><meta name="DC.source" content="getImpedance.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">[success,impedances]=getImpedance(amplifierStruct)</a></li><li><a href="#3">Retrieves the impedance value for each channel for each amplifier.</a></li><li><a href="#4">Acquiring the non-trigger hardware channel indices for each channel.</a></li><li><a href="#5">Setting the mode to impedance and queries the impedance values.</a></li><li><a href="#6">Selecting the impedance values corresponding to connected channels and the reference channel</a></li><li><a href="#7">Setting up the hardware channel indices.</a></li><li><a href="#8">Setting up the channel locations.</a></li></ul></div><h2>[success,impedances]=getImpedance(amplifierStruct)<a name="1"></a></h2><pre class="codeinput"><span class="comment">%getImpedance(amplifierStruct) fetches the impedance information from the amplifier(s) and</span>
+<span class="comment">%   returns the it. Each call returns the acquires one impedance value for</span>
+<span class="comment">%   each channel including the reference channels. Currently, there is no option of</span>
+<span class="comment">%   querying the impedance value for a subset of channels.</span>
+<span class="comment">%</span>
+<span class="comment">%   [success,impedances]=getImpedance(amplifierStruct)</span>
+<span class="comment">%</span>
+<span class="comment">%   The inputs of the function</span>
+<span class="comment">%          amplifierStruct - A structure that contains the amplifier</span>
+<span class="comment">%          information.</span>
+<span class="comment">%</span>
+<span class="comment">%   The outputs of the function</span>
+<span class="comment">%          success (0/1) - a flag to show the success of the operation</span>
+<span class="comment">%</span>
+<span class="comment">%           impedances - a cell vector containing a structure corresponding</span>
+<span class="comment">%           to each amplifier as its elements. The structures have the</span>
+<span class="comment">%           following fields,</span>
+<span class="comment">%</span>
+<span class="comment">%               * impedances{ampIndex}.value - An Mx1 vector (double) containing the</span>
+<span class="comment">%               impedance value of non-trigger channels and 4</span>
+<span class="comment">%               reference channels for amplifier with the index ampIndex, where M is the number of channels including the references.</span>
+<span class="comment">%               * impedances{ampIndex}.hwChannels - An Mx1 vector (integer in [1,20])</span>
+<span class="comment">%               containing the list of hardware channel connections, where</span>
+<span class="comment">%               M is the number of channels including the references.</span>
+<span class="comment">%               Channel 17-20 correspond to reference channels.</span>
+<span class="comment">%               * impedances{ampIndex}.hwChannels - An Mx1 cell array</span>
+<span class="comment">%               containing the electrode locations corresponding to each channel as strings, where</span>
+<span class="comment">%               M is the number of channels including the references.</span>
+<span class="comment">%</span>
+<span class="comment">%   See also getAmpsData, startAmps, stopAmps</span>
+</pre><pre class="codeinput"><span class="keyword">function</span> [success,impedances]=getImpedance(amplifierStruct)
+
+<span class="keyword">try</span>
+</pre><h2>Retrieves the impedance value for each channel for each amplifier.<a name="3"></a></h2><pre class="codeinput">    impedances=cell(amplifierStruct.numberOfAmplifiers,1);
+    <span class="keyword">for</span> ampIndex = 1: amplifierStruct.numberOfAmplifiers
+</pre><h2>Acquiring the non-trigger hardware channel indices for each channel.<a name="4"></a></h2><pre class="codeinput">        tempM=amplifierStruct.ai(ampIndex).Channel.HwChannel;
+        <span class="comment">%Handling the single channel case</span>
+        <span class="keyword">if</span>(iscell(tempM))
+            hwChannels=cell2mat(tempM);
+        <span class="keyword">else</span>
+            hwChannels=tempM;
+        <span class="keyword">end</span>
+        analogChannels=hwChannels&lt;=16;
+        hwChannels=hwChannels(analogChannels);
+</pre><h2>Setting the mode to impedance and queries the impedance values.<a name="5"></a></h2><pre class="codeinput">        set(amplifierStruct.ai(ampIndex),<span class="string">'Mode'</span>,<span class="string">'Impedance'</span>);
+        z = gUSBampImpedance(amplifierStruct.ai(ampIndex).DeviceSerial);
+</pre><h2>Selecting the impedance values corresponding to connected channels and the reference channel<a name="6"></a></h2><pre class="codeinput">        impedances{ampIndex}.value=[z(hwChannels);z(17:20)];
+</pre><h2>Setting up the hardware channel indices.<a name="7"></a></h2><pre class="codeinput">        impedances{ampIndex}.hwChannels=[hwChannels;(17:20)'];
+</pre><h2>Setting up the channel locations.<a name="8"></a></h2><pre class="codeinput">        temp=amplifierStruct.ai(ampIndex).Channel.ChannelName;
+        impedances{ampIndex}.locations=[temp(analogChannels);{<span class="string">'Ref1'</span>;<span class="string">'Ref2'</span>;<span class="string">'Ref3'</span>;<span class="string">'Ref4'</span>}];
+</pre><pre class="codeinput">    <span class="keyword">end</span>
+    success = 1;
+</pre><pre class="codeinput"><span class="keyword">catch</span> ME
+    logError(ME);
+    success=0;
+    impedances=[];
+<span class="keyword">end</span>
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.14<br></p></div><!--
+##### SOURCE BEGIN #####
+%% [success,impedances]=getImpedance(amplifierStruct)
+%getImpedance(amplifierStruct) fetches the impedance information from the amplifier(s) and
+%   returns the it. Each call returns the acquires one impedance value for
+%   each channel including the reference channels. Currently, there is no option of
+%   querying the impedance value for a subset of channels.
+%
+%   [success,impedances]=getImpedance(amplifierStruct)
+%
+%   The inputs of the function
+%          amplifierStruct - A structure that contains the amplifier
+%          information.
+%
+%   The outputs of the function
+%          success (0/1) - a flag to show the success of the operation
+%          
+%           impedances - a cell vector containing a structure corresponding
+%           to each amplifier as its elements. The structures have the
+%           following fields,
+%
+%               * impedances{ampIndex}.value - An Mx1 vector (double) containing the
+%               impedance value of non-trigger channels and 4
+%               reference channels for amplifier with the index ampIndex, where M is the number of channels including the references. 
+%               * impedances{ampIndex}.hwChannels - An Mx1 vector (integer in [1,20])
+%               containing the list of hardware channel connections, where
+%               M is the number of channels including the references.
+%               Channel 17-20 correspond to reference channels.
+%               * impedances{ampIndex}.hwChannels - An Mx1 cell array
+%               containing the electrode locations corresponding to each channel as strings, where
+%               M is the number of channels including the references.
+%
+%   See also getAmpsData, startAmps, stopAmps
+%%
+
+function [success,impedances]=getImpedance(amplifierStruct)
+
+try
+    %% Retrieves the impedance value for each channel for each amplifier.
+    impedances=cell(amplifierStruct.numberOfAmplifiers,1);
+    for ampIndex = 1: amplifierStruct.numberOfAmplifiers
+        %% Acquiring the non-trigger hardware channel indices for each channel.
+        tempM=amplifierStruct.ai(ampIndex).Channel.HwChannel;
+        %Handling the single channel case
+        if(iscell(tempM))
+            hwChannels=cell2mat(tempM);
+        else
+            hwChannels=tempM;
+        end
+        analogChannels=hwChannels<=16;
+        hwChannels=hwChannels(analogChannels);
+        
+        %% Setting the mode to impedance and queries the impedance values.
+        set(amplifierStruct.ai(ampIndex),'Mode','Impedance');
+        z = gUSBampImpedance(amplifierStruct.ai(ampIndex).DeviceSerial);
+        
+        %% Selecting the impedance values corresponding to connected channels and the reference channel
+        impedances{ampIndex}.value=[z(hwChannels);z(17:20)];
+        
+        %% Setting up the hardware channel indices.
+        impedances{ampIndex}.hwChannels=[hwChannels;(17:20)'];
+        
+        %% Setting up the channel locations.
+        temp=amplifierStruct.ai(ampIndex).Channel.ChannelName;
+        impedances{ampIndex}.locations=[temp(analogChannels);{'Ref1';'Ref2';'Ref3';'Ref4'}];
+    end
+    success = 1;
+catch ME
+    logError(ME);
+    success=0;
+    impedances=[];
+end
+##### SOURCE END #####
+--></body></html>

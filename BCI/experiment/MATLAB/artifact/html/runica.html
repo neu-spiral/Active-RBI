@@ -1,0 +1,3074 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>runica</title><meta name="generator" content="MATLAB 7.14"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2013-06-13"><meta name="DC.source" content="runica.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#3">Compute ICA Weights</a></li><li><a href="#5">promote data block (only) to double to keep u and weights double</a></li><li><a href="#7">Compute ICA Weights</a></li><li><a href="#8">Compute ICA Weights</a></li><li><a href="#9">Compute ICA Weights</a></li><li><a href="#10">Finalize Computed Data for Output</a></li></ul></div><pre class="codeinput"><span class="comment">% runica() - Perform Independent Component Analysis (ICA) decomposition</span>
+<span class="comment">%            of input data using the logistic infomax ICA algorithm of</span>
+<span class="comment">%            Bell &amp; Sejnowski (1995) with the natural gradient feature</span>
+<span class="comment">%            of Amari, Cichocki &amp; Yang, or optionally the extended-ICA</span>
+<span class="comment">%            algorithm of Lee, Girolami &amp; Sejnowski, with optional PCA</span>
+<span class="comment">%            dimension reduction. Annealing based on weight changes is</span>
+<span class="comment">%            used to automate the separation process.</span>
+<span class="comment">% Usage:</span>
+<span class="comment">%         &gt;&gt; [weights,sphere] = runica(data); % train using defaults</span>
+<span class="comment">%    else</span>
+<span class="comment">%         &gt;&gt; [weights,sphere,compvars,bias,signs,lrates,activations] ...</span>
+<span class="comment">%                             = runica(data,'Key1',Value1',...);</span>
+<span class="comment">% Input:</span>
+<span class="comment">%    data     = input data (chans,frames*epochs).</span>
+<span class="comment">%               Note that if data consists of multiple discontinuous epochs,</span>
+<span class="comment">%               each epoch should be separately baseline-zero'd using</span>
+<span class="comment">%                  &gt;&gt; data = rmbase(data,frames,basevector);</span>
+<span class="comment">%</span>
+<span class="comment">% Optional keywords [argument]:</span>
+<span class="comment">% 'extended'  = [N] perform tanh() "extended-ICA" with sign estimation</span>
+<span class="comment">%               N training blocks. If N &gt; 0, automatically estimate the</span>
+<span class="comment">%               number of sub-Gaussian sources. If N &lt; 0, fix number of</span>
+<span class="comment">%               sub-Gaussian comps to -N [faster than N&gt;0] (default|0 -&gt; off)</span>
+<span class="comment">% 'pca'       = [N] decompose a principal component     (default -&gt; 0=off)</span>
+<span class="comment">%               subspace of the data. Value is the number of PCs to retain.</span>
+<span class="comment">% 'sphering'  = ['on'/'off'] flag sphering of data      (default -&gt; 'on')</span>
+<span class="comment">% 'weights'   = [W] initial weight matrix               (default -&gt; eye())</span>
+<span class="comment">%                            (Note: if 'sphering' 'off', default -&gt; spher())</span>
+<span class="comment">% 'lrate'     = [rate] initial ICA learning rate (&lt;&lt; 1) (default -&gt; heuristic)</span>
+<span class="comment">% 'block'     = [N] ICA block size (&lt;&lt; datalength)      (default -&gt; heuristic)</span>
+<span class="comment">% 'anneal'    = annealing constant (0,1] (defaults -&gt; 0.90, or 0.98, extended)</span>
+<span class="comment">%                         controls speed of convergence</span>
+<span class="comment">% 'annealdeg' = [N] degrees weight change for annealing (default -&gt; 70)</span>
+<span class="comment">% 'stop'      = [f] stop training when weight-change &lt; this (default -&gt; 1e-6</span>
+<span class="comment">%               if less than 33 channel and 1E-7 otherwise)</span>
+<span class="comment">% 'maxsteps'  = [N] max number of ICA training steps    (default -&gt; 512)</span>
+<span class="comment">% 'bias'      = ['on'/'off'] perform bias adjustment    (default -&gt; 'on')</span>
+<span class="comment">% 'momentum'  = [0&lt;f&lt;1] training momentum               (default -&gt; 0)</span>
+<span class="comment">% 'specgram'  = [srate loHz hiHz frames winframes] decompose a complex time/frequency</span>
+<span class="comment">%               transform of the data - though not optimally. (Note: winframes must</span>
+<span class="comment">%               divide frames) (defaults [srate 0 srate/2 size(data,2) size(data,2)])</span>
+<span class="comment">% 'posact'    = make all component activations net-positive(default 'off'}</span>
+<span class="comment">%               Requires time and memory; posact() may be applied separately.</span>
+<span class="comment">% 'verbose'   = give ascii messages ('on'/'off')        (default -&gt; 'on')</span>
+<span class="comment">% 'logfile'   = [filename] save all message in a log file in addition to showing them</span>
+<span class="comment">%               on screen (default -&gt; none)</span>
+<span class="comment">% 'interput'  = ['on'|'off'] draw interupt figure. Default is off.</span>
+<span class="comment">%</span>
+<span class="comment">% Outputs:    [Note: RO means output in reverse order of projected mean variance</span>
+<span class="comment">%                    unless starting weight matrix passed ('weights' above)]</span>
+<span class="comment">% weights     = ICA weight matrix (comps,chans)      [RO]</span>
+<span class="comment">% sphere      = data sphering matrix (chans,chans) = spher(data)</span>
+<span class="comment">%               Note that unmixing_matrix = weights*sphere {if sphering off -&gt; eye(chans)}</span>
+<span class="comment">% compvars    = back-projected component variances   [RO]</span>
+<span class="comment">% bias        = vector of final (ncomps) online bias [RO]    (default = zeros())</span>
+<span class="comment">% signs       = extended-ICA signs for components    [RO]    (default = ones())</span>
+<span class="comment">%                   [ -1 = sub-Gaussian; 1 = super-Gaussian]</span>
+<span class="comment">% lrates      = vector of learning rates used at each training step [RO]</span>
+<span class="comment">% activations = activation time courses of the output components (ncomps,frames*epochs)</span>
+<span class="comment">%</span>
+<span class="comment">% Authors: Scott Makeig with contributions from Tony Bell, Te-Won Lee,</span>
+<span class="comment">% Tzyy-Ping Jung, Sigurd Enghoff, Michael Zibulevsky, Delorme Arnaud,</span>
+<span class="comment">% CNL/The Salk Institute, La Jolla, 1996-</span>
+
+<span class="comment">% Uses: posact()</span>
+
+<span class="comment">% 'ncomps'    = [N] number of ICA components to compute (default -&gt; chans or 'pca' arg)</span>
+<span class="comment">%               using rectangular ICA decomposition. This parameter may return</span>
+<span class="comment">%               strange results. This is because the weight matrix is rectangular</span>
+<span class="comment">%               instead of being square. Do not use except to try to fix the problem.</span>
+
+<span class="comment">% Reference (please cite):</span>
+<span class="comment">%</span>
+<span class="comment">% Makeig, S., Bell, A.J., Jung, T-P and Sejnowski, T.J.,</span>
+<span class="comment">% "Independent component analysis of electroencephalographic data,"</span>
+<span class="comment">% In: D. Touretzky, M. Mozer and M. Hasselmo (Eds). Advances in Neural</span>
+<span class="comment">% Information Processing Systems 8:145-151, MIT Press, Cambridge, MA (1996).</span>
+<span class="comment">%</span>
+<span class="comment">% Toolbox Citation:</span>
+<span class="comment">%</span>
+<span class="comment">% Makeig, Scott et al. "EEGLAB: ICA Toolbox for Psychophysiological Research".</span>
+<span class="comment">% WWW Site, Swartz Center for Computational Neuroscience, Institute of Neural</span>
+<span class="comment">% Computation, University of San Diego California</span>
+<span class="comment">% &lt;www.sccn.ucsd.edu/eeglab/&gt;, 2000. [World Wide Web Publication].</span>
+<span class="comment">%</span>
+<span class="comment">% For more information:</span>
+<span class="comment">% http://www.sccn.ucsd.edu/eeglab/icafaq.html - FAQ on ICA/EEG</span>
+<span class="comment">% http://www.sccn.ucsd.edu/eeglab/icabib.html - mss. on ICA &amp; biosignals</span>
+<span class="comment">% http://www.cnl.salk.edu/~tony/ica.html - math. mss. on ICA</span>
+
+<span class="comment">% Copyright (C) 1996 Scott Makeig et al, SCCN/INC/UCSD, scott@sccn.ucsd.edu</span>
+<span class="comment">%</span>
+<span class="comment">% This program is free software; you can redistribute it and/or modify</span>
+<span class="comment">% it under the terms of the GNU General Public License as published by</span>
+<span class="comment">% the Free Software Foundation; either version 2 of the License, or</span>
+<span class="comment">% (at your option) any later version.</span>
+<span class="comment">%</span>
+<span class="comment">% This program is distributed in the hope that it will be useful,</span>
+<span class="comment">% but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="comment">% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the</span>
+<span class="comment">% GNU General Public License for more details.</span>
+<span class="comment">%</span>
+<span class="comment">% You should have received a copy of the GNU General Public License</span>
+<span class="comment">% along with this program; if not, write to the Free Software</span>
+<span class="comment">% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA</span>
+
+<span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%% Edit history %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+<span class="comment">%</span>
+<span class="comment">%  runica()  - by Scott Makeig with contributions from Tony Bell, Te-Won Lee</span>
+<span class="comment">%              Tzyy-Ping Jung, Sigurd Enghoff, Michael Zibulevsky et al.</span>
+<span class="comment">%                            CNL / Salk Institute 1996-00</span>
+<span class="comment">%  04-30-96 built from icatest.m and ~jung/.../wtwpwica.m -sm</span>
+<span class="comment">%  07-28-97 new runica(), adds bias (default on), momentum (default off),</span>
+<span class="comment">%           extended-ICA (Lee &amp; Sejnowski, 1997), cumulative angledelta</span>
+<span class="comment">%           (until lrate drops), keywords, signcount for speeding extended-ICA</span>
+<span class="comment">%  10-07-97 put acos() outside verbose loop; verbose 'off' wasn't stopping -sm</span>
+<span class="comment">%  11-11-97 adjusted help msg -sm</span>
+<span class="comment">%  11-30-97 return eye(chans) if sphering 'off' or 'none' (undocumented option) -sm</span>
+<span class="comment">%  02-27-98 use pinv() instead of inv() to rank order comps if ncomps &lt; chans -sm</span>
+<span class="comment">%  04-28-98 added 'posact' and 'pca' flags  -sm</span>
+<span class="comment">%  07-16-98 reduced length of randperm() for kurtosis subset calc. -se &amp; sm</span>
+<span class="comment">%  07-19-98 fixed typo in weights def. above -tl &amp; sm</span>
+<span class="comment">%  12-21-99 added 'specgram' option suggested by Michael Zibulevsky, UNM -sm</span>
+<span class="comment">%  12-22-99 fixed rand() sizing inefficiency on suggestion of Mike Spratling, UK -sm</span>
+<span class="comment">%  01-11-00 fixed rand() sizing bug on suggestion of Jack Foucher, Strasbourg -sm</span>
+<span class="comment">%  12-18-00 test for existence of Sig Proc Tlbx function 'specgram'; improve</span>
+<span class="comment">%           'specgram' option arguments -sm</span>
+<span class="comment">%  01-25-02 reformated help &amp; license -ad</span>
+<span class="comment">%  01-25-02 lowered default lrate and block -ad</span>
+<span class="comment">%</span>
+<span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+
+<span class="keyword">function</span> [weights,sphere,meanvar,bias,signs,lrates,data,y] = runica(data,varargin) <span class="comment">% NB: Now optionally returns activations as variable 'data' -sm 7/05</span>
+</pre><pre class="codeinput"><span class="keyword">if</span> nargin &lt; 1
+  help <span class="string">runica</span>
+  <span class="keyword">return</span>
+<span class="keyword">end</span>
+
+[chans frames] = size(data); <span class="comment">% determine the data size</span>
+urchans = chans;  <span class="comment">% remember original data channels</span>
+datalength = frames;
+<span class="keyword">if</span> chans&lt;2
+   fprintf(<span class="string">'\nrunica() - data size (%d,%d) too small.\n\n'</span>, chans,frames);
+   <span class="keyword">return</span>
+<span class="keyword">end</span>
+<span class="comment">%</span>
+<span class="comment">%%%%%%%%%%%%%%%%%%%%%% Declare defaults used below %%%%%%%%%%%%%%%%%%%%%%%%</span>
+<span class="comment">%</span>
+MAX_WEIGHT           = 1e8;       <span class="comment">% guess that weights larger than this have blown up</span>
+DEFAULT_STOP         = 0.000001;  <span class="comment">% stop training if weight changes below this</span>
+DEFAULT_ANNEALDEG    = 60;        <span class="comment">% when angle change reaches this value,</span>
+DEFAULT_ANNEALSTEP   = 0.90;      <span class="comment">%     anneal by multiplying lrate by this</span>
+DEFAULT_EXTANNEAL    = 0.98;      <span class="comment">%     or this if extended-ICA</span>
+DEFAULT_MAXSTEPS     = 512;       <span class="comment">% ]top training after this many steps</span>
+DEFAULT_MOMENTUM     = 0.0;       <span class="comment">% default momentum weight</span>
+
+DEFAULT_BLOWUP       = 1000000000.0;   <span class="comment">% = learning rate has 'blown up'</span>
+DEFAULT_BLOWUP_FAC   = 0.8;       <span class="comment">% when lrate 'blows up,' anneal by this fac</span>
+DEFAULT_RESTART_FAC  = 0.9;       <span class="comment">% if weights blowup, restart with lrate</span>
+                                  <span class="comment">% lower by this factor</span>
+MIN_LRATE            = 0.000001;  <span class="comment">% if weight blowups make lrate &lt; this, quit</span>
+MAX_LRATE            = 0.1;       <span class="comment">% guard against uselessly high learning rate</span>
+DEFAULT_LRATE        = 0.00065/log(chans);
+                                  <span class="comment">% heuristic default - may need adjustment</span>
+                                  <span class="comment">%   for large or tiny data sets!</span>
+<span class="comment">% DEFAULT_BLOCK        = floor(sqrt(frames/4));  % heuristic default</span>
+DEFAULT_BLOCK          = ceil(min(5*log(frames),0.3*frames)); <span class="comment">% heuristic</span>
+                                  <span class="comment">% - may need adjustment!</span>
+<span class="comment">% Extended-ICA option:</span>
+DEFAULT_EXTENDED     = 0;         <span class="comment">% default off</span>
+DEFAULT_EXTBLOCKS    = 1;         <span class="comment">% number of blocks per kurtosis calculation</span>
+DEFAULT_NSUB         = 1;         <span class="comment">% initial default number of assumed sub-Gaussians</span>
+                                  <span class="comment">% for extended-ICA</span>
+DEFAULT_EXTMOMENTUM  = 0.5;       <span class="comment">% momentum term for computing extended-ICA kurtosis</span>
+MAX_KURTSIZE         = 6000;      <span class="comment">% max points to use in kurtosis calculation</span>
+MIN_KURTSIZE         = 2000;      <span class="comment">% minimum good kurtosis size (flag warning)</span>
+SIGNCOUNT_THRESHOLD  = 25;        <span class="comment">% raise extblocks when sign vector unchanged</span>
+                                  <span class="comment">% after this many steps</span>
+SIGNCOUNT_STEP       = 2;         <span class="comment">% extblocks increment factor</span>
+
+DEFAULT_SPHEREFLAG   = <span class="string">'on'</span>;      <span class="comment">% use the sphere matrix as the default</span>
+                                  <span class="comment">%   starting weight matrix</span>
+DEFAULT_INTERUPT     = <span class="string">'off'</span>;     <span class="comment">% figure interuption</span>
+DEFAULT_PCAFLAG      = <span class="string">'off'</span>;     <span class="comment">% don't use PCA reduction</span>
+DEFAULT_POSACTFLAG   = <span class="string">'off'</span>;     <span class="comment">% don't use posact(), to save space -sm 7/05</span>
+DEFAULT_VERBOSE      = 1;         <span class="comment">% write ascii info to calling screen</span>
+DEFAULT_BIASFLAG     = 1;         <span class="comment">% default to using bias in the ICA update rule</span>
+<span class="comment">%</span>
+<span class="comment">%%%%%%%%%%%%%%%%%%%%%%% Set up keyword default values %%%%%%%%%%%%%%%%%%%%%%%%%</span>
+<span class="comment">%</span>
+<span class="keyword">if</span> nargout &lt; 2,
+    fprintf(<span class="string">'runica() - needs at least two output arguments.\n'</span>);
+    <span class="keyword">return</span>
+<span class="keyword">end</span>
+epochs = 1;							 <span class="comment">% do not care how many epochs in data</span>
+
+pcaflag    = DEFAULT_PCAFLAG;
+sphering   = DEFAULT_SPHEREFLAG;     <span class="comment">% default flags</span>
+posactflag = DEFAULT_POSACTFLAG;
+verbose    = DEFAULT_VERBOSE;
+logfile    = [];
+
+block      = DEFAULT_BLOCK;          <span class="comment">% heuristic default - may need adjustment!</span>
+lrate      = DEFAULT_LRATE;
+annealdeg  = DEFAULT_ANNEALDEG;
+annealstep = 0;                      <span class="comment">% defaults declared below</span>
+nochange   = NaN;
+momentum   = DEFAULT_MOMENTUM;
+maxsteps   = DEFAULT_MAXSTEPS;
+
+weights    = 0;                      <span class="comment">% defaults defined below</span>
+ncomps     = chans;
+biasflag   = DEFAULT_BIASFLAG;
+
+interupt   = DEFAULT_INTERUPT;
+extended   = DEFAULT_EXTENDED;
+extblocks  = DEFAULT_EXTBLOCKS;
+kurtsize   = MAX_KURTSIZE;
+signsbias  = 0.02;                   <span class="comment">% bias towards super-Gaussian components</span>
+extmomentum= DEFAULT_EXTMOMENTUM;    <span class="comment">% exp. average the kurtosis estimates</span>
+nsub       = DEFAULT_NSUB;
+wts_blowup = 0;                      <span class="comment">% flag =1 when weights too large</span>
+wts_passed = 0;                      <span class="comment">% flag weights passed as argument</span>
+<span class="comment">%</span>
+<span class="comment">%%%%%%%%%% Collect keywords and values from argument list %%%%%%%%%%%%%%%</span>
+<span class="comment">%</span>
+   <span class="keyword">if</span> (nargin&gt; 1 &amp; rem(nargin,2) == 0)
+      fprintf(<span class="string">'runica(): Even number of input arguments???'</span>)
+      <span class="keyword">return</span>
+   <span class="keyword">end</span>
+   <span class="keyword">for</span> i = 1:2:length(varargin) <span class="comment">% for each Keyword</span>
+      Keyword = varargin{i};
+      Value = varargin{i+1};
+      <span class="keyword">if</span> ~isstr(Keyword)
+         fprintf(<span class="string">'runica(): keywords must be strings'</span>)
+         <span class="keyword">return</span>
+      <span class="keyword">end</span>
+      Keyword = lower(Keyword); <span class="comment">% convert upper or mixed case to lower</span>
+
+      <span class="keyword">if</span> strcmp(Keyword,<span class="string">'weights'</span>) | strcmp(Keyword,<span class="string">'weight'</span>)
+         <span class="keyword">if</span> isstr(Value)
+            fprintf(<span class="keyword">...</span>
+      <span class="string">'runica(): weights value must be a weight matrix or sphere'</span>)
+            <span class="keyword">return</span>
+        <span class="keyword">elseif</span> ~isempty(Value)
+           weights = Value;
+           wts_passed =1;
+         <span class="keyword">end</span>
+      <span class="keyword">elseif</span> strcmp(Keyword,<span class="string">'ncomps'</span>)
+         <span class="keyword">if</span> isstr(Value)
+            fprintf(<span class="string">'runica(): ncomps value must be an integer'</span>)
+            <span class="keyword">return</span>
+        <span class="keyword">elseif</span> ~isempty(Value)
+           <span class="keyword">if</span> ncomps &lt; urchans &amp; ncomps ~= Value
+               fprintf(<span class="string">'runica(): Use either PCA or ICA dimension reduction'</span>);
+               <span class="keyword">return</span>
+            <span class="keyword">end</span>
+            fprintf(<span class="string">'*****************************************************************************************'</span>);
+            fprintf(<span class="string">'************** WARNING: NCOMPS OPTION OFTEN DOES NOT RETURN ACCURATE RESULTS ************'</span>);
+            fprintf(<span class="string">'************** WARNING: IF YOU FIND THE PROBLEM, PLEASE LET US KNOW          ************'</span>);
+            fprintf(<span class="string">'*****************************************************************************************'</span>);
+            ncomps = Value;
+            <span class="keyword">if</span> ~ncomps,
+               ncomps = chans;
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+    <span class="keyword">elseif</span> strcmp(Keyword,<span class="string">'pca'</span>)
+        <span class="keyword">if</span> Value ~= 0
+           <span class="keyword">if</span> ncomps &lt; urchans &amp; ncomps ~= Value
+              fprintf(<span class="string">'runica(): Use either PCA or ICA dimension reduction'</span>);
+              <span class="keyword">return</span>
+           <span class="keyword">end</span>
+           <span class="keyword">if</span> isstr(Value)
+              fprintf(<span class="string">'runica(): pca value should be the number of principal components to retain'</span>)
+              <span class="keyword">return</span>
+           <span class="keyword">end</span>
+           pcaflag = <span class="string">'on'</span>;
+           ncomps = Value;
+           <span class="keyword">if</span> ncomps &gt; chans | ncomps &lt; 1,
+              fprintf(<span class="string">'runica(): pca value must be in range [1,%d]\n'</span>,chans)
+              <span class="keyword">return</span>
+           <span class="keyword">end</span>
+           chans = ncomps;
+        <span class="keyword">end</span>
+    <span class="keyword">elseif</span> strcmp(Keyword,<span class="string">'interupt'</span>)
+         <span class="keyword">if</span> ~isstr(Value)
+           fprintf(<span class="string">'runica(): interupt value must be on or off'</span>)
+           <span class="keyword">return</span>
+         <span class="keyword">else</span>
+           Value = lower(Value);
+           <span class="keyword">if</span> ~strcmp(Value,<span class="string">'on'</span>) &amp; ~strcmp(Value,<span class="string">'off'</span>),
+             fprintf(<span class="string">'runica(): interupt value must be on or off'</span>)
+             <span class="keyword">return</span>
+           <span class="keyword">end</span>
+           interupt = Value;
+         <span class="keyword">end</span>
+     <span class="keyword">elseif</span> strcmp(Keyword,<span class="string">'posact'</span>)
+         <span class="keyword">if</span> ~isstr(Value)
+           fprintf(<span class="string">'runica(): posact value must be on or off'</span>)
+           <span class="keyword">return</span>
+         <span class="keyword">else</span>
+           Value = lower(Value);
+           <span class="keyword">if</span> ~strcmp(Value,<span class="string">'on'</span>) &amp; ~strcmp(Value,<span class="string">'off'</span>),
+             fprintf(<span class="string">'runica(): posact value must be on or off'</span>)
+             <span class="keyword">return</span>
+           <span class="keyword">end</span>
+           posactflag = Value;
+         <span class="keyword">end</span>
+      <span class="keyword">elseif</span> strcmp(Keyword,<span class="string">'lrate'</span>)
+         <span class="keyword">if</span> isstr(Value)
+            fprintf(<span class="string">'runica(): lrate value must be a number'</span>)
+            <span class="keyword">return</span>
+        <span class="keyword">elseif</span> ~isempty(Value)
+         lrate = Value;
+         <span class="keyword">if</span> lrate&gt;MAX_LRATE | lrate &lt;0,
+           fprintf(<span class="string">'runica(): lrate value is out of bounds'</span>);
+           <span class="keyword">return</span>
+         <span class="keyword">end</span>
+         <span class="keyword">if</span> ~lrate,
+            lrate = DEFAULT_LRATE;
+            <span class="keyword">end</span>
+         <span class="keyword">end</span>
+      <span class="keyword">elseif</span> strcmp(Keyword,<span class="string">'block'</span>) | strcmp(Keyword,<span class="string">'blocksize'</span>)
+         <span class="keyword">if</span> isstr(Value)
+            fprintf(<span class="string">'runica(): block size value must be a number'</span>)
+            <span class="keyword">return</span>
+         <span class="keyword">elseif</span> ~isempty(Value)
+            block = floor(Value);
+            <span class="keyword">if</span> ~block,
+               block = DEFAULT_BLOCK;
+            <span class="keyword">end</span>
+         <span class="keyword">end</span>
+      <span class="keyword">elseif</span> strcmp(Keyword,<span class="string">'stop'</span>) | strcmp(Keyword,<span class="string">'nochange'</span>) <span class="keyword">...</span>
+                    | strcmp(Keyword,<span class="string">'stopping'</span>)
+         <span class="keyword">if</span> isstr(Value)
+            fprintf(<span class="string">'runica(): stop wchange value must be a number'</span>)
+            <span class="keyword">return</span>
+         <span class="keyword">elseif</span> ~isempty(Value)
+            nochange = Value;
+         <span class="keyword">end</span>
+      <span class="keyword">elseif</span> strcmp(Keyword,<span class="string">'logfile'</span>)
+         <span class="keyword">if</span> ~isstr(Value)
+            fprintf(<span class="string">'runica(): logfile value must be a string'</span>)
+            <span class="keyword">return</span>
+         <span class="keyword">end</span>
+         logfile = Value;
+      <span class="keyword">elseif</span> strcmp(Keyword,<span class="string">'maxsteps'</span>) | strcmp(Keyword,<span class="string">'steps'</span>)
+         <span class="keyword">if</span> isstr(Value)
+            fprintf(<span class="string">'runica(): maxsteps value must be an integer'</span>)
+            <span class="keyword">return</span>
+         <span class="keyword">elseif</span> ~isempty(Value)
+            maxsteps = Value;
+            <span class="keyword">if</span> ~maxsteps,
+               maxsteps   = DEFAULT_MAXSTEPS;
+            <span class="keyword">end</span>
+            <span class="keyword">if</span> maxsteps &lt; 0
+               fprintf(<span class="string">'runica(): maxsteps value (%d) must be a positive integer'</span>,maxsteps)
+               <span class="keyword">return</span>
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+      <span class="keyword">elseif</span> strcmp(Keyword,<span class="string">'anneal'</span>) | strcmp(Keyword,<span class="string">'annealstep'</span>)
+         <span class="keyword">if</span> isstr(Value)
+            fprintf(<span class="string">'runica(): anneal step value (%2.4f) must be a number (0,1)'</span>,Value)
+            <span class="keyword">return</span>
+         <span class="keyword">elseif</span> ~isempty(Value)
+            annealstep = Value;
+            <span class="keyword">if</span> annealstep &lt;=0 | annealstep &gt; 1,
+               fprintf(<span class="string">'runica(): anneal step value (%2.4f) must be (0,1]'</span>,annealstep)
+               <span class="keyword">return</span>
+            <span class="keyword">end</span>
+         <span class="keyword">end</span>
+      <span class="keyword">elseif</span> strcmp(Keyword,<span class="string">'annealdeg'</span>) | strcmp(Keyword,<span class="string">'degrees'</span>)
+         <span class="keyword">if</span> isstr(Value)
+            fprintf(<span class="string">'runica(): annealdeg value must be a number'</span>)
+            <span class="keyword">return</span>
+         <span class="keyword">elseif</span> ~isempty(Value)
+            annealdeg = Value;
+            <span class="keyword">if</span> ~annealdeg,
+                annealdeg = DEFAULT_ANNEALDEG;
+            <span class="keyword">elseif</span> annealdeg &gt; 180 | annealdeg &lt; 0
+                fprintf(<span class="string">'runica(): annealdeg (%3.1f) is out of bounds [0,180]'</span>,<span class="keyword">...</span>
+                      annealdeg);
+                <span class="keyword">return</span>
+
+            <span class="keyword">end</span>
+         <span class="keyword">end</span>
+      <span class="keyword">elseif</span> strcmp(Keyword,<span class="string">'momentum'</span>)
+         <span class="keyword">if</span> isstr(Value)
+            fprintf(<span class="string">'runica(): momentum value must be a number'</span>)
+            <span class="keyword">return</span>
+         <span class="keyword">elseif</span> ~isempty(Value)
+            momentum = Value;
+            <span class="keyword">if</span> momentum &gt; 1.0 | momentum &lt; 0
+             fprintf(<span class="string">'runica(): momentum value is out of bounds [0,1]'</span>)
+             <span class="keyword">return</span>
+            <span class="keyword">end</span>
+         <span class="keyword">end</span>
+      <span class="keyword">elseif</span> strcmp(Keyword,<span class="string">'sphering'</span>) | strcmp(Keyword,<span class="string">'sphereing'</span>) <span class="keyword">...</span>
+                | strcmp(Keyword,<span class="string">'sphere'</span>)
+         <span class="keyword">if</span> ~isstr(Value)
+           fprintf(<span class="string">'runica(): sphering value must be on, off, or none'</span>)
+           <span class="keyword">return</span>
+         <span class="keyword">else</span>
+           Value = lower(Value);
+           <span class="keyword">if</span> ~strcmp(Value,<span class="string">'on'</span>) &amp; ~strcmp(Value,<span class="string">'off'</span>) &amp; ~strcmp(Value,<span class="string">'none'</span>),
+             fprintf(<span class="string">'runica(): sphering value must be on or off'</span>)
+             <span class="keyword">return</span>
+           <span class="keyword">end</span>
+           sphering = Value;
+         <span class="keyword">end</span>
+      <span class="keyword">elseif</span> strcmp(Keyword,<span class="string">'bias'</span>)
+         <span class="keyword">if</span> ~isstr(Value)
+           fprintf(<span class="string">'runica(): bias value must be on or off'</span>)
+           <span class="keyword">return</span>
+        <span class="keyword">elseif</span> ~isempty(Value)
+           Value = lower(Value);
+           <span class="keyword">if</span> strcmp(Value,<span class="string">'on'</span>)
+              biasflag = 1;
+           <span class="keyword">elseif</span> strcmp(Value,<span class="string">'off'</span>),
+              biasflag = 0;
+           <span class="keyword">else</span>
+              fprintf(<span class="string">'runica(): bias value must be on or off'</span>)
+              <span class="keyword">return</span>
+           <span class="keyword">end</span>
+         <span class="keyword">end</span>
+      <span class="keyword">elseif</span> strcmp(Keyword,<span class="string">'specgram'</span>) | strcmp(Keyword,<span class="string">'spec'</span>)
+
+         <span class="keyword">if</span> ~exist(<span class="string">'specgram'</span>) &lt; 2 <span class="comment">% if ~exist or defined workspace variable</span>
+           fprintf(<span class="keyword">...</span>
+   <span class="string">'runica(): MATLAB Sig. Proc. Toolbox function "specgram" not found.\n'</span>)
+           <span class="keyword">return</span>
+         <span class="keyword">end</span>
+         <span class="keyword">if</span> isstr(Value)
+           fprintf(<span class="string">'runica(): specgram argument must be a vector'</span>)
+           <span class="keyword">return</span>
+         <span class="keyword">end</span>
+         srate = Value(1);
+         <span class="keyword">if</span> (srate &lt; 0)
+             fprintf(<span class="string">'runica(): specgram srate (%4.1f) must be &gt;=0'</span>,srate)
+             <span class="keyword">return</span>
+           <span class="keyword">end</span>
+         <span class="keyword">if</span> length(Value)&gt;1
+           loHz = Value(2);
+           <span class="keyword">if</span> (loHz &lt; 0 | loHz &gt; srate/2)
+             fprintf(<span class="string">'runica(): specgram loHz must be &gt;=0 and &lt;= srate/2 (%4.1f)'</span>,srate/2)
+             <span class="keyword">return</span>
+           <span class="keyword">end</span>
+         <span class="keyword">else</span>
+           loHz = 0; <span class="comment">% default</span>
+         <span class="keyword">end</span>
+         <span class="keyword">if</span> length(Value)&gt;2
+           hiHz = Value(3);
+           <span class="keyword">if</span> (hiHz &lt; loHz | hiHz &gt; srate/2)
+             fprintf(<span class="string">'runica(): specgram hiHz must be &gt;=loHz (%4.1f) and &lt;= srate/2 (%4.1f)'</span>,loHz,srate/2)
+             <span class="keyword">return</span>
+           <span class="keyword">end</span>
+         <span class="keyword">else</span>
+           hiHz = srate/2; <span class="comment">% default</span>
+         <span class="keyword">end</span>
+         <span class="keyword">if</span> length(Value)&gt;3
+           Hzframes = Value(5);
+           <span class="keyword">if</span> (Hzframes&lt;0 | Hzframes &gt; size(data,2))
+             fprintf(<span class="string">'runica(): specgram frames must be &gt;=0 and &lt;= data length (%d)'</span>,size(data,2))
+             <span class="keyword">return</span>
+           <span class="keyword">end</span>
+         <span class="keyword">else</span>
+           Hzframes = size(data,2); <span class="comment">% default</span>
+         <span class="keyword">end</span>
+         <span class="keyword">if</span> length(Value)&gt;4
+           Hzwinlen = Value(4);
+           <span class="keyword">if</span> rem(Hzframes,Hzwinlen) <span class="comment">% if winlen doesn't divide frames</span>
+             fprintf(<span class="string">'runica(): specgram Hzinc must divide frames (%d)'</span>,Hzframes)
+             <span class="keyword">return</span>
+           <span class="keyword">end</span>
+         <span class="keyword">else</span>
+           Hzwinlen = Hzframes; <span class="comment">% default</span>
+         <span class="keyword">end</span>
+         Specgramflag = 1; <span class="comment">% set flag to perform specgram()</span>
+
+      <span class="keyword">elseif</span> strcmp(Keyword,<span class="string">'extended'</span>) | strcmp(Keyword,<span class="string">'extend'</span>)
+         <span class="keyword">if</span> isstr(Value)
+           fprintf(<span class="string">'runica(): extended value must be an integer (+/-)'</span>)
+           <span class="keyword">return</span>
+         <span class="keyword">else</span>
+           extended = 1;      <span class="comment">% turn on extended-ICA</span>
+           extblocks = fix(Value); <span class="comment">% number of blocks per kurt() compute</span>
+           <span class="keyword">if</span> extblocks &lt; 0
+                nsub = -1*fix(extblocks);  <span class="comment">% fix this many sub-Gauss comps</span>
+           <span class="keyword">elseif</span> ~extblocks,
+                extended = 0;             <span class="comment">% turn extended-ICA off</span>
+           <span class="keyword">elseif</span> kurtsize&gt;frames,   <span class="comment">% length of kurtosis calculation</span>
+                kurtsize = frames;
+                <span class="keyword">if</span> kurtsize &lt; MIN_KURTSIZE
+                   fprintf(<span class="keyword">...</span>
+   <span class="string">'runica() warning: kurtosis values inexact for &lt;&lt; %d points.\n'</span>,<span class="keyword">...</span>
+                                                         MIN_KURTSIZE);
+                <span class="keyword">end</span>
+           <span class="keyword">end</span>
+         <span class="keyword">end</span>
+      <span class="keyword">elseif</span> strcmp(Keyword,<span class="string">'verbose'</span>)
+         <span class="keyword">if</span> ~isstr(Value)
+            fprintf(<span class="string">'runica(): verbose flag value must be on or off'</span>)
+            <span class="keyword">return</span>
+         <span class="keyword">elseif</span> strcmp(Value,<span class="string">'on'</span>),
+             verbose = 1;
+         <span class="keyword">elseif</span> strcmp(Value,<span class="string">'off'</span>),
+             verbose = 0;
+         <span class="keyword">else</span>
+             fprintf(<span class="string">'runica(): verbose flag value must be on or off'</span>)
+             <span class="keyword">return</span>
+         <span class="keyword">end</span>
+      <span class="keyword">else</span>
+         fprintf(<span class="string">'runica(): unknown flag'</span>)
+         <span class="keyword">return</span>
+      <span class="keyword">end</span>
+   <span class="keyword">end</span>
+
+<span class="comment">%</span>
+<span class="comment">%%%%%%%%%%%%%%%%%%%%%%%% Initialize weights, etc. %%%%%%%%%%%%%%%%%%%%%%%%</span>
+<span class="comment">%</span>
+<span class="keyword">if</span> ~annealstep,
+  <span class="keyword">if</span> ~extended,
+    annealstep = DEFAULT_ANNEALSTEP;     <span class="comment">% defaults defined above</span>
+  <span class="keyword">else</span>
+    annealstep = DEFAULT_EXTANNEAL;       <span class="comment">% defaults defined above</span>
+  <span class="keyword">end</span>
+<span class="keyword">end</span> <span class="comment">% else use annealstep from commandline</span>
+
+<span class="keyword">if</span> ~annealdeg,
+    annealdeg  = DEFAULT_ANNEALDEG - momentum*90; <span class="comment">% heuristic</span>
+    <span class="keyword">if</span> annealdeg &lt; 0,
+        annealdeg = 0;
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+<span class="keyword">if</span> ncomps &gt;  chans | ncomps &lt; 1
+    fprintf(<span class="string">'runica(): number of components must be 1 to %d.\n'</span>,chans);
+    <span class="keyword">return</span>
+<span class="keyword">end</span>
+<span class="comment">%</span>
+<span class="comment">%%%%%%%%%%%%%%%%%%%%% Check keyword values %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+<span class="comment">%</span>
+<span class="keyword">if</span> frames&lt;chans,
+    fprintf(<span class="string">'runica(): data length (%d) &lt; data channels (%d)!\n'</span>,frames,chans)
+    <span class="keyword">return</span>
+<span class="keyword">elseif</span> block &lt; 2,
+    fprintf(<span class="string">'runica(): block size %d too small!\n'</span>,block)
+    <span class="keyword">return</span>
+<span class="keyword">elseif</span> block &gt; frames,
+    fprintf(<span class="string">'runica(): block size exceeds data length!\n'</span>);
+    <span class="keyword">return</span>
+<span class="keyword">elseif</span> floor(epochs) ~= epochs,
+    fprintf(<span class="string">'runica(): data length is not a multiple of the epoch length!\n'</span>);
+    <span class="keyword">return</span>
+<span class="keyword">elseif</span> nsub &gt; ncomps
+    fprintf(<span class="string">'runica(): there can be at most %d sub-Gaussian components!\n'</span>,ncomps);
+    <span class="keyword">return</span>
+<span class="keyword">end</span>;
+
+<span class="keyword">if</span> ~isempty(logfile)
+    fid = fopen(logfile, <span class="string">'w'</span>);
+    <span class="keyword">if</span> fid == -1, error(<span class="string">'Cannot open logfile for writing'</span>); <span class="keyword">end</span>;
+<span class="keyword">else</span>
+    fid = [];
+<span class="keyword">end</span>;
+verb = verbose;
+
+<span class="keyword">if</span> weights ~= 0,                    <span class="comment">% initialize weights</span>
+  <span class="comment">% starting weights are being passed to runica() from the commandline</span>
+    <span class="keyword">if</span>  chans&gt;ncomps &amp; weights ~=0,
+        [r,c]=size(weights);
+        <span class="keyword">if</span> r~=ncomps | c~=chans,
+            fprintf(<span class="string">'runica(): weight matrix must have %d rows, %d columns.\n'</span>, <span class="keyword">...</span>
+                    chans,ncomps);
+            <span class="keyword">return</span>;
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+    icaprintf(verb,fid,<span class="string">'Using starting weight matrix named in argument list ...\n'</span>);
+<span class="keyword">end</span>;
+
+<span class="comment">%</span>
+<span class="comment">% adjust nochange if necessary</span>
+<span class="comment">%</span>
+<span class="keyword">if</span> isnan(nochange)
+    <span class="keyword">if</span> ncomps &gt; 32
+        nochange = 1E-7;
+        nochangeupdated = 1; <span class="comment">% for fprinting purposes</span>
+    <span class="keyword">else</span>
+        nochangeupdated = 1; <span class="comment">% for fprinting purposes</span>
+        nochange = DEFAULT_STOP;
+    <span class="keyword">end</span>;
+<span class="keyword">else</span>
+    nochangeupdated = 0;
+<span class="keyword">end</span>;
+
+<span class="comment">%</span>
+<span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Process the data %%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+<span class="comment">%</span>
+icaprintf(verb,fid,<span class="string">'\nInput data size [%d,%d] = %d channels, %d frames/n'</span>, <span class="keyword">...</span>
+          chans,frames,chans,frames);
+
+<span class="keyword">if</span> strcmp(pcaflag,<span class="string">'on'</span>)
+    icaprintf(verb,fid,<span class="string">'After PCA dimension reduction,\n  finding '</span>);
+<span class="keyword">else</span>
+    icaprintf(verb,fid,<span class="string">'Finding '</span>);
+<span class="keyword">end</span>
+<span class="keyword">if</span> ~extended
+    icaprintf(verb,fid,<span class="string">'%d ICA components using logistic ICA.\n'</span>,ncomps);
+<span class="keyword">else</span> <span class="comment">% if extended</span>
+icaprintf(verb,fid,<span class="string">'%d ICA components using extended ICA.\n'</span>,ncomps);
+<span class="keyword">if</span> extblocks &gt; 0
+    icaprintf(verb,fid,<span class="string">'Kurtosis will be calculated initially every %d blocks using %d data points.\n'</span>,<span class="keyword">...</span>
+              extblocks, kurtsize);
+<span class="keyword">else</span>
+    icaprintf(verb,fid,<span class="string">'Kurtosis will not be calculated. Exactly %d sub-Gaussian components assumed.\n'</span>,nsub);
+<span class="keyword">end</span>
+<span class="keyword">end</span>
+icaprintf(verb,fid,<span class="string">'Decomposing %d frames per ICA weight ((%d)^2 = %d weights, %d frames)\n'</span>,<span class="keyword">...</span>
+          floor(frames/ncomps.^2),ncomps.^2,frames);
+icaprintf(verb,fid,<span class="string">'Initial learning rate will be %g, block size %d.\n'</span>,<span class="keyword">...</span>
+          lrate,block);
+<span class="keyword">if</span> momentum&gt;0,
+    icaprintf(verb,fid,<span class="string">'Momentum will be %g.\n'</span>,momentum);
+<span class="keyword">end</span>
+icaprintf(verb,fid,<span class="string">'Learning rate will be multiplied by %g whenever angledelta &gt;= %g deg.\n'</span>, <span class="keyword">...</span>
+          annealstep,annealdeg);
+
+<span class="keyword">if</span> nochangeupdated
+    icaprintf(verb,fid,<span class="string">'More than 32 channels: default stopping weight change 1E-7\n'</span>);
+<span class="keyword">end</span>;
+icaprintf(verb,fid,<span class="string">'Training will end when wchange &lt; %g or after %d steps.\n'</span>, nochange,maxsteps);
+<span class="keyword">if</span> biasflag,
+    icaprintf(verb,fid,<span class="string">'Online bias adjustment will be used.\n'</span>);
+<span class="keyword">else</span>
+    icaprintf(verb,fid,<span class="string">'Online bias adjustment will not be used.\n'</span>);
+<span class="keyword">end</span>
+
+<span class="comment">%</span>
+<span class="comment">%%%%%%%%%%%%%%%%% Remove overall row means of data %%%%%%%%%%%%%%%%%%%%%%%</span>
+<span class="comment">%</span>
+icaprintf(verb,fid,<span class="string">'Removing mean of each channel ...\n'</span>);
+rowmeans = mean(data');
+data = data - rowmeans'*ones(1,frames);      <span class="comment">% subtract row means</span>
+icaprintf(verb,fid,<span class="string">'Final training data range: %g to %g\n'</span>, min(min(data)),max(max(data)));
+
+<span class="comment">%</span>
+<span class="comment">%%%%%%%%%%%%%%%%%%% Perform PCA reduction %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+<span class="comment">%</span>
+<span class="keyword">if</span> strcmp(pcaflag,<span class="string">'on'</span>)
+    icaprintf(verb,fid,<span class="string">'Reducing the data to %d principal dimensions...\n'</span>,ncomps);
+    [eigenvectors,eigenvalues,data] = pcsquash(data,ncomps);
+    <span class="comment">% make data its projection onto the ncomps-dim principal subspace</span>
+<span class="keyword">end</span>
+
+<span class="comment">%</span>
+<span class="comment">%%%%%%%%%%%%%%%%%%% Perform specgram transformation %%%%%%%%%%%%%%%%%%%%%%%</span>
+<span class="comment">%</span>
+<span class="keyword">if</span> exist(<span class="string">'Specgramflag'</span>) == 1
+  <span class="comment">% [P F T] = SPECGRAM(A,NFFT,Fs,WINDOW,NOVERLAP) % MATLAB Sig Proc Toolbox</span>
+  <span class="comment">% Hzwinlen =  fix(srate/Hzinc); % CHANGED FROM THIS 12/18/00 -sm</span>
+
+  Hzfftlen = 2^(ceil(log(Hzwinlen)/log(2)));   <span class="comment">% make FFT length next higher 2^k</span>
+  Hzoverlap = 0; <span class="comment">% use sequential windows</span>
+  <span class="comment">%</span>
+  <span class="comment">% Get freqs and times from 1st channel analysis</span>
+  <span class="comment">%</span>
+  [tmp,freqs,tms] = specgram(data(1,:),Hzfftlen,srate,Hzwinlen,Hzoverlap);
+
+  fs = find(freqs&gt;=loHz &amp; freqs &lt;= hiHz);
+  icaprintf(verb,fid,<span class="string">'runica(): specified frequency range too narrow, exiting!\n'</span>);
+
+  specdata = reshape(tmp(fs,:),1,length(fs)*size(tmp,2));
+  specdata = [real(specdata) imag(specdata)];
+     <span class="comment">% fprintf('   size(fs) = %d,%d\n',size(fs,1),size(fs,2));</span>
+     <span class="comment">% fprintf('   size(tmp) = %d,%d\n',size(tmp,1),size(tmp,2));</span>
+  <span class="comment">%</span>
+  <span class="comment">% Loop through remaining channels</span>
+  <span class="comment">%</span>
+  <span class="keyword">for</span> ch=2:chans
+      [tmp] = specgram(data(ch,:),Hzwinlen,srate,Hzwinlen,Hzoverlap);
+      tmp = reshape((tmp(fs,:)),1,length(fs)*size(tmp,2));
+      specdata = [specdata;[real(tmp) imag(tmp)]]; <span class="comment">% channels are rows</span>
+  <span class="keyword">end</span>
+  <span class="comment">%</span>
+  <span class="comment">% Print specgram confirmation and details</span>
+  <span class="comment">%</span>
+  icaprintf(verb,fid,<span class="string">'Converted data to %d channels by %d=2*%dx%d points spectrogram data.\n'</span>,<span class="keyword">...</span>
+            chans,2*length(fs)*length(tms),length(fs),length(tms));
+  <span class="keyword">if</span> length(fs) &gt; 1
+      icaprintf(verb,fid,<span class="string">'   Low Hz %g, high Hz %g, Hz incr %g, window length %d\n'</span>,freqs(fs(1)),freqs(fs(end)),freqs(fs(2))-freqs(fs(1)),Hzwinlen);
+  <span class="keyword">else</span>
+      icaprintf(verb,fid,<span class="string">'   Low Hz %g, high Hz %g, window length %d\n'</span>,freqs(fs(1)),freqs(fs(end)),Hzwinlen);
+  <span class="keyword">end</span>
+  <span class="comment">%</span>
+  <span class="comment">% Replace data with specdata</span>
+  <span class="comment">%</span>
+  data = specdata;
+  datalength=size(data,2);
+<span class="keyword">end</span>
+<span class="comment">%</span>
+<span class="comment">%%%%%%%%%%%%%%%%%%% Perform sphering %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+<span class="comment">%</span>
+
+<span class="keyword">if</span> strcmp(sphering,<span class="string">'on'</span>), <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+  icaprintf(verb,fid,<span class="string">'Computing the sphering matrix...\n'</span>);
+  sphere = 2.0*inv(sqrtm(double(cov(data')))); <span class="comment">% find the "sphering" matrix = spher()</span>
+  <span class="keyword">if</span> ~weights,
+      icaprintf(verb,fid,<span class="string">'Starting weights are the identity matrix ...\n'</span>);
+      weights = eye(ncomps,chans); <span class="comment">% begin with the identity matrix</span>
+  <span class="keyword">else</span> <span class="comment">% weights given on commandline</span>
+      icaprintf(verb,fid,<span class="string">'Using starting weights named on commandline ...\n'</span>);
+  <span class="keyword">end</span>
+  icaprintf(verb,fid,<span class="string">'Sphering the data ...\n'</span>);
+  data = sphere*data; <span class="comment">% decorrelate the electrode signals by 'sphereing' them</span>
+
+<span class="keyword">elseif</span> strcmp(sphering,<span class="string">'off'</span>) <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+  <span class="keyword">if</span> ~weights <span class="comment">% is starting weights not given</span>
+      icaprintf(verb,fid,<span class="string">'Using the sphering matrix as the starting weight matrix ...\n'</span>);
+      icaprintf(verb,fid,<span class="string">'Returning the identity matrix in variable "sphere" ...\n'</span>);
+      sphere = 2.0*inv(sqrtm(cov(data'))); <span class="comment">% find the "sphering" matrix = spher()</span>
+      weights = eye(ncomps,chans)*sphere;  <span class="comment">% begin with the identity matrix</span>
+      sphere = eye(chans);                 <span class="comment">% return the identity matrix</span>
+  <span class="keyword">else</span> <span class="comment">% weights ~= 0</span>
+      icaprintf(verb,fid,<span class="string">'Using starting weights from commandline ...\n'</span>);
+      icaprintf(verb,fid,<span class="string">'Returning the identity matrix in variable "sphere" ...\n'</span>);
+      sphere = eye(chans);                 <span class="comment">% return the identity matrix</span>
+  <span class="keyword">end</span>
+<span class="keyword">elseif</span> strcmp(sphering,<span class="string">'none'</span>)
+  sphere = eye(chans,chans);<span class="comment">% return the identity matrix</span>
+  <span class="keyword">if</span> ~weights
+      icaprintf(verb,fid,<span class="string">'Starting weights are the identity matrix ...\n'</span>);
+      icaprintf(verb,fid,<span class="string">'Returning the identity matrix in variable "sphere" ...\n'</span>);
+      weights = eye(ncomps,chans); <span class="comment">% begin with the identity matrix</span>
+  <span class="keyword">else</span> <span class="comment">% weights ~= 0</span>
+      icaprintf(verb,fid,<span class="string">'Using starting weights named on commandline ...\n'</span>);
+      icaprintf(verb,fid,<span class="string">'Returning the identity matrix in variable "sphere" ...\n'</span>);
+  <span class="keyword">end</span>
+  icaprintf(verb,fid,<span class="string">'Returned variable "sphere" will be the identity matrix.\n'</span>);
+<span class="keyword">end</span>
+<span class="comment">%</span>
+<span class="comment">%%%%%%%%%%%%%%%%%%%%%%%% Initialize ICA training %%%%%%%%%%%%%%%%%%%%%%%%%</span>
+<span class="comment">%</span>
+lastt=fix((datalength/block-1)*block+1);
+BI=block*eye(ncomps,ncomps);
+delta=zeros(1,chans*ncomps);
+changes = [];
+degconst = 180./pi;
+startweights = weights;
+prevweights = startweights;
+oldweights = startweights;
+prevwtchange = zeros(chans,ncomps);
+oldwtchange = zeros(chans,ncomps);
+lrates = zeros(1,maxsteps);
+onesrow = ones(1,block);
+bias = zeros(ncomps,1);
+signs = ones(1,ncomps);    <span class="comment">% initialize signs to nsub -1, rest +1</span>
+<span class="keyword">for</span> k=1:nsub
+    signs(k) = -1;
+<span class="keyword">end</span>
+<span class="keyword">if</span> extended &amp; extblocks &lt; 0,
+    icaprintf(verb,fid,<span class="string">'Fixed extended-ICA sign assignments:  '</span>);
+    <span class="keyword">for</span> k=1:ncomps
+        icaprintf(verb,fid,<span class="string">'%d '</span>,signs(k));
+    <span class="keyword">end</span>; icaprintf(verb,fid,<span class="string">'\n'</span>);
+<span class="keyword">end</span>
+signs = diag(signs); <span class="comment">% make a diagonal matrix</span>
+oldsigns = zeros(size(signs));
+signcount = 0;              <span class="comment">% counter for same-signs</span>
+signcounts = [];
+urextblocks = extblocks;    <span class="comment">% original value, for resets</span>
+old_kk = zeros(1,ncomps);   <span class="comment">% for kurtosis momemtum</span>
+
+<span class="comment">%</span>
+<span class="comment">%%%%%%%% ICA training loop using the logistic sigmoid %%%%%%%%%%%%%%%%%%%</span>
+<span class="comment">%</span>
+icaprintf(verb,fid,<span class="string">'Beginning ICA training ...'</span>);
+<span class="keyword">if</span> extended,
+    icaprintf(verb,fid,<span class="string">' first training step may be slow ...\n'</span>);
+<span class="keyword">else</span>
+    icaprintf(verb,fid,<span class="string">'\n'</span>);
+<span class="keyword">end</span>
+step=0;
+laststep=0;
+blockno = 1;  <span class="comment">% running block counter for kurtosis interrupts</span>
+
+rand(<span class="string">'state'</span>,sum(100*clock));  <span class="comment">% set the random number generator state to</span>
+                               <span class="comment">% a position dependent on the system clock</span>
+<span class="comment">% interupt figure</span>
+<span class="comment">% ---------------</span>
+<span class="keyword">if</span> strcmpi(interupt, <span class="string">'on'</span>)
+    fig = figure(<span class="string">'visible'</span>, <span class="string">'off'</span>);
+    supergui( fig, {1 1}, [], {<span class="string">'style'</span> <span class="string">'text'</span> <span class="string">'string'</span> <span class="string">'Press button to interrupt runica()'</span> }, <span class="keyword">...</span>
+              {<span class="string">'style'</span> <span class="string">'pushbutton'</span> <span class="string">'string'</span> <span class="string">'Interupt'</span> <span class="string">'callback'</span> <span class="string">'setappdata(gcf, ''run'', 0);'</span> } );
+    set(fig, <span class="string">'visible'</span>, <span class="string">'on'</span>);
+    setappdata(gcf, <span class="string">'run'</span>, 1);
+
+    <span class="keyword">if</span> strcmpi(interupt, <span class="string">'on'</span>)
+        drawnow;
+    <span class="keyword">end</span>;
+<span class="keyword">end</span>;
+</pre><h2>Compute ICA Weights<a name="3"></a></h2><pre class="codeinput"><span class="keyword">if</span> biasflag &amp; extended
+    <span class="keyword">while</span> step &lt; maxsteps, <span class="comment">%%% ICA step = pass through all the data %%%%%%%%%</span>
+        timeperm=randperm(datalength); <span class="comment">% shuffle data order at each step</span>
+
+        <span class="keyword">for</span> t=1:block:lastt, <span class="comment">%%%%%%%%% ICA Training Block %%%%%%%%%%%%%%%%%%%</span>
+</pre><pre class="codeinput">            <span class="keyword">if</span> strcmpi(interupt, <span class="string">'on'</span>)
+                drawnow;
+                flag = getappdata(fig, <span class="string">'run'</span>);
+                <span class="keyword">if</span> ~flag,
+                    <span class="keyword">if</span> ~isempty(fid), fclose(fid); <span class="keyword">end</span>;
+                    close; error(<span class="string">'USER ABORT'</span>);
+                <span class="keyword">end</span>;
+            <span class="keyword">end</span>;
+</pre><h2>promote data block (only) to double to keep u and weights double<a name="5"></a></h2><pre class="codeinput">            u=weights*double(data(:,timeperm(t:t+block-1))) + bias*onesrow;
+
+            y=tanh(u);
+            weights = weights + lrate*(BI-signs*y*u'-u*u')*weights;
+            bias = bias + lrate*sum((-2*y)')';  <span class="comment">% for tanh() nonlin.</span>
+
+            <span class="keyword">if</span> momentum &gt; 0 <span class="comment">%%%%%%%%% Add momentum %%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+                weights = weights + momentum*prevwtchange;
+                prevwtchange = weights-prevweights;
+                prevweights = weights;
+            <span class="keyword">end</span> <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+
+            <span class="keyword">if</span> max(max(abs(weights))) &gt; MAX_WEIGHT
+                wts_blowup = 1;
+                change = nochange;
+            <span class="keyword">end</span>
+            <span class="keyword">if</span> ~wts_blowup
+                <span class="comment">%</span>
+                <span class="comment">%%%%%%%%%%% Extended-ICA kurtosis estimation %%%%%%%%%%%%%%%%%%%%%</span>
+                <span class="comment">%while step &lt; maxsteps</span>
+                <span class="keyword">if</span> extblocks &gt; 0 &amp; rem(blockno,extblocks) == 0,
+                    <span class="comment">% recompute signs vector using kurtosis</span>
+                    <span class="keyword">if</span> kurtsize &lt; frames <span class="comment">% 12-22-99 rand() size suggestion by M. Spratling</span>
+                        rp = fix(rand(1,kurtsize)*datalength);  <span class="comment">% pick random subset</span>
+                        <span class="comment">% Accout for the possibility of a 0 generation by rand</span>
+                        ou = find(rp == 0);
+                        <span class="keyword">while</span> ~isempty(ou) <span class="comment">% 1-11-00 suggestion by J. Foucher</span>
+                            rp(ou) = fix(rand(1,length(ou))*datalength);
+                            ou = find(rp == 0);
+                        <span class="keyword">end</span>
+                        partact=weights*double(data(:,rp(1:kurtsize)));
+                    <span class="keyword">else</span>                                        <span class="comment">% for small data sets,</span>
+                        partact=weights*double(data);           <span class="comment">% use whole data</span>
+                    <span class="keyword">end</span>
+                    m2=mean(partact'.^2).^2;
+                    m4= mean(partact'.^4);
+                    kk= (m4./m2)-3.0;                           <span class="comment">% kurtosis estimates</span>
+                    <span class="keyword">if</span> extmomentum
+                        kk = extmomentum*old_kk + (1.0-extmomentum)*kk; <span class="comment">% use momentum</span>
+                        old_kk = kk;
+                    <span class="keyword">end</span>
+                    signs=diag(sign(kk+signsbias));             <span class="comment">% pick component signs</span>
+                    <span class="keyword">if</span> signs == oldsigns,
+                        signcount = signcount+1;
+                    <span class="keyword">else</span>
+                        signcount = 0;
+                    <span class="keyword">end</span>
+                    oldsigns = signs;
+                    signcounts = [signcounts signcount];
+                    <span class="keyword">if</span> signcount &gt;= SIGNCOUNT_THRESHOLD,
+                        extblocks = fix(extblocks * SIGNCOUNT_STEP);<span class="comment">% make kurt() estimation</span>
+                        signcount = 0;                             <span class="comment">% less frequent if sign</span>
+                    <span class="keyword">end</span>                                         <span class="comment">% is not changing</span>
+                <span class="keyword">end</span> <span class="comment">% extblocks &gt; 0 &amp; . . .</span>
+            <span class="keyword">end</span> <span class="comment">% if extended &amp; ~wts_blowup %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+            blockno = blockno + 1;
+            <span class="keyword">if</span> wts_blowup
+                <span class="keyword">break</span>
+            <span class="keyword">end</span>
+</pre><pre class="codeinput">        <span class="keyword">end</span> <span class="comment">% for t=1:block:lastt %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+
+        <span class="keyword">if</span> ~wts_blowup
+            oldwtchange = weights-oldweights;
+            step=step+1;
+            <span class="comment">%</span>
+            <span class="comment">%%%%%%% Compute and print weight and update angle changes %%%%%%%%%</span>
+            <span class="comment">%</span>
+            lrates(1,step) = lrate;
+            angledelta=0.;
+            delta=reshape(oldwtchange,1,chans*ncomps);
+            change=delta*delta';
+        <span class="keyword">end</span>
+        <span class="comment">%</span>
+        <span class="comment">%%%%%%%%%%%%%%%%%%%%%% Restart if weights blow up %%%%%%%%%%%%%%%%%%%%</span>
+        <span class="comment">%</span>
+        <span class="keyword">if</span> wts_blowup | isnan(change)|isinf(change),  <span class="comment">% if weights blow up,</span>
+            icaprintf(verb,fid,<span class="string">''</span>);
+            step = 0;                          <span class="comment">% start again</span>
+            change = nochange;
+            wts_blowup = 0;                    <span class="comment">% re-initialize variables</span>
+            blockno = 1;
+            lrate = lrate*DEFAULT_RESTART_FAC; <span class="comment">% with lower learning rate</span>
+            weights = startweights;            <span class="comment">% and original weight matrix</span>
+            oldweights = startweights;
+            change = nochange;
+            oldwtchange = zeros(chans,ncomps);
+            delta=zeros(1,chans*ncomps);
+            olddelta = delta;
+            extblocks = urextblocks;
+            prevweights = startweights;
+            prevwtchange = zeros(chans,ncomps);
+            lrates = zeros(1,maxsteps);
+            bias = zeros(ncomps,1);
+
+            signs = ones(1,ncomps);    <span class="comment">% initialize signs to nsub -1, rest +1</span>
+            <span class="keyword">for</span> k=1:nsub
+                signs(k) = -1;
+            <span class="keyword">end</span>
+            signs = diag(signs); <span class="comment">% make a diagonal matrix</span>
+            oldsigns = zeros(size(signs));;
+
+            <span class="keyword">if</span> lrate&gt; MIN_LRATE
+                r = rank(data); <span class="comment">% determine if data rank is too low</span>
+                <span class="keyword">if</span> r&lt;ncomps
+                    icaprintf(verb,fid,<span class="string">'Data has rank %d. Cannot compute %d components.\n'</span>,<span class="keyword">...</span>
+                        r,ncomps);
+                    <span class="keyword">return</span>
+                <span class="keyword">else</span>
+                    icaprintf(verb,fid,<span class="keyword">...</span>
+                        <span class="string">'Lowering learning rate to %g and starting again.\n'</span>,lrate);
+                <span class="keyword">end</span>
+            <span class="keyword">else</span>
+                icaprintf(verb,fid, <span class="keyword">...</span>
+                    <span class="string">'runica(): QUITTING - weight matrix may not be invertible!\n'</span>);
+                <span class="keyword">return</span>;
+            <span class="keyword">end</span>
+        <span class="keyword">else</span> <span class="comment">% if weights in bounds</span>
+            <span class="comment">%</span>
+            <span class="comment">%%%%%%%%%%%%% Print weight update information %%%%%%%%%%%%%%%%%%%%%%</span>
+            <span class="comment">%</span>
+            <span class="keyword">if</span> step&gt; 2
+                angledelta=acos((delta*olddelta')/sqrt(change*oldchange));
+            <span class="keyword">end</span>
+            places = -floor(log10(nochange));
+            icaprintf(verb,fid,<span class="string">'step %d - lrate %5f, wchange %8.8f, angledelta %4.1f deg\n'</span>, <span class="keyword">...</span>
+                                step,      lrate,     change, degconst*angledelta);
+            <span class="comment">%</span>
+            <span class="comment">%%%%%%%%%%%%%%%%%%%% Save current values %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+            <span class="comment">%</span>
+            changes = [changes change];
+            oldweights = weights;
+            <span class="comment">%</span>
+            <span class="comment">%%%%%%%%%%%%%%%%%%%% Anneal learning rate %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+            <span class="comment">%</span>
+            <span class="keyword">if</span> degconst*angledelta &gt; annealdeg,
+                lrate = lrate*annealstep;          <span class="comment">% anneal learning rate</span>
+                olddelta   = delta;                <span class="comment">% accumulate angledelta until</span>
+                oldchange  = change;               <span class="comment">%  annealdeg is reached</span>
+            <span class="keyword">elseif</span> step == 1                     <span class="comment">% on first step only</span>
+                olddelta   = delta;                <span class="comment">% initialize</span>
+                oldchange  = change;
+            <span class="keyword">end</span>
+            <span class="comment">%</span>
+            <span class="comment">%%%%%%%%%%%%%%%%%%%% Apply stopping rule %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+            <span class="comment">%</span>
+            <span class="keyword">if</span> step &gt;2 &amp; change &lt; nochange,      <span class="comment">% apply stopping rule</span>
+                laststep=step;
+                step=maxsteps;                  <span class="comment">% stop when weights stabilize</span>
+            <span class="keyword">elseif</span> change &gt; DEFAULT_BLOWUP,      <span class="comment">% if weights blow up,</span>
+                lrate=lrate*DEFAULT_BLOWUP_FAC;    <span class="comment">% keep trying</span>
+            <span class="keyword">end</span>;                                 <span class="comment">% with a smaller learning rate</span>
+        <span class="keyword">end</span>; <span class="comment">% end if weights in bounds</span>
+
+    <span class="keyword">end</span>; <span class="comment">% end while step &lt; maxsteps (ICA Training) %%%%%%%%%%%%%%%%%%%%%%%%%</span>
+    <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+<span class="keyword">end</span>
+</pre><h2>Compute ICA Weights<a name="7"></a></h2><pre class="codeinput"><span class="keyword">if</span> biasflag &amp; ~extended
+    <span class="keyword">while</span> step &lt; maxsteps, <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+        timeperm=randperm(datalength); <span class="comment">% shuffle data order at each step</span>
+
+        <span class="keyword">for</span> t=1:block:lastt, <span class="comment">%%%%%%%%% ICA Training Block %%%%%%%%%%%%%%%%%%%</span>
+            <span class="keyword">if</span> strcmpi(interupt, <span class="string">'on'</span>)
+                drawnow;
+                flag = getappdata(fig, <span class="string">'run'</span>);
+                <span class="keyword">if</span> ~flag,
+                    <span class="keyword">if</span> ~isempty(fid), fclose(fid); <span class="keyword">end</span>;
+                    close; error(<span class="string">'USER ABORT'</span>);
+                <span class="keyword">end</span>;
+            <span class="keyword">end</span>;
+
+            u=weights*double(data(:,timeperm(t:t+block-1))) + bias*onesrow;
+            y=1./(1+exp(-u));
+            weights = weights + lrate*(BI+(1-2*y)*u')*weights;
+            bias = bias + lrate*sum((1-2*y)')'; <span class="comment">% for logistic nonlin. %</span>
+
+            <span class="keyword">if</span> momentum &gt; 0 <span class="comment">%%%%%%%%% Add momentum %%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+                weights = weights + momentum*prevwtchange;
+                prevwtchange = weights-prevweights;
+                prevweights = weights;
+            <span class="keyword">end</span> <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+
+            <span class="keyword">if</span> max(max(abs(weights))) &gt; MAX_WEIGHT
+                wts_blowup = 1;
+                change = nochange;
+            <span class="keyword">end</span>
+            blockno = blockno + 1;
+            <span class="keyword">if</span> wts_blowup
+                <span class="keyword">break</span>
+            <span class="keyword">end</span>
+        <span class="keyword">end</span> <span class="comment">% for t=1:block:lastt %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+
+        <span class="keyword">if</span> ~wts_blowup
+            oldwtchange = weights-oldweights;
+            step=step+1;
+            <span class="comment">%</span>
+            <span class="comment">%%%%%%% Compute and print weight and update angle changes %%%%%%%%%</span>
+            <span class="comment">%</span>
+            lrates(1,step) = lrate;
+            angledelta=0.;
+            delta=reshape(oldwtchange,1,chans*ncomps);
+            change=delta*delta';
+        <span class="keyword">end</span>
+        <span class="comment">%</span>
+        <span class="comment">%%%%%%%%%%%%%%%%%%%%%% Restart if weights blow up %%%%%%%%%%%%%%%%%%%%</span>
+        <span class="comment">%</span>
+        <span class="keyword">if</span> wts_blowup | isnan(change)|isinf(change),  <span class="comment">% if weights blow up,</span>
+            icaprintf(verb,fid,<span class="string">''</span>);
+            step = 0;                          <span class="comment">% start again</span>
+            change = nochange;
+            wts_blowup = 0;                    <span class="comment">% re-initialize variables</span>
+            blockno = 1;
+            lrate = lrate*DEFAULT_RESTART_FAC; <span class="comment">% with lower learning rate</span>
+            weights = startweights;            <span class="comment">% and original weight matrix</span>
+            oldweights = startweights;
+            change = nochange;
+            oldwtchange = zeros(chans,ncomps);
+            delta=zeros(1,chans*ncomps);
+            olddelta = delta;
+            extblocks = urextblocks;
+            prevweights = startweights;
+            prevwtchange = zeros(chans,ncomps);
+            lrates = zeros(1,maxsteps);
+            bias = zeros(ncomps,1);
+            <span class="keyword">if</span> lrate&gt; MIN_LRATE
+                r = rank(data); <span class="comment">% determine if data rank is too low</span>
+                <span class="keyword">if</span> r&lt;ncomps
+                    icaprintf(verb,fid,<span class="string">'Data has rank %d. Cannot compute %d components.\n'</span>,r,ncomps);
+                    <span class="keyword">return</span>
+                <span class="keyword">else</span>
+                    icaprintf(verb,fid,<span class="string">'Lowering learning rate to %g and starting again.\n'</span>,lrate);
+                <span class="keyword">end</span>
+            <span class="keyword">else</span>
+                icaprintf(verb,fid,<span class="string">'runica(): QUITTING - weight matrix may not be invertible!\n'</span>);
+                <span class="keyword">return</span>;
+            <span class="keyword">end</span>
+        <span class="keyword">else</span> <span class="comment">% if weights in bounds</span>
+            <span class="comment">%</span>
+            <span class="comment">%%%%%%%%%%%%% Print weight update information %%%%%%%%%%%%%%%%%%%%%%</span>
+            <span class="comment">%</span>
+            <span class="keyword">if</span> step&gt; 2
+                angledelta=acos((delta*olddelta')/sqrt(change*oldchange));
+            <span class="keyword">end</span>
+            places = -floor(log10(nochange));
+<span class="comment">%             icaprintf(verb,fid,'step %d - lrate %5f, wchange %8.8f,</span>
+<span class="comment">%             angledelta %4.1f deg\n', ... marzieh</span>
+<span class="comment">%                                 step,      lrate,     change, degconst*angledelta);</span>
+            <span class="comment">%</span>
+            <span class="comment">%%%%%%%%%%%%%%%%%%%% Save current values %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+            <span class="comment">%</span>
+            changes = [changes change];
+            oldweights = weights;
+            <span class="comment">%</span>
+            <span class="comment">%%%%%%%%%%%%%%%%%%%% Anneal learning rate %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+            <span class="comment">%</span>
+            <span class="keyword">if</span> degconst*angledelta &gt; annealdeg,
+                lrate = lrate*annealstep;          <span class="comment">% anneal learning rate</span>
+                olddelta   = delta;                <span class="comment">% accumulate angledelta until</span>
+                oldchange  = change;               <span class="comment">%  annealdeg is reached</span>
+            <span class="keyword">elseif</span> step == 1                     <span class="comment">% on first step only</span>
+                olddelta   = delta;                <span class="comment">% initialize</span>
+                oldchange  = change;
+            <span class="keyword">end</span>
+            <span class="comment">%</span>
+            <span class="comment">%%%%%%%%%%%%%%%%%%%% Apply stopping rule %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+            <span class="comment">%</span>
+            <span class="keyword">if</span> step &gt;2 &amp; change &lt; nochange,      <span class="comment">% apply stopping rule</span>
+                laststep=step;
+                step=maxsteps;                  <span class="comment">% stop when weights stabilize</span>
+            <span class="keyword">elseif</span> change &gt; DEFAULT_BLOWUP,      <span class="comment">% if weights blow up,</span>
+                lrate=lrate*DEFAULT_BLOWUP_FAC;    <span class="comment">% keep trying</span>
+            <span class="keyword">end</span>;                                 <span class="comment">% with a smaller learning rate</span>
+        <span class="keyword">end</span>; <span class="comment">% end if weights in bounds</span>
+
+    <span class="keyword">end</span>; <span class="comment">% end while step &lt; maxsteps (ICA Training) %%%%%%%%%%%%%%%%%%%%%%%%%</span>
+    <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+<span class="keyword">end</span>
+</pre><h2>Compute ICA Weights<a name="8"></a></h2><pre class="codeinput"><span class="keyword">if</span> ~biasflag &amp; extended
+    <span class="keyword">while</span> step &lt; maxsteps, <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+        timeperm=randperm(datalength); <span class="comment">% shuffle data order at each step through data</span>
+
+        <span class="keyword">for</span> t=1:block:lastt, <span class="comment">%%%%%%%%% ICA Training Block %%%%%%%%%%%%%%%%%%%</span>
+            <span class="keyword">if</span> strcmpi(interupt, <span class="string">'on'</span>)
+                drawnow;
+                flag = getappdata(fig, <span class="string">'run'</span>);
+                <span class="keyword">if</span> ~flag,
+                    <span class="keyword">if</span> ~isempty(fid), fclose(fid); <span class="keyword">end</span>;
+                    close; error(<span class="string">'USER ABORT'</span>);
+                <span class="keyword">end</span>;
+            <span class="keyword">end</span>;
+
+            u=weights*double(data(:,timeperm(t:t+block-1))); <span class="comment">% promote block to dbl</span>
+            y=tanh(u);                                                       <span class="comment">%</span>
+            weights = weights + lrate*(BI-signs*y*u'-u*u')*weights;
+
+            <span class="keyword">if</span> momentum &gt; 0 <span class="comment">%%%%%%%%% Add momentum %%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+                weights = weights + momentum*prevwtchange;
+                prevwtchange = weights-prevweights;
+                prevweights = weights;
+            <span class="keyword">end</span> <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+
+            <span class="keyword">if</span> max(max(abs(weights))) &gt; MAX_WEIGHT
+                wts_blowup = 1;
+                change = nochange;
+            <span class="keyword">end</span>
+            <span class="keyword">if</span> ~wts_blowup
+                <span class="comment">%</span>
+                <span class="comment">%%%%%%%%%%% Extended-ICA kurtosis estimation %%%%%%%%%%%%%%%%%%%%%</span>
+                <span class="comment">%while step &lt; maxsteps</span>
+                <span class="keyword">if</span> extblocks &gt; 0 &amp; rem(blockno,extblocks) == 0,
+                    <span class="comment">% recompute signs vector using kurtosis</span>
+                    <span class="keyword">if</span> kurtsize &lt; frames <span class="comment">% 12-22-99 rand() size suggestion by M. Spratling</span>
+                        rp = fix(rand(1,kurtsize)*datalength);  <span class="comment">% pick random subset</span>
+                        <span class="comment">% Accout for the possibility of a 0 generation by rand</span>
+                        ou = find(rp == 0);
+                        <span class="keyword">while</span> ~isempty(ou) <span class="comment">% 1-11-00 suggestion by J. Foucher</span>
+                            rp(ou) = fix(rand(1,length(ou))*datalength);
+                            ou = find(rp == 0);
+                        <span class="keyword">end</span>
+                        partact=weights*double(data(:,rp(1:kurtsize)));
+                    <span class="keyword">else</span>                                        <span class="comment">% for small data sets,</span>
+                        partact=weights*double(data);           <span class="comment">% use whole data</span>
+                    <span class="keyword">end</span>
+                    m2=mean(partact'.^2).^2;
+                    m4= mean(partact'.^4);
+                    kk= (m4./m2)-3.0;                           <span class="comment">% kurtosis estimates</span>
+                    <span class="keyword">if</span> extmomentum
+                        kk = extmomentum*old_kk + (1.0-extmomentum)*kk; <span class="comment">% use momentum</span>
+                        old_kk = kk;
+                    <span class="keyword">end</span>
+                    signs=diag(sign(kk+signsbias));             <span class="comment">% pick component signs</span>
+                    <span class="keyword">if</span> signs == oldsigns,
+                        signcount = signcount+1;
+                    <span class="keyword">else</span>
+                        signcount = 0;
+                    <span class="keyword">end</span>
+                    oldsigns = signs;
+                    signcounts = [signcounts signcount];
+                    <span class="keyword">if</span> signcount &gt;= SIGNCOUNT_THRESHOLD,
+                        extblocks = fix(extblocks * SIGNCOUNT_STEP);<span class="comment">% make kurt() estimation</span>
+                        signcount = 0;                             <span class="comment">% less frequent if sign</span>
+                    <span class="keyword">end</span>                                         <span class="comment">% is not changing</span>
+                <span class="keyword">end</span> <span class="comment">% extblocks &gt; 0 &amp; . . .</span>
+            <span class="keyword">end</span> <span class="comment">% if ~wts_blowup %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+            blockno = blockno + 1;
+            <span class="keyword">if</span> wts_blowup
+                <span class="keyword">break</span>
+            <span class="keyword">end</span>
+        <span class="keyword">end</span> <span class="comment">% for t=1:block:lastt %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+
+        <span class="keyword">if</span> ~wts_blowup
+            oldwtchange = weights-oldweights;
+            step=step+1;
+            <span class="comment">%</span>
+            <span class="comment">%%%%%%% Compute and print weight and update angle changes %%%%%%%%%</span>
+            <span class="comment">%</span>
+            lrates(1,step) = lrate;
+            angledelta=0.;
+            delta=reshape(oldwtchange,1,chans*ncomps);
+            change=delta*delta';
+        <span class="keyword">end</span>
+        <span class="comment">%</span>
+        <span class="comment">%%%%%%%%%%%%%%%%%%%%%% Restart if weights blow up %%%%%%%%%%%%%%%%%%%%</span>
+        <span class="comment">%</span>
+        <span class="keyword">if</span> wts_blowup | isnan(change)|isinf(change),  <span class="comment">% if weights blow up,</span>
+            icaprintf(verb,fid,<span class="string">''</span>);
+            step = 0;                          <span class="comment">% start again</span>
+            change = nochange;
+            wts_blowup = 0;                    <span class="comment">% re-initialize variables</span>
+            blockno = 1;
+            lrate = lrate*DEFAULT_RESTART_FAC; <span class="comment">% with lower learning rate</span>
+            weights = startweights;            <span class="comment">% and original weight matrix</span>
+            oldweights = startweights;
+            change = nochange;
+            oldwtchange = zeros(chans,ncomps);
+            delta=zeros(1,chans*ncomps);
+            olddelta = delta;
+            extblocks = urextblocks;
+            prevweights = startweights;
+            prevwtchange = zeros(chans,ncomps);
+            lrates = zeros(1,maxsteps);
+            bias = zeros(ncomps,1);
+            signs = ones(1,ncomps);    <span class="comment">% initialize signs to nsub -1, rest +1</span>
+            <span class="keyword">for</span> k=1:nsub
+                signs(k) = -1;
+            <span class="keyword">end</span>
+            signs = diag(signs); <span class="comment">% make a diagonal matrix</span>
+            oldsigns = zeros(size(signs));
+            <span class="keyword">if</span> lrate&gt; MIN_LRATE
+                r = rank(data); <span class="comment">% find whether data rank is too low</span>
+                <span class="keyword">if</span> r&lt;ncomps
+                    icaprintf(verb,fid,<span class="string">'Data has rank %d. Cannot compute %d components.\n'</span>,<span class="keyword">...</span>
+                        r,ncomps);
+                    <span class="keyword">return</span>
+                <span class="keyword">else</span>
+                    icaprintf(verb,fid,<span class="keyword">...</span>
+                        <span class="string">'Lowering learning rate to %g and starting again.\n'</span>,lrate);
+                <span class="keyword">end</span>
+            <span class="keyword">else</span>
+                icaprintf(verb,fid, <span class="keyword">...</span>
+                    <span class="string">'runica(): QUITTING - weight matrix may not be invertible!\n'</span>);
+                <span class="keyword">return</span>;
+            <span class="keyword">end</span>
+        <span class="keyword">else</span> <span class="comment">% if weights in bounds</span>
+            <span class="comment">%</span>
+            <span class="comment">%%%%%%%%%%%%% Print weight update information %%%%%%%%%%%%%%%%%%%%%%</span>
+            <span class="comment">%</span>
+            <span class="keyword">if</span> step&gt; 2
+                angledelta=acos((delta*olddelta')/sqrt(change*oldchange));
+            <span class="keyword">end</span>
+            places = -floor(log10(nochange));
+<span class="comment">%             icaprintf(verb,fid,'step %d - lrate %5f, wchange %8.8f, angledelta %4.1f deg\n', ...</span>
+<span class="comment">%                                 step,      lrate,     change,</span>
+<span class="comment">%                                 degconst*angledelta);           marzieh</span>
+            <span class="comment">%</span>
+            <span class="comment">%%%%%%%%%%%%%%%%%%%% Save current values %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+            <span class="comment">%</span>
+            changes = [changes change];
+            oldweights = weights;
+            <span class="comment">%</span>
+            <span class="comment">%%%%%%%%%%%%%%%%%%%% Anneal learning rate %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+            <span class="comment">%</span>
+            <span class="keyword">if</span> degconst*angledelta &gt; annealdeg,
+                lrate = lrate*annealstep;          <span class="comment">% anneal learning rate</span>
+                olddelta   = delta;                <span class="comment">% accumulate angledelta until</span>
+                oldchange  = change;               <span class="comment">%  annealdeg is reached</span>
+            <span class="keyword">elseif</span> step == 1                     <span class="comment">% on first step only</span>
+                olddelta   = delta;                <span class="comment">% initialize</span>
+                oldchange  = change;
+            <span class="keyword">end</span>
+            <span class="comment">%</span>
+            <span class="comment">%%%%%%%%%%%%%%%%%%%% Apply stopping rule %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+            <span class="comment">%</span>
+            <span class="keyword">if</span> step &gt;2 &amp; change &lt; nochange,      <span class="comment">% apply stopping rule</span>
+                laststep=step;
+                step=maxsteps;                  <span class="comment">% stop when weights stabilize</span>
+            <span class="keyword">elseif</span> change &gt; DEFAULT_BLOWUP,      <span class="comment">% if weights blow up,</span>
+                lrate=lrate*DEFAULT_BLOWUP_FAC;    <span class="comment">% keep trying</span>
+            <span class="keyword">end</span>;                                 <span class="comment">% with a smaller learning rate</span>
+        <span class="keyword">end</span>; <span class="comment">% end if weights in bounds</span>
+
+    <span class="keyword">end</span>; <span class="comment">% end while step &lt; maxsteps (ICA Training) %%%%%%%%%%%%%%%%%%%%%%%%%</span>
+<span class="keyword">end</span>
+<span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+</pre><h2>Compute ICA Weights<a name="9"></a></h2><pre class="codeinput"><span class="keyword">if</span> ~biasflag &amp; ~extended
+    <span class="keyword">while</span> step &lt; maxsteps, <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+        timeperm=randperm(datalength); <span class="comment">% shuffle data order at each step</span>
+
+        <span class="keyword">for</span> t=1:block:lastt, <span class="comment">%%%%%%%%% ICA Training Block %%%%%%%%%%%%%%%%%%%</span>
+            <span class="keyword">if</span> strcmpi(interupt, <span class="string">'on'</span>)
+                drawnow;
+                flag = getappdata(fig, <span class="string">'run'</span>);
+                <span class="keyword">if</span> ~flag,
+                    <span class="keyword">if</span> ~isempty(fid), fclose(fid); <span class="keyword">end</span>;
+                    close; error(<span class="string">'USER ABORT'</span>);
+                <span class="keyword">end</span>;
+            <span class="keyword">end</span>;
+            u=weights*double(data(:,timeperm(t:t+block-1)));
+            y=1./(1+exp(-u));                                                <span class="comment">%</span>
+            weights = weights + lrate*(BI+(1-2*y)*u')*weights;
+
+            <span class="keyword">if</span> momentum &gt; 0 <span class="comment">%%%%%%%%% Add momentum %%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+                weights = weights + momentum*prevwtchange;
+                prevwtchange = weights-prevweights;
+                prevweights = weights;
+            <span class="keyword">end</span> <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+
+            <span class="keyword">if</span> max(max(abs(weights))) &gt; MAX_WEIGHT
+                wts_blowup = 1;
+                change = nochange;
+            <span class="keyword">end</span>
+
+            blockno = blockno + 1;
+            <span class="keyword">if</span> wts_blowup
+                <span class="keyword">break</span>
+            <span class="keyword">end</span>
+        <span class="keyword">end</span> <span class="comment">% for t=1:block:lastt %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+
+        <span class="keyword">if</span> ~wts_blowup
+            oldwtchange = weights-oldweights;
+            step=step+1;
+            <span class="comment">%</span>
+            <span class="comment">%%%%%%% Compute and print weight and update angle changes %%%%%%%%%</span>
+            <span class="comment">%</span>
+            lrates(1,step) = lrate;
+            angledelta=0.;
+            delta=reshape(oldwtchange,1,chans*ncomps);
+            change=delta*delta';
+        <span class="keyword">end</span>
+        <span class="comment">%</span>
+        <span class="comment">%%%%%%%%%%%%%%%%%%%%%% Restart if weights blow up %%%%%%%%%%%%%%%%%%%%</span>
+        <span class="comment">%</span>
+        <span class="keyword">if</span> wts_blowup | isnan(change)|isinf(change),  <span class="comment">% if weights blow up,</span>
+            icaprintf(verb,fid,<span class="string">''</span>);
+            step = 0;                          <span class="comment">% start again</span>
+            change = nochange;
+            wts_blowup = 0;                    <span class="comment">% re-initialize variables</span>
+            blockno = 1;
+            lrate = lrate*DEFAULT_RESTART_FAC; <span class="comment">% with lower learning rate</span>
+            weights = startweights;            <span class="comment">% and original weight matrix</span>
+            oldweights = startweights;
+            change = nochange;
+            oldwtchange = zeros(chans,ncomps);
+            delta=zeros(1,chans*ncomps);
+            olddelta = delta;
+            extblocks = urextblocks;
+            prevweights = startweights;
+            prevwtchange = zeros(chans,ncomps);
+            lrates = zeros(1,maxsteps);
+            bias = zeros(ncomps,1);
+
+            <span class="keyword">if</span> lrate&gt; MIN_LRATE
+                r = rank(data); <span class="comment">% find whether data rank is too low</span>
+                <span class="keyword">if</span> r&lt;ncomps
+                    icaprintf(verb,fid,<span class="string">'Data has rank %d. Cannot compute %d components.\n'</span>,<span class="keyword">...</span>
+                        r,ncomps);
+                    <span class="keyword">return</span>
+                <span class="keyword">else</span>
+                    icaprintf(verb,fid,<span class="keyword">...</span>
+                        <span class="string">'Lowering learning rate to %g and starting again.\n'</span>,lrate);
+                <span class="keyword">end</span>
+            <span class="keyword">else</span>
+                icaprintf(verb,fid, <span class="keyword">...</span>
+                    <span class="string">'runica(): QUITTING - weight matrix may not be invertible!\n'</span>);
+                <span class="keyword">return</span>;
+            <span class="keyword">end</span>
+        <span class="keyword">else</span> <span class="comment">% if weights in bounds</span>
+            <span class="comment">%</span>
+            <span class="comment">%%%%%%%%%%%%% Print weight update information %%%%%%%%%%%%%%%%%%%%%%</span>
+            <span class="comment">%</span>
+            <span class="keyword">if</span> step&gt; 2
+                angledelta=acos((delta*olddelta')/sqrt(change*oldchange));
+            <span class="keyword">end</span>
+            places = -floor(log10(nochange));
+            icaprintf(verb,fid,<span class="string">'step %d - lrate %5f, wchange %8.8f, angledelta %4.1f deg\n'</span>, <span class="keyword">...</span>
+                                step,      lrate,     change, degconst*angledelta);
+            <span class="comment">%</span>
+            <span class="comment">%%%%%%%%%%%%%%%%%%%% Save current values %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+            <span class="comment">%</span>
+            changes = [changes change];
+            oldweights = weights;
+            <span class="comment">%</span>
+            <span class="comment">%%%%%%%%%%%%%%%%%%%% Anneal learning rate %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+            <span class="comment">%</span>
+            <span class="keyword">if</span> degconst*angledelta &gt; annealdeg,
+                lrate = lrate*annealstep;          <span class="comment">% anneal learning rate</span>
+                olddelta   = delta;                <span class="comment">% accumulate angledelta until</span>
+                oldchange  = change;               <span class="comment">%  annealdeg is reached</span>
+            <span class="keyword">elseif</span> step == 1                     <span class="comment">% on first step only</span>
+                olddelta   = delta;                <span class="comment">% initialize</span>
+                oldchange  = change;
+            <span class="keyword">end</span>
+            <span class="comment">%</span>
+            <span class="comment">%%%%%%%%%%%%%%%%%%%% Apply stopping rule %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+            <span class="comment">%</span>
+            <span class="keyword">if</span> step &gt;2 &amp; change &lt; nochange,      <span class="comment">% apply stopping rule</span>
+                laststep=step;
+                step=maxsteps;                  <span class="comment">% stop when weights stabilize</span>
+            <span class="keyword">elseif</span> change &gt; DEFAULT_BLOWUP,      <span class="comment">% if weights blow up,</span>
+                lrate=lrate*DEFAULT_BLOWUP_FAC;    <span class="comment">% keep trying</span>
+            <span class="keyword">end</span>;                                 <span class="comment">% with a smaller learning rate</span>
+        <span class="keyword">end</span>; <span class="comment">% end if weights in bounds</span>
+
+    <span class="keyword">end</span>; <span class="comment">% end while step &lt; maxsteps (ICA Training) %%%%%%%%%%%%%%%%%%%%%%%%%</span>
+    <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+<span class="keyword">end</span>
+</pre><h2>Finalize Computed Data for Output<a name="10"></a></h2><pre class="codeinput"><span class="keyword">if</span> strcmpi(interupt, <span class="string">'on'</span>)
+    close(fig);
+<span class="keyword">end</span>;
+
+
+  <span class="keyword">if</span> ~laststep
+    laststep = step;
+  <span class="keyword">end</span>;
+  lrates = lrates(1,1:laststep);           <span class="comment">% truncate lrate history vector</span>
+
+  <span class="comment">%</span>
+  <span class="comment">%%%%%%%%%%%%%% Orient components towards max positive activation %%%%%%</span>
+  <span class="comment">%</span>
+  <span class="keyword">if</span> nargout &gt; 6 | strcmp(posactflag,<span class="string">'on'</span>)
+      <span class="comment">% make activations from sphered and pca'd data; -sm 7/05</span>
+      <span class="comment">% add back the row means removed from data before sphering</span>
+      <span class="keyword">if</span> strcmp(pcaflag,<span class="string">'off'</span>)
+          sr = sphere * rowmeans';
+          <span class="keyword">for</span> r = 1:ncomps
+              data(r,:) = data(r,:)+sr(r); <span class="comment">% add back row means</span>
+          <span class="keyword">end</span>
+          data = weights*data; <span class="comment">% OK in single</span>
+      <span class="keyword">else</span>
+          ser = sphere*eigenvectors(:,1:ncomps)'*rowmeans';
+          <span class="keyword">for</span> r = 1:ncomps
+              data(r,:) = data(r,:)+ser(r); <span class="comment">% add back row means</span>
+          <span class="keyword">end</span>
+          data = weights*data; <span class="comment">% OK in single</span>
+      <span class="keyword">end</span>;
+  <span class="keyword">end</span>
+  <span class="comment">%</span>
+  <span class="comment">% NOTE: Now 'data' are the component activations = weights*sphere*raw_data</span>
+  <span class="comment">%</span>
+  <span class="comment">%</span>
+  <span class="comment">%%%%%%%%%%%%%% If pcaflag, compose PCA and ICA matrices %%%%%%%%%%%%%%%</span>
+  <span class="comment">%</span>
+  <span class="keyword">if</span> strcmp(pcaflag,<span class="string">'on'</span>)
+    icaprintf(verb,fid,<span class="string">'Composing the eigenvector, weights, and sphere matrices\n'</span>);
+    icaprintf(verb,fid,<span class="string">'  into a single rectangular weights matrix; sphere=eye(%d)\n'</span><span class="keyword">...</span>
+                                                                  ,chans);
+    weights= weights*sphere*eigenvectors(:,1:ncomps)';
+    sphere = eye(urchans);
+  <span class="keyword">end</span>
+  <span class="comment">%</span>
+  <span class="comment">%%%%%% Sort components in descending order of max projected variance %%%%</span>
+  <span class="comment">%</span>
+  icaprintf(verb,fid,<span class="string">'Sorting components in descending order of mean projected variance ...\n'</span>);
+  <span class="comment">%</span>
+  <span class="comment">%%%%%%%%%%%%%%%%%%%% Find mean variances %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+  <span class="comment">%</span>
+  <span class="comment">% meanvar  = zeros(ncomps,1);      % size of the projections</span>
+  <span class="keyword">if</span> ncomps == urchans <span class="comment">% if weights are square . . .</span>
+      winv = inv(weights*sphere);
+  <span class="keyword">else</span>
+      icaprintf(verb,fid,<span class="string">'Using pseudo-inverse of weight matrix to rank order component projections.\n'</span>);
+      winv = pinv(weights*sphere);
+  <span class="keyword">end</span>
+  <span class="comment">%</span>
+  <span class="comment">% compute variances without backprojecting to save time and memory -sm 7/05</span>
+  <span class="comment">%</span>
+  meanvar = sum(winv.^2).*sum((data').^2)/((chans*frames)-1); <span class="comment">% from Rey Ramirez 8/07</span>
+  <span class="comment">%</span>
+  <span class="comment">%%%%%%%%%%%%%% Sort components by mean variance %%%%%%%%%%%%%%%%%%%%%%%%</span>
+  <span class="comment">%</span>
+  [sortvar, windex] = sort(meanvar);
+  windex = windex(ncomps:-1:1); <span class="comment">% order large to small</span>
+  meanvar = meanvar(windex);
+  <span class="comment">%</span>
+  <span class="comment">%%%%%%%%%%%% re-orient max(abs(activations)) to &gt;=0 ('posact') %%%%%%%%</span>
+  <span class="comment">%</span>
+  <span class="keyword">if</span> strcmp(posactflag,<span class="string">'on'</span>) <span class="comment">% default is now off to save processing and memory</span>
+      icaprintf(verb,fid,<span class="string">'Making the max(abs(activations)) positive ...\n'</span>);
+      [tmp ix] = max(abs(data')); <span class="comment">% = max abs activations</span>
+      signsflipped = 0;
+      <span class="keyword">for</span> r=1:ncomps
+         <span class="keyword">if</span> sign(data(r,ix(r))) &lt; 0
+            <span class="keyword">if</span> nargout&gt;6  <span class="comment">% if activations are to be returned (only)</span>
+               data(r,:) = -1*data(r,:);  <span class="comment">% flip activations so max(abs()) is &gt;= 0</span>
+            <span class="keyword">end</span>
+            winv(:,r) = -1*winv(:,r);  <span class="comment">% flip component maps</span>
+            signsflipped = 1;
+         <span class="keyword">end</span>
+      <span class="keyword">end</span>
+      <span class="keyword">if</span> signsflipped == 1
+          weights = pinv(winv)*inv(sphere); <span class="comment">% re-invert the component maps</span>
+      <span class="keyword">end</span>
+
+      <span class="comment">% [data,winvout,weights] = posact(data,weights); % overwrite data with activations</span>
+      <span class="comment">% changes signs of activations (now = data) and weights</span>
+      <span class="comment">% to make activations (data) net rms-positive</span>
+      <span class="comment">% can call this outside of runica() - though it is inefficient!</span>
+  <span class="keyword">end</span>
+  <span class="comment">%</span>
+  <span class="comment">%%%%%%%%%%%%%%%%%%%%% Filter data using final weights %%%%%%%%%%%%%%%%%%</span>
+  <span class="comment">%</span>
+  <span class="keyword">if</span> nargout&gt;6, <span class="comment">% if activations are to be returned</span>
+      icaprintf(verb,fid,<span class="string">'Permuting the activation wave forms ...\n'</span>);
+      data = data(windex,:); <span class="comment">% data is now activations -sm 7/05</span>
+  <span class="keyword">else</span>
+      clear <span class="string">data</span>
+  <span class="keyword">end</span>
+  weights = weights(windex,:);<span class="comment">% reorder the weight matrix</span>
+  bias  = bias(windex);       <span class="comment">% reorder them</span>
+  signs = diag(signs);        <span class="comment">% vectorize the signs matrix</span>
+  signs = signs(windex);      <span class="comment">% reorder them</span>
+
+  <span class="keyword">if</span> ~isempty(fid), fclose(fid); <span class="keyword">end</span>; <span class="comment">% close logfile</span>
+
+<span class="comment">%</span>
+<span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% end %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+<span class="comment">%</span>
+
+<span class="keyword">return</span>
+
+<span class="comment">% printing functions</span>
+<span class="comment">% ------------------</span>
+</pre><pre class="codeinput"><span class="keyword">function</span> icaprintf(verb,fid, varargin);
+    <span class="keyword">if</span> verb
+        <span class="keyword">if</span> ~isempty(fid)
+            fprintf(fid, varargin{:});
+        <span class="keyword">end</span>;
+        fprintf(varargin{:});
+    <span class="keyword">end</span>;
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.14<br></p></div><!--
+##### SOURCE BEGIN #####
+% runica() - Perform Independent Component Analysis (ICA) decomposition
+%            of input data using the logistic infomax ICA algorithm of 
+%            Bell & Sejnowski (1995) with the natural gradient feature 
+%            of Amari, Cichocki & Yang, or optionally the extended-ICA 
+%            algorithm of Lee, Girolami & Sejnowski, with optional PCA 
+%            dimension reduction. Annealing based on weight changes is 
+%            used to automate the separation process. 
+% Usage:
+%         >> [weights,sphere] = runica(data); % train using defaults 
+%    else
+%         >> [weights,sphere,compvars,bias,signs,lrates,activations] ...
+%                             = runica(data,'Key1',Value1',...);
+% Input:
+%    data     = input data (chans,frames*epochs). 
+%               Note that if data consists of multiple discontinuous epochs, 
+%               each epoch should be separately baseline-zero'd using
+%                  >> data = rmbase(data,frames,basevector);
+%
+% Optional keywords [argument]:
+% 'extended'  = [N] perform tanh() "extended-ICA" with sign estimation 
+%               N training blocks. If N > 0, automatically estimate the 
+%               number of sub-Gaussian sources. If N < 0, fix number of 
+%               sub-Gaussian comps to -N [faster than N>0] (default|0 -> off)
+% 'pca'       = [N] decompose a principal component     (default -> 0=off)
+%               subspace of the data. Value is the number of PCs to retain.
+% 'sphering'  = ['on'/'off'] flag sphering of data      (default -> 'on')
+% 'weights'   = [W] initial weight matrix               (default -> eye())
+%                            (Note: if 'sphering' 'off', default -> spher())
+% 'lrate'     = [rate] initial ICA learning rate (<< 1) (default -> heuristic)
+% 'block'     = [N] ICA block size (<< datalength)      (default -> heuristic)
+% 'anneal'    = annealing constant (0,1] (defaults -> 0.90, or 0.98, extended)
+%                         controls speed of convergence
+% 'annealdeg' = [N] degrees weight change for annealing (default -> 70)
+% 'stop'      = [f] stop training when weight-change < this (default -> 1e-6
+%               if less than 33 channel and 1E-7 otherwise)
+% 'maxsteps'  = [N] max number of ICA training steps    (default -> 512)
+% 'bias'      = ['on'/'off'] perform bias adjustment    (default -> 'on')
+% 'momentum'  = [0<f<1] training momentum               (default -> 0)
+% 'specgram'  = [srate loHz hiHz frames winframes] decompose a complex time/frequency
+%               transform of the data - though not optimally. (Note: winframes must 
+%               divide frames) (defaults [srate 0 srate/2 size(data,2) size(data,2)])
+% 'posact'    = make all component activations net-positive(default 'off'}
+%               Requires time and memory; posact() may be applied separately.
+% 'verbose'   = give ascii messages ('on'/'off')        (default -> 'on')
+% 'logfile'   = [filename] save all message in a log file in addition to showing them
+%               on screen (default -> none)
+% 'interput'  = ['on'|'off'] draw interupt figure. Default is off.
+%
+% Outputs:    [Note: RO means output in reverse order of projected mean variance
+%                    unless starting weight matrix passed ('weights' above)]
+% weights     = ICA weight matrix (comps,chans)      [RO]
+% sphere      = data sphering matrix (chans,chans) = spher(data)
+%               Note that unmixing_matrix = weights*sphere {if sphering off -> eye(chans)}
+% compvars    = back-projected component variances   [RO]
+% bias        = vector of final (ncomps) online bias [RO]    (default = zeros())
+% signs       = extended-ICA signs for components    [RO]    (default = ones())
+%                   [ -1 = sub-Gaussian; 1 = super-Gaussian]
+% lrates      = vector of learning rates used at each training step [RO]
+% activations = activation time courses of the output components (ncomps,frames*epochs)
+%
+% Authors: Scott Makeig with contributions from Tony Bell, Te-Won Lee, 
+% Tzyy-Ping Jung, Sigurd Enghoff, Michael Zibulevsky, Delorme Arnaud,
+% CNL/The Salk Institute, La Jolla, 1996-
+
+% Uses: posact()
+
+% 'ncomps'    = [N] number of ICA components to compute (default -> chans or 'pca' arg) 
+%               using rectangular ICA decomposition. This parameter may return 
+%               strange results. This is because the weight matrix is rectangular 
+%               instead of being square. Do not use except to try to fix the problem. 
+
+% Reference (please cite):
+%
+% Makeig, S., Bell, A.J., Jung, T-P and Sejnowski, T.J.,
+% "Independent component analysis of electroencephalographic data," 
+% In: D. Touretzky, M. Mozer and M. Hasselmo (Eds). Advances in Neural 
+% Information Processing Systems 8:145-151, MIT Press, Cambridge, MA (1996).
+%
+% Toolbox Citation:
+%
+% Makeig, Scott et al. "EEGLAB: ICA Toolbox for Psychophysiological Research". 
+% WWW Site, Swartz Center for Computational Neuroscience, Institute of Neural
+% Computation, University of San Diego California
+% <www.sccn.ucsd.edu/eeglab/>, 2000. [World Wide Web Publication]. 
+%
+% For more information:
+% http://www.sccn.ucsd.edu/eeglab/icafaq.html - FAQ on ICA/EEG
+% http://www.sccn.ucsd.edu/eeglab/icabib.html - mss. on ICA & biosignals
+% http://www.cnl.salk.edu/~tony/ica.html - math. mss. on ICA
+
+% Copyright (C) 1996 Scott Makeig et al, SCCN/INC/UCSD, scott@sccn.ucsd.edu
+%
+% This program is free software; you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation; either version 2 of the License, or
+% (at your option) any later version.
+%
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+%
+% You should have received a copy of the GNU General Public License
+% along with this program; if not, write to the Free Software
+% Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%% Edit history %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%  runica()  - by Scott Makeig with contributions from Tony Bell, Te-Won Lee 
+%              Tzyy-Ping Jung, Sigurd Enghoff, Michael Zibulevsky et al.
+%                            CNL / Salk Institute 1996-00
+%  04-30-96 built from icatest.m and ~jung/.../wtwpwica.m -sm
+%  07-28-97 new runica(), adds bias (default on), momentum (default off), 
+%           extended-ICA (Lee & Sejnowski, 1997), cumulative angledelta 
+%           (until lrate drops), keywords, signcount for speeding extended-ICA
+%  10-07-97 put acos() outside verbose loop; verbose 'off' wasn't stopping -sm
+%  11-11-97 adjusted help msg -sm
+%  11-30-97 return eye(chans) if sphering 'off' or 'none' (undocumented option) -sm
+%  02-27-98 use pinv() instead of inv() to rank order comps if ncomps < chans -sm
+%  04-28-98 added 'posact' and 'pca' flags  -sm
+%  07-16-98 reduced length of randperm() for kurtosis subset calc. -se & sm
+%  07-19-98 fixed typo in weights def. above -tl & sm
+%  12-21-99 added 'specgram' option suggested by Michael Zibulevsky, UNM -sm
+%  12-22-99 fixed rand() sizing inefficiency on suggestion of Mike Spratling, UK -sm
+%  01-11-00 fixed rand() sizing bug on suggestion of Jack Foucher, Strasbourg -sm
+%  12-18-00 test for existence of Sig Proc Tlbx function 'specgram'; improve
+%           'specgram' option arguments -sm
+%  01-25-02 reformated help & license -ad 
+%  01-25-02 lowered default lrate and block -ad 
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+function [weights,sphere,meanvar,bias,signs,lrates,data,y] = runica(data,varargin) % NB: Now optionally returns activations as variable 'data' -sm 7/05
+
+if nargin < 1
+  help runica  
+  return
+end
+
+[chans frames] = size(data); % determine the data size
+urchans = chans;  % remember original data channels 
+datalength = frames;
+if chans<2 
+   fprintf('\nrunica() - data size (%d,%d) too small.\n\n', chans,frames);
+   return
+end
+%
+%%%%%%%%%%%%%%%%%%%%%% Declare defaults used below %%%%%%%%%%%%%%%%%%%%%%%%
+%
+MAX_WEIGHT           = 1e8;       % guess that weights larger than this have blown up
+DEFAULT_STOP         = 0.000001;  % stop training if weight changes below this
+DEFAULT_ANNEALDEG    = 60;        % when angle change reaches this value,
+DEFAULT_ANNEALSTEP   = 0.90;      %     anneal by multiplying lrate by this
+DEFAULT_EXTANNEAL    = 0.98;      %     or this if extended-ICA
+DEFAULT_MAXSTEPS     = 512;       % ]top training after this many steps 
+DEFAULT_MOMENTUM     = 0.0;       % default momentum weight
+
+DEFAULT_BLOWUP       = 1000000000.0;   % = learning rate has 'blown up'
+DEFAULT_BLOWUP_FAC   = 0.8;       % when lrate 'blows up,' anneal by this fac
+DEFAULT_RESTART_FAC  = 0.9;       % if weights blowup, restart with lrate
+                                  % lower by this factor
+MIN_LRATE            = 0.000001;  % if weight blowups make lrate < this, quit
+MAX_LRATE            = 0.1;       % guard against uselessly high learning rate
+DEFAULT_LRATE        = 0.00065/log(chans); 
+                                  % heuristic default - may need adjustment
+                                  %   for large or tiny data sets!
+% DEFAULT_BLOCK        = floor(sqrt(frames/4));  % heuristic default 
+DEFAULT_BLOCK          = ceil(min(5*log(frames),0.3*frames)); % heuristic 
+                                  % - may need adjustment!
+% Extended-ICA option:
+DEFAULT_EXTENDED     = 0;         % default off
+DEFAULT_EXTBLOCKS    = 1;         % number of blocks per kurtosis calculation
+DEFAULT_NSUB         = 1;         % initial default number of assumed sub-Gaussians
+                                  % for extended-ICA
+DEFAULT_EXTMOMENTUM  = 0.5;       % momentum term for computing extended-ICA kurtosis
+MAX_KURTSIZE         = 6000;      % max points to use in kurtosis calculation
+MIN_KURTSIZE         = 2000;      % minimum good kurtosis size (flag warning)
+SIGNCOUNT_THRESHOLD  = 25;        % raise extblocks when sign vector unchanged
+                                  % after this many steps
+SIGNCOUNT_STEP       = 2;         % extblocks increment factor 
+
+DEFAULT_SPHEREFLAG   = 'on';      % use the sphere matrix as the default
+                                  %   starting weight matrix
+DEFAULT_INTERUPT     = 'off';     % figure interuption
+DEFAULT_PCAFLAG      = 'off';     % don't use PCA reduction
+DEFAULT_POSACTFLAG   = 'off';     % don't use posact(), to save space -sm 7/05
+DEFAULT_VERBOSE      = 1;         % write ascii info to calling screen
+DEFAULT_BIASFLAG     = 1;         % default to using bias in the ICA update rule
+%                                 
+%%%%%%%%%%%%%%%%%%%%%%% Set up keyword default values %%%%%%%%%%%%%%%%%%%%%%%%%
+%
+if nargout < 2, 
+    fprintf('runica() - needs at least two output arguments.\n');
+    return
+end
+epochs = 1;							 % do not care how many epochs in data
+
+pcaflag    = DEFAULT_PCAFLAG;
+sphering   = DEFAULT_SPHEREFLAG;     % default flags
+posactflag = DEFAULT_POSACTFLAG;
+verbose    = DEFAULT_VERBOSE;
+logfile    = [];
+
+block      = DEFAULT_BLOCK;          % heuristic default - may need adjustment!
+lrate      = DEFAULT_LRATE;
+annealdeg  = DEFAULT_ANNEALDEG;
+annealstep = 0;                      % defaults declared below
+nochange   = NaN;
+momentum   = DEFAULT_MOMENTUM;
+maxsteps   = DEFAULT_MAXSTEPS;
+
+weights    = 0;                      % defaults defined below
+ncomps     = chans;
+biasflag   = DEFAULT_BIASFLAG;
+
+interupt   = DEFAULT_INTERUPT;
+extended   = DEFAULT_EXTENDED;
+extblocks  = DEFAULT_EXTBLOCKS;
+kurtsize   = MAX_KURTSIZE;
+signsbias  = 0.02;                   % bias towards super-Gaussian components
+extmomentum= DEFAULT_EXTMOMENTUM;    % exp. average the kurtosis estimates
+nsub       = DEFAULT_NSUB;
+wts_blowup = 0;                      % flag =1 when weights too large
+wts_passed = 0;                      % flag weights passed as argument
+%
+%%%%%%%%%% Collect keywords and values from argument list %%%%%%%%%%%%%%%
+%
+   if (nargin> 1 & rem(nargin,2) == 0)
+      fprintf('runica(): Even number of input arguments???')
+      return
+   end
+   for i = 1:2:length(varargin) % for each Keyword
+      Keyword = varargin{i};
+      Value = varargin{i+1};
+      if ~isstr(Keyword)
+         fprintf('runica(): keywords must be strings')
+         return
+      end
+      Keyword = lower(Keyword); % convert upper or mixed case to lower
+
+      if strcmp(Keyword,'weights') | strcmp(Keyword,'weight')
+         if isstr(Value)
+            fprintf(...
+      'runica(): weights value must be a weight matrix or sphere')
+            return
+        elseif ~isempty(Value)
+           weights = Value;
+           wts_passed =1;
+         end
+      elseif strcmp(Keyword,'ncomps')
+         if isstr(Value)
+            fprintf('runica(): ncomps value must be an integer')
+            return
+        elseif ~isempty(Value)
+           if ncomps < urchans & ncomps ~= Value
+               fprintf('runica(): Use either PCA or ICA dimension reduction');
+               return
+            end
+            fprintf('*****************************************************************************************');
+            fprintf('************** WARNING: NCOMPS OPTION OFTEN DOES NOT RETURN ACCURATE RESULTS ************');
+            fprintf('************** WARNING: IF YOU FIND THE PROBLEM, PLEASE LET US KNOW          ************');
+            fprintf('*****************************************************************************************');
+            ncomps = Value;
+            if ~ncomps,
+               ncomps = chans;
+            end
+        end
+    elseif strcmp(Keyword,'pca')
+        if Value ~= 0
+           if ncomps < urchans & ncomps ~= Value
+              fprintf('runica(): Use either PCA or ICA dimension reduction');
+              return
+           end
+           if isstr(Value)
+              fprintf('runica(): pca value should be the number of principal components to retain')
+              return
+           end
+           pcaflag = 'on';
+           ncomps = Value;
+           if ncomps > chans | ncomps < 1,
+              fprintf('runica(): pca value must be in range [1,%d]\n',chans)
+              return
+           end
+           chans = ncomps;
+        end
+    elseif strcmp(Keyword,'interupt')
+         if ~isstr(Value)
+           fprintf('runica(): interupt value must be on or off')
+           return
+         else 
+           Value = lower(Value);
+           if ~strcmp(Value,'on') & ~strcmp(Value,'off'),
+             fprintf('runica(): interupt value must be on or off')
+             return
+           end
+           interupt = Value;
+         end
+     elseif strcmp(Keyword,'posact') 
+         if ~isstr(Value)
+           fprintf('runica(): posact value must be on or off')
+           return
+         else 
+           Value = lower(Value);
+           if ~strcmp(Value,'on') & ~strcmp(Value,'off'),
+             fprintf('runica(): posact value must be on or off')
+             return
+           end
+           posactflag = Value;
+         end
+      elseif strcmp(Keyword,'lrate')
+         if isstr(Value)
+            fprintf('runica(): lrate value must be a number')
+            return
+        elseif ~isempty(Value)
+         lrate = Value;
+         if lrate>MAX_LRATE | lrate <0,
+           fprintf('runica(): lrate value is out of bounds'); 
+           return
+         end
+         if ~lrate,
+            lrate = DEFAULT_LRATE;
+            end
+         end
+      elseif strcmp(Keyword,'block') | strcmp(Keyword,'blocksize')
+         if isstr(Value)
+            fprintf('runica(): block size value must be a number')
+            return
+         elseif ~isempty(Value)
+            block = floor(Value);
+            if ~block,
+               block = DEFAULT_BLOCK;
+            end
+         end
+      elseif strcmp(Keyword,'stop') | strcmp(Keyword,'nochange') ...
+                    | strcmp(Keyword,'stopping')
+         if isstr(Value)
+            fprintf('runica(): stop wchange value must be a number')
+            return
+         elseif ~isempty(Value)
+            nochange = Value;
+         end
+      elseif strcmp(Keyword,'logfile')
+         if ~isstr(Value)
+            fprintf('runica(): logfile value must be a string')
+            return
+         end
+         logfile = Value;
+      elseif strcmp(Keyword,'maxsteps') | strcmp(Keyword,'steps')
+         if isstr(Value)
+            fprintf('runica(): maxsteps value must be an integer')
+            return
+         elseif ~isempty(Value)
+            maxsteps = Value;
+            if ~maxsteps,
+               maxsteps   = DEFAULT_MAXSTEPS;
+            end
+            if maxsteps < 0
+               fprintf('runica(): maxsteps value (%d) must be a positive integer',maxsteps)
+               return
+            end
+        end
+      elseif strcmp(Keyword,'anneal') | strcmp(Keyword,'annealstep')
+         if isstr(Value)
+            fprintf('runica(): anneal step value (%2.4f) must be a number (0,1)',Value)
+            return
+         elseif ~isempty(Value)
+            annealstep = Value;
+            if annealstep <=0 | annealstep > 1,
+               fprintf('runica(): anneal step value (%2.4f) must be (0,1]',annealstep)
+               return
+            end
+         end
+      elseif strcmp(Keyword,'annealdeg') | strcmp(Keyword,'degrees')
+         if isstr(Value)
+            fprintf('runica(): annealdeg value must be a number')
+            return
+         elseif ~isempty(Value)
+            annealdeg = Value;
+            if ~annealdeg,
+                annealdeg = DEFAULT_ANNEALDEG;
+            elseif annealdeg > 180 | annealdeg < 0
+                fprintf('runica(): annealdeg (%3.1f) is out of bounds [0,180]',...
+                      annealdeg);
+                return
+                                              
+            end
+         end
+      elseif strcmp(Keyword,'momentum')
+         if isstr(Value)
+            fprintf('runica(): momentum value must be a number')
+            return
+         elseif ~isempty(Value)
+            momentum = Value;
+            if momentum > 1.0 | momentum < 0
+             fprintf('runica(): momentum value is out of bounds [0,1]')
+             return
+            end
+         end
+      elseif strcmp(Keyword,'sphering') | strcmp(Keyword,'sphereing') ...
+                | strcmp(Keyword,'sphere')
+         if ~isstr(Value)
+           fprintf('runica(): sphering value must be on, off, or none')
+           return
+         else 
+           Value = lower(Value);
+           if ~strcmp(Value,'on') & ~strcmp(Value,'off') & ~strcmp(Value,'none'),
+             fprintf('runica(): sphering value must be on or off')
+             return
+           end
+           sphering = Value;
+         end
+      elseif strcmp(Keyword,'bias')
+         if ~isstr(Value)
+           fprintf('runica(): bias value must be on or off')
+           return
+        elseif ~isempty(Value)
+           Value = lower(Value);
+           if strcmp(Value,'on') 
+              biasflag = 1;
+           elseif strcmp(Value,'off'),
+              biasflag = 0;
+           else
+              fprintf('runica(): bias value must be on or off')
+              return
+           end
+         end
+      elseif strcmp(Keyword,'specgram') | strcmp(Keyword,'spec')
+
+         if ~exist('specgram') < 2 % if ~exist or defined workspace variable
+           fprintf(...
+   'runica(): MATLAB Sig. Proc. Toolbox function "specgram" not found.\n')
+           return
+         end
+         if isstr(Value)
+           fprintf('runica(): specgram argument must be a vector')
+           return
+         end
+         srate = Value(1);
+         if (srate < 0)
+             fprintf('runica(): specgram srate (%4.1f) must be >=0',srate)
+             return
+           end
+         if length(Value)>1
+           loHz = Value(2);
+           if (loHz < 0 | loHz > srate/2)
+             fprintf('runica(): specgram loHz must be >=0 and <= srate/2 (%4.1f)',srate/2)
+             return
+           end
+         else
+           loHz = 0; % default
+         end
+         if length(Value)>2
+           hiHz = Value(3);
+           if (hiHz < loHz | hiHz > srate/2)
+             fprintf('runica(): specgram hiHz must be >=loHz (%4.1f) and <= srate/2 (%4.1f)',loHz,srate/2)
+             return
+           end
+         else
+           hiHz = srate/2; % default
+         end
+         if length(Value)>3
+           Hzframes = Value(5);
+           if (Hzframes<0 | Hzframes > size(data,2))
+             fprintf('runica(): specgram frames must be >=0 and <= data length (%d)',size(data,2))
+             return
+           end
+         else
+           Hzframes = size(data,2); % default
+         end
+         if length(Value)>4
+           Hzwinlen = Value(4);
+           if rem(Hzframes,Hzwinlen) % if winlen doesn't divide frames
+             fprintf('runica(): specgram Hzinc must divide frames (%d)',Hzframes)
+             return
+           end
+         else
+           Hzwinlen = Hzframes; % default
+         end
+         Specgramflag = 1; % set flag to perform specgram()
+
+      elseif strcmp(Keyword,'extended') | strcmp(Keyword,'extend')
+         if isstr(Value)
+           fprintf('runica(): extended value must be an integer (+/-)')
+           return
+         else
+           extended = 1;      % turn on extended-ICA
+           extblocks = fix(Value); % number of blocks per kurt() compute
+           if extblocks < 0
+                nsub = -1*fix(extblocks);  % fix this many sub-Gauss comps
+           elseif ~extblocks,
+                extended = 0;             % turn extended-ICA off
+           elseif kurtsize>frames,   % length of kurtosis calculation
+                kurtsize = frames;
+                if kurtsize < MIN_KURTSIZE
+                   fprintf(...
+   'runica() warning: kurtosis values inexact for << %d points.\n',...
+                                                         MIN_KURTSIZE);
+                end
+           end
+         end
+      elseif strcmp(Keyword,'verbose') 
+         if ~isstr(Value)
+            fprintf('runica(): verbose flag value must be on or off')
+            return
+         elseif strcmp(Value,'on'),
+             verbose = 1; 
+         elseif strcmp(Value,'off'),
+             verbose = 0; 
+         else
+             fprintf('runica(): verbose flag value must be on or off')
+             return
+         end
+      else
+         fprintf('runica(): unknown flag')
+         return
+      end
+   end
+
+%
+%%%%%%%%%%%%%%%%%%%%%%%% Initialize weights, etc. %%%%%%%%%%%%%%%%%%%%%%%%
+%
+if ~annealstep,
+  if ~extended,
+    annealstep = DEFAULT_ANNEALSTEP;     % defaults defined above
+  else
+    annealstep = DEFAULT_EXTANNEAL;       % defaults defined above
+  end
+end % else use annealstep from commandline
+
+if ~annealdeg, 
+    annealdeg  = DEFAULT_ANNEALDEG - momentum*90; % heuristic
+    if annealdeg < 0,
+        annealdeg = 0;
+    end
+end
+if ncomps >  chans | ncomps < 1
+    fprintf('runica(): number of components must be 1 to %d.\n',chans);
+    return
+end
+%
+%%%%%%%%%%%%%%%%%%%%% Check keyword values %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+if frames<chans,
+    fprintf('runica(): data length (%d) < data channels (%d)!\n',frames,chans)
+    return
+elseif block < 2,
+    fprintf('runica(): block size %d too small!\n',block)
+    return
+elseif block > frames, 
+    fprintf('runica(): block size exceeds data length!\n');
+    return
+elseif floor(epochs) ~= epochs,
+    fprintf('runica(): data length is not a multiple of the epoch length!\n');
+    return
+elseif nsub > ncomps
+    fprintf('runica(): there can be at most %d sub-Gaussian components!\n',ncomps);
+    return
+end;
+
+if ~isempty(logfile)
+    fid = fopen(logfile, 'w');
+    if fid == -1, error('Cannot open logfile for writing'); end;
+else
+    fid = [];
+end;
+verb = verbose;
+
+if weights ~= 0,                    % initialize weights
+  % starting weights are being passed to runica() from the commandline
+    if  chans>ncomps & weights ~=0,
+        [r,c]=size(weights);
+        if r~=ncomps | c~=chans,
+            fprintf('runica(): weight matrix must have %d rows, %d columns.\n', ...
+                    chans,ncomps);
+            return;
+        end
+    end
+    icaprintf(verb,fid,'Using starting weight matrix named in argument list ...\n');
+end;   
+
+% 
+% adjust nochange if necessary
+%
+if isnan(nochange) 
+    if ncomps > 32
+        nochange = 1E-7;
+        nochangeupdated = 1; % for fprinting purposes
+    else
+        nochangeupdated = 1; % for fprinting purposes
+        nochange = DEFAULT_STOP;
+    end;
+else 
+    nochangeupdated = 0;
+end;
+
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Process the data %%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+icaprintf(verb,fid,'\nInput data size [%d,%d] = %d channels, %d frames/n', ...
+          chans,frames,chans,frames);
+
+if strcmp(pcaflag,'on')
+    icaprintf(verb,fid,'After PCA dimension reduction,\n  finding ');
+else
+    icaprintf(verb,fid,'Finding ');
+end
+if ~extended
+    icaprintf(verb,fid,'%d ICA components using logistic ICA.\n',ncomps);
+else % if extended
+icaprintf(verb,fid,'%d ICA components using extended ICA.\n',ncomps);
+if extblocks > 0
+    icaprintf(verb,fid,'Kurtosis will be calculated initially every %d blocks using %d data points.\n',...
+              extblocks, kurtsize);
+else
+    icaprintf(verb,fid,'Kurtosis will not be calculated. Exactly %d sub-Gaussian components assumed.\n',nsub);
+end
+end
+icaprintf(verb,fid,'Decomposing %d frames per ICA weight ((%d)^2 = %d weights, %d frames)\n',...
+          floor(frames/ncomps.^2),ncomps.^2,frames);
+icaprintf(verb,fid,'Initial learning rate will be %g, block size %d.\n',...
+          lrate,block);
+if momentum>0,
+    icaprintf(verb,fid,'Momentum will be %g.\n',momentum);
+end
+icaprintf(verb,fid,'Learning rate will be multiplied by %g whenever angledelta >= %g deg.\n', ...
+          annealstep,annealdeg);
+
+if nochangeupdated 
+    icaprintf(verb,fid,'More than 32 channels: default stopping weight change 1E-7\n');
+end;
+icaprintf(verb,fid,'Training will end when wchange < %g or after %d steps.\n', nochange,maxsteps);
+if biasflag,
+    icaprintf(verb,fid,'Online bias adjustment will be used.\n');
+else
+    icaprintf(verb,fid,'Online bias adjustment will not be used.\n');
+end
+
+%
+%%%%%%%%%%%%%%%%% Remove overall row means of data %%%%%%%%%%%%%%%%%%%%%%%
+%
+icaprintf(verb,fid,'Removing mean of each channel ...\n');
+rowmeans = mean(data');
+data = data - rowmeans'*ones(1,frames);      % subtract row means
+icaprintf(verb,fid,'Final training data range: %g to %g\n', min(min(data)),max(max(data)));
+
+%
+%%%%%%%%%%%%%%%%%%% Perform PCA reduction %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+if strcmp(pcaflag,'on')
+    icaprintf(verb,fid,'Reducing the data to %d principal dimensions...\n',ncomps);
+    [eigenvectors,eigenvalues,data] = pcsquash(data,ncomps);
+    % make data its projection onto the ncomps-dim principal subspace
+end
+
+%
+%%%%%%%%%%%%%%%%%%% Perform specgram transformation %%%%%%%%%%%%%%%%%%%%%%%
+%
+if exist('Specgramflag') == 1
+  % [P F T] = SPECGRAM(A,NFFT,Fs,WINDOW,NOVERLAP) % MATLAB Sig Proc Toolbox
+  % Hzwinlen =  fix(srate/Hzinc); % CHANGED FROM THIS 12/18/00 -sm
+
+  Hzfftlen = 2^(ceil(log(Hzwinlen)/log(2)));   % make FFT length next higher 2^k
+  Hzoverlap = 0; % use sequential windows
+  %
+  % Get freqs and times from 1st channel analysis
+  %
+  [tmp,freqs,tms] = specgram(data(1,:),Hzfftlen,srate,Hzwinlen,Hzoverlap);
+
+  fs = find(freqs>=loHz & freqs <= hiHz);
+  icaprintf(verb,fid,'runica(): specified frequency range too narrow, exiting!\n');
+    
+  specdata = reshape(tmp(fs,:),1,length(fs)*size(tmp,2));
+  specdata = [real(specdata) imag(specdata)];
+     % fprintf('   size(fs) = %d,%d\n',size(fs,1),size(fs,2));
+     % fprintf('   size(tmp) = %d,%d\n',size(tmp,1),size(tmp,2));
+  %
+  % Loop through remaining channels
+  %
+  for ch=2:chans
+      [tmp] = specgram(data(ch,:),Hzwinlen,srate,Hzwinlen,Hzoverlap);
+      tmp = reshape((tmp(fs,:)),1,length(fs)*size(tmp,2));
+      specdata = [specdata;[real(tmp) imag(tmp)]]; % channels are rows
+  end
+  %
+  % Print specgram confirmation and details
+  %
+  icaprintf(verb,fid,'Converted data to %d channels by %d=2*%dx%d points spectrogram data.\n',...
+            chans,2*length(fs)*length(tms),length(fs),length(tms));
+  if length(fs) > 1
+      icaprintf(verb,fid,'   Low Hz %g, high Hz %g, Hz incr %g, window length %d\n',freqs(fs(1)),freqs(fs(end)),freqs(fs(2))-freqs(fs(1)),Hzwinlen);
+  else
+      icaprintf(verb,fid,'   Low Hz %g, high Hz %g, window length %d\n',freqs(fs(1)),freqs(fs(end)),Hzwinlen);
+  end
+  %
+  % Replace data with specdata
+  %
+  data = specdata;
+  datalength=size(data,2);
+end
+%
+%%%%%%%%%%%%%%%%%%% Perform sphering %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+
+if strcmp(sphering,'on'), %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  icaprintf(verb,fid,'Computing the sphering matrix...\n');
+  sphere = 2.0*inv(sqrtm(double(cov(data')))); % find the "sphering" matrix = spher()
+  if ~weights,
+      icaprintf(verb,fid,'Starting weights are the identity matrix ...\n');
+      weights = eye(ncomps,chans); % begin with the identity matrix
+  else % weights given on commandline
+      icaprintf(verb,fid,'Using starting weights named on commandline ...\n');
+  end
+  icaprintf(verb,fid,'Sphering the data ...\n');
+  data = sphere*data; % decorrelate the electrode signals by 'sphereing' them
+
+elseif strcmp(sphering,'off') %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  if ~weights % is starting weights not given
+      icaprintf(verb,fid,'Using the sphering matrix as the starting weight matrix ...\n');
+      icaprintf(verb,fid,'Returning the identity matrix in variable "sphere" ...\n');
+      sphere = 2.0*inv(sqrtm(cov(data'))); % find the "sphering" matrix = spher()
+      weights = eye(ncomps,chans)*sphere;  % begin with the identity matrix
+      sphere = eye(chans);                 % return the identity matrix
+  else % weights ~= 0
+      icaprintf(verb,fid,'Using starting weights from commandline ...\n');
+      icaprintf(verb,fid,'Returning the identity matrix in variable "sphere" ...\n');
+      sphere = eye(chans);                 % return the identity matrix
+  end
+elseif strcmp(sphering,'none')
+  sphere = eye(chans,chans);% return the identity matrix
+  if ~weights
+      icaprintf(verb,fid,'Starting weights are the identity matrix ...\n');
+      icaprintf(verb,fid,'Returning the identity matrix in variable "sphere" ...\n');
+      weights = eye(ncomps,chans); % begin with the identity matrix
+  else % weights ~= 0
+      icaprintf(verb,fid,'Using starting weights named on commandline ...\n');
+      icaprintf(verb,fid,'Returning the identity matrix in variable "sphere" ...\n');
+  end
+  icaprintf(verb,fid,'Returned variable "sphere" will be the identity matrix.\n');
+end
+%
+%%%%%%%%%%%%%%%%%%%%%%%% Initialize ICA training %%%%%%%%%%%%%%%%%%%%%%%%%
+%
+lastt=fix((datalength/block-1)*block+1);
+BI=block*eye(ncomps,ncomps);
+delta=zeros(1,chans*ncomps);
+changes = [];
+degconst = 180./pi;
+startweights = weights;
+prevweights = startweights;
+oldweights = startweights;
+prevwtchange = zeros(chans,ncomps);
+oldwtchange = zeros(chans,ncomps);
+lrates = zeros(1,maxsteps);
+onesrow = ones(1,block);
+bias = zeros(ncomps,1);
+signs = ones(1,ncomps);    % initialize signs to nsub -1, rest +1
+for k=1:nsub
+    signs(k) = -1;
+end
+if extended & extblocks < 0,
+    icaprintf(verb,fid,'Fixed extended-ICA sign assignments:  ');
+    for k=1:ncomps
+        icaprintf(verb,fid,'%d ',signs(k));
+    end; icaprintf(verb,fid,'\n');
+end
+signs = diag(signs); % make a diagonal matrix
+oldsigns = zeros(size(signs));
+signcount = 0;              % counter for same-signs
+signcounts = [];
+urextblocks = extblocks;    % original value, for resets
+old_kk = zeros(1,ncomps);   % for kurtosis momemtum
+
+%
+%%%%%%%% ICA training loop using the logistic sigmoid %%%%%%%%%%%%%%%%%%%
+%
+icaprintf(verb,fid,'Beginning ICA training ...');
+if extended,
+    icaprintf(verb,fid,' first training step may be slow ...\n');
+else
+    icaprintf(verb,fid,'\n');
+end
+step=0;
+laststep=0;
+blockno = 1;  % running block counter for kurtosis interrupts
+
+rand('state',sum(100*clock));  % set the random number generator state to
+                               % a position dependent on the system clock
+% interupt figure
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH- 
+if strcmpi(interupt, 'on')
+    fig = figure('visible', 'off');
+    supergui( fig, {1 1}, [], {'style' 'text' 'string' 'Press button to interrupt runica()' }, ...
+              {'style' 'pushbutton' 'string' 'Interupt' 'callback' 'setappdata(gcf, ''run'', 0);' } );
+    set(fig, 'visible', 'on');
+    setappdata(gcf, 'run', 1);
+    
+    if strcmpi(interupt, 'on')
+        drawnow;
+    end;
+end;
+
+
+%% Compute ICA Weights
+if biasflag & extended
+    while step < maxsteps, %%% ICA step = pass through all the data %%%%%%%%%
+        timeperm=randperm(datalength); % shuffle data order at each step
+
+        for t=1:block:lastt, %%%%%%%%% ICA Training Block %%%%%%%%%%%%%%%%%%%
+            if strcmpi(interupt, 'on')
+                drawnow;
+                flag = getappdata(fig, 'run');
+                if ~flag,
+                    if ~isempty(fid), fclose(fid); end;
+                    close; error('USER ABORT');
+                end;
+            end;
+            
+            %% promote data block (only) to double to keep u and weights double
+            u=weights*double(data(:,timeperm(t:t+block-1))) + bias*onesrow;
+
+            y=tanh(u);                                                       
+            weights = weights + lrate*(BI-signs*y*u'-u*u')*weights;
+            bias = bias + lrate*sum((-2*y)')';  % for tanh() nonlin.
+            
+            if momentum > 0 %%%%%%%%% Add momentum %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                weights = weights + momentum*prevwtchange;
+                prevwtchange = weights-prevweights;
+                prevweights = weights;
+            end %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+            if max(max(abs(weights))) > MAX_WEIGHT
+                wts_blowup = 1;
+                change = nochange;
+            end
+            if ~wts_blowup
+                %
+                %%%%%%%%%%% Extended-ICA kurtosis estimation %%%%%%%%%%%%%%%%%%%%%
+                %while step < maxsteps
+                if extblocks > 0 & rem(blockno,extblocks) == 0,
+                    % recompute signs vector using kurtosis
+                    if kurtsize < frames % 12-22-99 rand() size suggestion by M. Spratling
+                        rp = fix(rand(1,kurtsize)*datalength);  % pick random subset
+                        % Accout for the possibility of a 0 generation by rand
+                        ou = find(rp == 0);
+                        while ~isempty(ou) % 1-11-00 suggestion by J. Foucher
+                            rp(ou) = fix(rand(1,length(ou))*datalength);
+                            ou = find(rp == 0);
+                        end
+                        partact=weights*double(data(:,rp(1:kurtsize)));
+                    else                                        % for small data sets,
+                        partact=weights*double(data);           % use whole data
+                    end
+                    m2=mean(partact'.^2).^2;
+                    m4= mean(partact'.^4);
+                    kk= (m4./m2)-3.0;                           % kurtosis estimates
+                    if extmomentum
+                        kk = extmomentum*old_kk + (1.0-extmomentum)*kk; % use momentum
+                        old_kk = kk;
+                    end
+                    signs=diag(sign(kk+signsbias));             % pick component signs
+                    if signs == oldsigns,
+                        signcount = signcount+1;
+                    else
+                        signcount = 0;
+                    end
+                    oldsigns = signs;
+                    signcounts = [signcounts signcount];
+                    if signcount >= SIGNCOUNT_THRESHOLD,
+                        extblocks = fix(extblocks * SIGNCOUNT_STEP);% make kurt() estimation
+                        signcount = 0;                             % less frequent if sign
+                    end                                         % is not changing
+                end % extblocks > 0 & . . .
+            end % if extended & ~wts_blowup %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            blockno = blockno + 1;
+            if wts_blowup
+                break
+            end
+        end % for t=1:block:lastt %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+        if ~wts_blowup
+            oldwtchange = weights-oldweights;
+            step=step+1;
+            %
+            %%%%%%% Compute and print weight and update angle changes %%%%%%%%%
+            %
+            lrates(1,step) = lrate;
+            angledelta=0.;
+            delta=reshape(oldwtchange,1,chans*ncomps);
+            change=delta*delta';
+        end
+        %
+        %%%%%%%%%%%%%%%%%%%%%% Restart if weights blow up %%%%%%%%%%%%%%%%%%%%
+        %
+        if wts_blowup | isnan(change)|isinf(change),  % if weights blow up,
+            icaprintf(verb,fid,'');
+            step = 0;                          % start again
+            change = nochange;
+            wts_blowup = 0;                    % re-initialize variables
+            blockno = 1;
+            lrate = lrate*DEFAULT_RESTART_FAC; % with lower learning rate
+            weights = startweights;            % and original weight matrix
+            oldweights = startweights;
+            change = nochange;
+            oldwtchange = zeros(chans,ncomps);
+            delta=zeros(1,chans*ncomps);
+            olddelta = delta;
+            extblocks = urextblocks;
+            prevweights = startweights;
+            prevwtchange = zeros(chans,ncomps);
+            lrates = zeros(1,maxsteps);
+            bias = zeros(ncomps,1);
+
+            signs = ones(1,ncomps);    % initialize signs to nsub -1, rest +1
+            for k=1:nsub
+                signs(k) = -1;
+            end
+            signs = diag(signs); % make a diagonal matrix
+            oldsigns = zeros(size(signs));;
+
+            if lrate> MIN_LRATE
+                r = rank(data); % determine if data rank is too low 
+                if r<ncomps
+                    icaprintf(verb,fid,'Data has rank %d. Cannot compute %d components.\n',...
+                        r,ncomps);
+                    return
+                else
+                    icaprintf(verb,fid,...
+                        'Lowering learning rate to %g and starting again.\n',lrate);
+                end
+            else
+                icaprintf(verb,fid, ...
+                    'runica(): QUITTING - weight matrix may not be invertible!\n');
+                return;
+            end
+        else % if weights in bounds
+            %
+            %%%%%%%%%%%%% Print weight update information %%%%%%%%%%%%%%%%%%%%%%
+            %
+            if step> 2
+                angledelta=acos((delta*olddelta')/sqrt(change*oldchange));
+            end
+            places = -floor(log10(nochange));
+            icaprintf(verb,fid,'step %d - lrate %5f, wchange %8.8f, angledelta %4.1f deg\n', ...
+                                step,      lrate,     change, degconst*angledelta);
+            %
+            %%%%%%%%%%%%%%%%%%%% Save current values %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %
+            changes = [changes change];
+            oldweights = weights;
+            %
+            %%%%%%%%%%%%%%%%%%%% Anneal learning rate %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %
+            if degconst*angledelta > annealdeg,
+                lrate = lrate*annealstep;          % anneal learning rate
+                olddelta   = delta;                % accumulate angledelta until
+                oldchange  = change;               %  annealdeg is reached
+            elseif step == 1                     % on first step only
+                olddelta   = delta;                % initialize
+                oldchange  = change;
+            end
+            %
+            %%%%%%%%%%%%%%%%%%%% Apply stopping rule %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %
+            if step >2 & change < nochange,      % apply stopping rule
+                laststep=step;
+                step=maxsteps;                  % stop when weights stabilize
+            elseif change > DEFAULT_BLOWUP,      % if weights blow up,
+                lrate=lrate*DEFAULT_BLOWUP_FAC;    % keep trying
+            end;                                 % with a smaller learning rate
+        end; % end if weights in bounds
+
+    end; % end while step < maxsteps (ICA Training) %%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+end
+%% Compute ICA Weights
+if biasflag & ~extended
+    while step < maxsteps, %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        timeperm=randperm(datalength); % shuffle data order at each step
+
+        for t=1:block:lastt, %%%%%%%%% ICA Training Block %%%%%%%%%%%%%%%%%%%
+            if strcmpi(interupt, 'on')
+                drawnow;
+                flag = getappdata(fig, 'run');
+                if ~flag,
+                    if ~isempty(fid), fclose(fid); end;
+                    close; error('USER ABORT');
+                end;
+            end;
+            
+            u=weights*double(data(:,timeperm(t:t+block-1))) + bias*onesrow;
+            y=1./(1+exp(-u));                                                
+            weights = weights + lrate*(BI+(1-2*y)*u')*weights;               
+            bias = bias + lrate*sum((1-2*y)')'; % for logistic nonlin. %
+               
+            if momentum > 0 %%%%%%%%% Add momentum %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                weights = weights + momentum*prevwtchange;
+                prevwtchange = weights-prevweights;
+                prevweights = weights;
+            end %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+            if max(max(abs(weights))) > MAX_WEIGHT
+                wts_blowup = 1;
+                change = nochange;
+            end
+            blockno = blockno + 1;
+            if wts_blowup
+                break
+            end
+        end % for t=1:block:lastt %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+        if ~wts_blowup
+            oldwtchange = weights-oldweights;
+            step=step+1;
+            %
+            %%%%%%% Compute and print weight and update angle changes %%%%%%%%%
+            %
+            lrates(1,step) = lrate;
+            angledelta=0.;
+            delta=reshape(oldwtchange,1,chans*ncomps);
+            change=delta*delta';
+        end
+        %
+        %%%%%%%%%%%%%%%%%%%%%% Restart if weights blow up %%%%%%%%%%%%%%%%%%%%
+        %
+        if wts_blowup | isnan(change)|isinf(change),  % if weights blow up,
+            icaprintf(verb,fid,'');
+            step = 0;                          % start again
+            change = nochange;
+            wts_blowup = 0;                    % re-initialize variables
+            blockno = 1;
+            lrate = lrate*DEFAULT_RESTART_FAC; % with lower learning rate
+            weights = startweights;            % and original weight matrix
+            oldweights = startweights;
+            change = nochange;
+            oldwtchange = zeros(chans,ncomps);
+            delta=zeros(1,chans*ncomps);
+            olddelta = delta;
+            extblocks = urextblocks;
+            prevweights = startweights;
+            prevwtchange = zeros(chans,ncomps);
+            lrates = zeros(1,maxsteps);
+            bias = zeros(ncomps,1);
+            if lrate> MIN_LRATE
+                r = rank(data); % determine if data rank is too low
+                if r<ncomps
+                    icaprintf(verb,fid,'Data has rank %d. Cannot compute %d components.\n',r,ncomps);
+                    return
+                else
+                    icaprintf(verb,fid,'Lowering learning rate to %g and starting again.\n',lrate);
+                end
+            else
+                icaprintf(verb,fid,'runica(): QUITTING - weight matrix may not be invertible!\n');
+                return;
+            end
+        else % if weights in bounds
+            %
+            %%%%%%%%%%%%% Print weight update information %%%%%%%%%%%%%%%%%%%%%%
+            %
+            if step> 2
+                angledelta=acos((delta*olddelta')/sqrt(change*oldchange));
+            end
+            places = -floor(log10(nochange));
+%             icaprintf(verb,fid,'step %d - lrate %5f, wchange %8.8f,
+%             angledelta %4.1f deg\n', ... marzieh
+%                                 step,      lrate,     change, degconst*angledelta);
+            %
+            %%%%%%%%%%%%%%%%%%%% Save current values %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %
+            changes = [changes change];
+            oldweights = weights;
+            %
+            %%%%%%%%%%%%%%%%%%%% Anneal learning rate %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %
+            if degconst*angledelta > annealdeg,
+                lrate = lrate*annealstep;          % anneal learning rate
+                olddelta   = delta;                % accumulate angledelta until
+                oldchange  = change;               %  annealdeg is reached
+            elseif step == 1                     % on first step only
+                olddelta   = delta;                % initialize
+                oldchange  = change;
+            end
+            %
+            %%%%%%%%%%%%%%%%%%%% Apply stopping rule %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %
+            if step >2 & change < nochange,      % apply stopping rule
+                laststep=step;
+                step=maxsteps;                  % stop when weights stabilize
+            elseif change > DEFAULT_BLOWUP,      % if weights blow up,
+                lrate=lrate*DEFAULT_BLOWUP_FAC;    % keep trying
+            end;                                 % with a smaller learning rate
+        end; % end if weights in bounds
+
+    end; % end while step < maxsteps (ICA Training) %%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+end
+%% Compute ICA Weights
+if ~biasflag & extended
+    while step < maxsteps, %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        timeperm=randperm(datalength); % shuffle data order at each step through data
+
+        for t=1:block:lastt, %%%%%%%%% ICA Training Block %%%%%%%%%%%%%%%%%%%
+            if strcmpi(interupt, 'on')
+                drawnow;
+                flag = getappdata(fig, 'run');
+                if ~flag,
+                    if ~isempty(fid), fclose(fid); end;
+                    close; error('USER ABORT');
+                end;
+            end;
+            
+            u=weights*double(data(:,timeperm(t:t+block-1))); % promote block to dbl
+            y=tanh(u);                                                       %
+            weights = weights + lrate*(BI-signs*y*u'-u*u')*weights;
+
+            if momentum > 0 %%%%%%%%% Add momentum %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                weights = weights + momentum*prevwtchange;
+                prevwtchange = weights-prevweights;
+                prevweights = weights;
+            end %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+            if max(max(abs(weights))) > MAX_WEIGHT
+                wts_blowup = 1;
+                change = nochange;
+            end
+            if ~wts_blowup
+                %
+                %%%%%%%%%%% Extended-ICA kurtosis estimation %%%%%%%%%%%%%%%%%%%%%
+                %while step < maxsteps
+                if extblocks > 0 & rem(blockno,extblocks) == 0,
+                    % recompute signs vector using kurtosis
+                    if kurtsize < frames % 12-22-99 rand() size suggestion by M. Spratling
+                        rp = fix(rand(1,kurtsize)*datalength);  % pick random subset
+                        % Accout for the possibility of a 0 generation by rand
+                        ou = find(rp == 0);
+                        while ~isempty(ou) % 1-11-00 suggestion by J. Foucher
+                            rp(ou) = fix(rand(1,length(ou))*datalength);
+                            ou = find(rp == 0);
+                        end
+                        partact=weights*double(data(:,rp(1:kurtsize)));
+                    else                                        % for small data sets,
+                        partact=weights*double(data);           % use whole data
+                    end
+                    m2=mean(partact'.^2).^2;
+                    m4= mean(partact'.^4);
+                    kk= (m4./m2)-3.0;                           % kurtosis estimates
+                    if extmomentum
+                        kk = extmomentum*old_kk + (1.0-extmomentum)*kk; % use momentum
+                        old_kk = kk;
+                    end
+                    signs=diag(sign(kk+signsbias));             % pick component signs
+                    if signs == oldsigns,
+                        signcount = signcount+1;
+                    else
+                        signcount = 0;
+                    end
+                    oldsigns = signs;
+                    signcounts = [signcounts signcount];
+                    if signcount >= SIGNCOUNT_THRESHOLD,
+                        extblocks = fix(extblocks * SIGNCOUNT_STEP);% make kurt() estimation
+                        signcount = 0;                             % less frequent if sign
+                    end                                         % is not changing
+                end % extblocks > 0 & . . .
+            end % if ~wts_blowup %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            blockno = blockno + 1;
+            if wts_blowup
+                break
+            end
+        end % for t=1:block:lastt %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+        if ~wts_blowup
+            oldwtchange = weights-oldweights;
+            step=step+1;
+            %
+            %%%%%%% Compute and print weight and update angle changes %%%%%%%%%
+            %
+            lrates(1,step) = lrate;
+            angledelta=0.;
+            delta=reshape(oldwtchange,1,chans*ncomps);
+            change=delta*delta';
+        end
+        %
+        %%%%%%%%%%%%%%%%%%%%%% Restart if weights blow up %%%%%%%%%%%%%%%%%%%%
+        %
+        if wts_blowup | isnan(change)|isinf(change),  % if weights blow up,
+            icaprintf(verb,fid,'');
+            step = 0;                          % start again
+            change = nochange;
+            wts_blowup = 0;                    % re-initialize variables
+            blockno = 1;
+            lrate = lrate*DEFAULT_RESTART_FAC; % with lower learning rate
+            weights = startweights;            % and original weight matrix
+            oldweights = startweights;
+            change = nochange;
+            oldwtchange = zeros(chans,ncomps);
+            delta=zeros(1,chans*ncomps);
+            olddelta = delta;
+            extblocks = urextblocks;
+            prevweights = startweights;
+            prevwtchange = zeros(chans,ncomps);
+            lrates = zeros(1,maxsteps);
+            bias = zeros(ncomps,1);
+            signs = ones(1,ncomps);    % initialize signs to nsub -1, rest +1
+            for k=1:nsub
+                signs(k) = -1;
+            end
+            signs = diag(signs); % make a diagonal matrix
+            oldsigns = zeros(size(signs));
+            if lrate> MIN_LRATE
+                r = rank(data); % find whether data rank is too low
+                if r<ncomps
+                    icaprintf(verb,fid,'Data has rank %d. Cannot compute %d components.\n',...
+                        r,ncomps);
+                    return
+                else
+                    icaprintf(verb,fid,...
+                        'Lowering learning rate to %g and starting again.\n',lrate);
+                end
+            else
+                icaprintf(verb,fid, ...
+                    'runica(): QUITTING - weight matrix may not be invertible!\n');
+                return;
+            end
+        else % if weights in bounds
+            %
+            %%%%%%%%%%%%% Print weight update information %%%%%%%%%%%%%%%%%%%%%%
+            %
+            if step> 2
+                angledelta=acos((delta*olddelta')/sqrt(change*oldchange));
+            end
+            places = -floor(log10(nochange));
+%             icaprintf(verb,fid,'step %d - lrate %5f, wchange %8.8f, angledelta %4.1f deg\n', ...
+%                                 step,      lrate,     change,
+%                                 degconst*angledelta);           marzieh
+            %
+            %%%%%%%%%%%%%%%%%%%% Save current values %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %
+            changes = [changes change];
+            oldweights = weights;
+            %
+            %%%%%%%%%%%%%%%%%%%% Anneal learning rate %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %
+            if degconst*angledelta > annealdeg,
+                lrate = lrate*annealstep;          % anneal learning rate
+                olddelta   = delta;                % accumulate angledelta until
+                oldchange  = change;               %  annealdeg is reached
+            elseif step == 1                     % on first step only
+                olddelta   = delta;                % initialize
+                oldchange  = change;
+            end
+            %
+            %%%%%%%%%%%%%%%%%%%% Apply stopping rule %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %
+            if step >2 & change < nochange,      % apply stopping rule
+                laststep=step;
+                step=maxsteps;                  % stop when weights stabilize
+            elseif change > DEFAULT_BLOWUP,      % if weights blow up,
+                lrate=lrate*DEFAULT_BLOWUP_FAC;    % keep trying
+            end;                                 % with a smaller learning rate
+        end; % end if weights in bounds
+
+    end; % end while step < maxsteps (ICA Training) %%%%%%%%%%%%%%%%%%%%%%%%%
+end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Compute ICA Weights
+if ~biasflag & ~extended
+    while step < maxsteps, %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        timeperm=randperm(datalength); % shuffle data order at each step
+
+        for t=1:block:lastt, %%%%%%%%% ICA Training Block %%%%%%%%%%%%%%%%%%%
+            if strcmpi(interupt, 'on')
+                drawnow;
+                flag = getappdata(fig, 'run');
+                if ~flag,
+                    if ~isempty(fid), fclose(fid); end;
+                    close; error('USER ABORT');
+                end;
+            end;
+            u=weights*double(data(:,timeperm(t:t+block-1)));
+            y=1./(1+exp(-u));                                                %
+            weights = weights + lrate*(BI+(1-2*y)*u')*weights;
+
+            if momentum > 0 %%%%%%%%% Add momentum %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                weights = weights + momentum*prevwtchange;
+                prevwtchange = weights-prevweights;
+                prevweights = weights;
+            end %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+            if max(max(abs(weights))) > MAX_WEIGHT
+                wts_blowup = 1;
+                change = nochange;
+            end
+            
+            blockno = blockno + 1;
+            if wts_blowup
+                break
+            end
+        end % for t=1:block:lastt %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+        if ~wts_blowup
+            oldwtchange = weights-oldweights;
+            step=step+1;
+            %
+            %%%%%%% Compute and print weight and update angle changes %%%%%%%%%
+            %
+            lrates(1,step) = lrate;
+            angledelta=0.;
+            delta=reshape(oldwtchange,1,chans*ncomps);
+            change=delta*delta';
+        end
+        %
+        %%%%%%%%%%%%%%%%%%%%%% Restart if weights blow up %%%%%%%%%%%%%%%%%%%%
+        %
+        if wts_blowup | isnan(change)|isinf(change),  % if weights blow up,
+            icaprintf(verb,fid,'');
+            step = 0;                          % start again
+            change = nochange;
+            wts_blowup = 0;                    % re-initialize variables
+            blockno = 1;
+            lrate = lrate*DEFAULT_RESTART_FAC; % with lower learning rate
+            weights = startweights;            % and original weight matrix
+            oldweights = startweights;
+            change = nochange;
+            oldwtchange = zeros(chans,ncomps);
+            delta=zeros(1,chans*ncomps);
+            olddelta = delta;
+            extblocks = urextblocks;
+            prevweights = startweights;
+            prevwtchange = zeros(chans,ncomps);
+            lrates = zeros(1,maxsteps);
+            bias = zeros(ncomps,1);
+            
+            if lrate> MIN_LRATE
+                r = rank(data); % find whether data rank is too low
+                if r<ncomps
+                    icaprintf(verb,fid,'Data has rank %d. Cannot compute %d components.\n',...
+                        r,ncomps);
+                    return
+                else
+                    icaprintf(verb,fid,...
+                        'Lowering learning rate to %g and starting again.\n',lrate);
+                end
+            else
+                icaprintf(verb,fid, ...
+                    'runica(): QUITTING - weight matrix may not be invertible!\n');
+                return;
+            end
+        else % if weights in bounds
+            %
+            %%%%%%%%%%%%% Print weight update information %%%%%%%%%%%%%%%%%%%%%%
+            %
+            if step> 2
+                angledelta=acos((delta*olddelta')/sqrt(change*oldchange));
+            end
+            places = -floor(log10(nochange));
+            icaprintf(verb,fid,'step %d - lrate %5f, wchange %8.8f, angledelta %4.1f deg\n', ...
+                                step,      lrate,     change, degconst*angledelta);
+            %
+            %%%%%%%%%%%%%%%%%%%% Save current values %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %
+            changes = [changes change];
+            oldweights = weights;
+            %
+            %%%%%%%%%%%%%%%%%%%% Anneal learning rate %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %
+            if degconst*angledelta > annealdeg,
+                lrate = lrate*annealstep;          % anneal learning rate
+                olddelta   = delta;                % accumulate angledelta until
+                oldchange  = change;               %  annealdeg is reached
+            elseif step == 1                     % on first step only
+                olddelta   = delta;                % initialize
+                oldchange  = change;
+            end
+            %
+            %%%%%%%%%%%%%%%%%%%% Apply stopping rule %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %
+            if step >2 & change < nochange,      % apply stopping rule
+                laststep=step;
+                step=maxsteps;                  % stop when weights stabilize
+            elseif change > DEFAULT_BLOWUP,      % if weights blow up,
+                lrate=lrate*DEFAULT_BLOWUP_FAC;    % keep trying
+            end;                                 % with a smaller learning rate
+        end; % end if weights in bounds
+
+    end; % end while step < maxsteps (ICA Training) %%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+end
+%% Finalize Computed Data for Output
+  
+if strcmpi(interupt, 'on')
+    close(fig);
+end;
+
+
+  if ~laststep
+    laststep = step;
+  end;
+  lrates = lrates(1,1:laststep);           % truncate lrate history vector
+
+  %
+  %%%%%%%%%%%%%% Orient components towards max positive activation %%%%%%
+  %
+  if nargout > 6 | strcmp(posactflag,'on')
+      % make activations from sphered and pca'd data; -sm 7/05
+      % add back the row means removed from data before sphering
+      if strcmp(pcaflag,'off')
+          sr = sphere * rowmeans';
+          for r = 1:ncomps
+              data(r,:) = data(r,:)+sr(r); % add back row means 
+          end
+          data = weights*data; % OK in single
+      else
+          ser = sphere*eigenvectors(:,1:ncomps)'*rowmeans';
+          for r = 1:ncomps
+              data(r,:) = data(r,:)+ser(r); % add back row means 
+          end
+          data = weights*data; % OK in single
+      end;
+  end
+  %
+  % NOTE: Now 'data' are the component activations = weights*sphere*raw_data
+  %
+  %
+  %%%%%%%%%%%%%% If pcaflag, compose PCA and ICA matrices %%%%%%%%%%%%%%%
+  %
+  if strcmp(pcaflag,'on')
+    icaprintf(verb,fid,'Composing the eigenvector, weights, and sphere matrices\n');
+    icaprintf(verb,fid,'  into a single rectangular weights matrix; sphere=eye(%d)\n'...
+                                                                  ,chans);
+    weights= weights*sphere*eigenvectors(:,1:ncomps)'; 
+    sphere = eye(urchans);
+  end
+  %
+  %%%%%% Sort components in descending order of max projected variance %%%%
+  %
+  icaprintf(verb,fid,'Sorting components in descending order of mean projected variance ...\n');
+  %
+  %%%%%%%%%%%%%%%%%%%% Find mean variances %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  %
+  % meanvar  = zeros(ncomps,1);      % size of the projections
+  if ncomps == urchans % if weights are square . . .
+      winv = inv(weights*sphere);
+  else
+      icaprintf(verb,fid,'Using pseudo-inverse of weight matrix to rank order component projections.\n');
+      winv = pinv(weights*sphere);
+  end
+  %
+  % compute variances without backprojecting to save time and memory -sm 7/05
+  %
+  meanvar = sum(winv.^2).*sum((data').^2)/((chans*frames)-1); % from Rey Ramirez 8/07
+  %
+  %%%%%%%%%%%%%% Sort components by mean variance %%%%%%%%%%%%%%%%%%%%%%%%
+  %
+  [sortvar, windex] = sort(meanvar);
+  windex = windex(ncomps:-1:1); % order large to small 
+  meanvar = meanvar(windex);
+  %
+  %%%%%%%%%%%% re-orient max(abs(activations)) to >=0 ('posact') %%%%%%%%
+  %
+  if strcmp(posactflag,'on') % default is now off to save processing and memory
+      icaprintf(verb,fid,'Making the max(abs(activations)) positive ...\n');
+      [tmp ix] = max(abs(data')); % = max abs activations
+      signsflipped = 0;
+      for r=1:ncomps
+         if sign(data(r,ix(r))) < 0
+            if nargout>6  % if activations are to be returned (only)
+               data(r,:) = -1*data(r,:);  % flip activations so max(abs()) is >= 0
+            end
+            winv(:,r) = -1*winv(:,r);  % flip component maps
+            signsflipped = 1;
+         end
+      end
+      if signsflipped == 1
+          weights = pinv(winv)*inv(sphere); % re-invert the component maps
+      end
+       
+      % [data,winvout,weights] = posact(data,weights); % overwrite data with activations
+      % changes signs of activations (now = data) and weights 
+      % to make activations (data) net rms-positive
+      % can call this outside of runica() - though it is inefficient!
+  end
+  % 
+  %%%%%%%%%%%%%%%%%%%%% Filter data using final weights %%%%%%%%%%%%%%%%%%
+  %
+  if nargout>6, % if activations are to be returned
+      icaprintf(verb,fid,'Permuting the activation wave forms ...\n');
+      data = data(windex,:); % data is now activations -sm 7/05
+  else
+      clear data
+  end
+  weights = weights(windex,:);% reorder the weight matrix
+  bias  = bias(windex);       % reorder them
+  signs = diag(signs);        % vectorize the signs matrix
+  signs = signs(windex);      % reorder them
+  
+  if ~isempty(fid), fclose(fid); end; % close logfile
+
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% end %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+    
+return
+
+% printing functions
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+function icaprintf(verb,fid, varargin);
+    if verb
+        if ~isempty(fid)
+            fprintf(fid, varargin{:});
+        end;        
+        fprintf(varargin{:});
+    end;
+
+##### SOURCE END #####
+--></body></html>

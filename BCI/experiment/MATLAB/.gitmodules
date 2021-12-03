@@ -1,0 +1,4 @@
+[submodule "machine-learning"]
+	path = machine-learning
+	url = https://bitbucket.org/cogsyslab/machine-learning.git
+	branch = master

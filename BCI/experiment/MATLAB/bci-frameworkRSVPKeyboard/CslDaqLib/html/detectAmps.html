@@ -1,0 +1,243 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>detectAmps</title><meta name="generator" content="MATLAB 7.14"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2013-06-13"><meta name="DC.source" content="detectAmps.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">[success, amplfierStruct]=detectAmps()</a></li><li><a href="#3">Detection of the amplfiers and creation of amplifier objects</a></li><li><a href="#4">Query slave location in daisy-chain configuration and set the slave flags</a></li></ul></div><h2>[success, amplfierStruct]=detectAmps()<a name="1"></a></h2><pre class="codeinput"><span class="comment">%This function detects the amplifiers.</span>
+<span class="comment">%   detectAmps detects the connected amplifiers and creates amplifier objects.</span>
+<span class="comment">%   If the number of amplifiers is more than 1, it prints the serial numbers of</span>
+<span class="comment">%   the amplifiers and queries the master amplifier. Analog input objects as many</span>
+<span class="comment">%   as the number of amplifiers are also created.</span>
+<span class="comment">%</span>
+<span class="comment">%   [success, amplifierStruct]=detectAmps() returns</span>
+<span class="comment">%       success (0/1) - a flag to show the success of the operation</span>
+<span class="comment">%       amplifierStruct - a structure with the following fields filled in this</span>
+<span class="comment">%       function</span>
+<span class="comment">%</span>
+<span class="comment">%           amplifierStruct.numberOfAmplifiers - Number of amplifiers (integer)</span>
+<span class="comment">%           amplifierStruct.ai - Vector of analog input objects (amplifier object)</span>
+<span class="comment">%           amplifierStruct.masterIndex - Index of the master amplifier (integer)</span>
+<span class="comment">%           amplifierStruct.slaveIndex  - Index of the slave amplifier  (vector of integers)</span>
+<span class="comment">%</span>
+</pre><pre class="codeinput"><span class="keyword">function</span> [success,amplifierStruct]=detectAmps()
+
+
+<span class="keyword">try</span>
+</pre><h2>Detection of the amplfiers and creation of amplifier objects<a name="3"></a></h2><pre class="codeinput">    amplifierStruct.numberOfAmplifiers=0;
+    <span class="keyword">while</span> amplifierStruct.numberOfAmplifiers==0
+        amp_info = daqhwinfo(<span class="string">'guadaq'</span>);
+        amplifierStruct.numberOfAmplifiers = length(amp_info.InstalledBoardIds);
+        <span class="keyword">if</span>(amplifierStruct.numberOfAmplifiers==0)
+            disp(<span class="string">'No amplifers detected.'</span>);
+            disp(<span class="string">'Please, check power and USB connections.'</span>);
+            tryAgain=input(<span class="string">'Try again? (y/n):'</span>,<span class="string">'s'</span>);
+            <span class="keyword">if</span>(tryAgain==<span class="string">'n'</span>)
+                disp(<span class="string">'Detecting amplifier(s) aborted by user.'</span>)
+                success=0;
+                <span class="keyword">return</span>;
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    amplifierSerialNums=cell(amplifierStruct.numberOfAmplifiers,1);
+    <span class="keyword">for</span> ampi = 1:amplifierStruct.numberOfAmplifiers
+        amplifierStruct.ai(ampi)=analoginput(<span class="string">'guadaq'</span>,amp_info.InstalledBoardIds{ampi});
+        amplifierSerialNums{ampi}= amplifierStruct.ai(ampi).DeviceSerial;
+    <span class="keyword">end</span>
+</pre><h2>Query slave location in daisy-chain configuration and set the slave flags<a name="4"></a></h2><pre class="codeinput">    <span class="keyword">if</span>(amplifierStruct.numberOfAmplifiers &gt; 1)
+        string2display=num2str([repmat(<span class="string">'  '</span>,amplifierStruct.numberOfAmplifiers,1) <span class="keyword">...</span>
+            num2str((1:amplifierStruct.numberOfAmplifiers)')<span class="keyword">...</span>
+            repmat(<span class="string">':  '</span>,amplifierStruct.numberOfAmplifiers,1) cell2mat(amplifierSerialNums)]);
+
+        continueFlag=1;
+        <span class="keyword">while</span> continueFlag
+            disp(<span class="string">' '</span>);
+            disp(<span class="string">'The list of the detected amplifiers:'</span>);
+            disp(string2display)
+            amplifierStruct.masterIndex=input(<span class="string">'Please enter the number corresponding to master amplifier: '</span>);
+            <span class="comment">%Slaves should be ordered, if there are more than two amplifiers.</span>
+            amplifierStruct.slaveIndex=setdiff(1:amplifierStruct.numberOfAmplifiers,amplifierStruct.masterIndex);
+
+            <span class="keyword">if</span>(isnumeric(amplifierStruct.masterIndex))
+                <span class="keyword">if</span>(~isempty(amplifierStruct.masterIndex) &amp;&amp; <span class="keyword">...</span>
+                        0&lt;amplifierStruct.masterIndex &amp;&amp; <span class="keyword">...</span>
+                        amplifierStruct.masterIndex&lt;=amplifierStruct.numberOfAmplifiers)
+                    continueFlag=0;
+                <span class="keyword">else</span>
+                    disp([<span class="string">'Input is not valid, please enter an integer between 1 and '</span> num2str(amplifierStruct.numberOfAmplifiers) <span class="string">'.'</span>]);
+
+                <span class="keyword">end</span>
+            <span class="keyword">else</span>
+                disp([<span class="string">'Input is not valid, please enter an integer between 1 and '</span> num2str(amplifierStruct.numberOfAmplifiers) <span class="string">'.'</span>]);
+
+            <span class="keyword">end</span>
+
+        <span class="keyword">end</span>
+        <span class="keyword">for</span> ampi=1:amplifierStruct.numberOfAmplifiers
+            <span class="keyword">if</span>(ampi~=amplifierStruct.masterIndex)
+                set(amplifierStruct.ai(ampi),<span class="string">'SlaveMode'</span>,<span class="string">'on'</span>);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+    <span class="keyword">else</span>
+        amplifierStruct.masterIndex=1;
+        amplifierStruct.slaveIndex=[];
+    <span class="keyword">end</span>
+    amplifierStruct.ai=amplifierStruct.ai([amplifierStruct.masterIndex amplifierStruct.slaveIndex]);
+    success=1;
+</pre><pre class="codeinput"><span class="keyword">catch</span> ME
+    logError(ME);
+    amplifierStruct=[];
+    success=0;
+<span class="keyword">end</span>
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.14<br></p></div><!--
+##### SOURCE BEGIN #####
+%% [success, amplfierStruct]=detectAmps()
+%This function detects the amplifiers. 
+%   detectAmps detects the connected amplifiers and creates amplifier objects. 
+%   If the number of amplifiers is more than 1, it prints the serial numbers of 
+%   the amplifiers and queries the master amplifier. Analog input objects as many 
+%   as the number of amplifiers are also created.
+%
+%   [success, amplifierStruct]=detectAmps() returns
+%       success (0/1) - a flag to show the success of the operation
+%       amplifierStruct - a structure with the following fields filled in this
+%       function
+%
+%           amplifierStruct.numberOfAmplifiers - Number of amplifiers (integer)
+%           amplifierStruct.ai - Vector of analog input objects (amplifier object)
+%           amplifierStruct.masterIndex - Index of the master amplifier (integer)
+%           amplifierStruct.slaveIndex  - Index of the slave amplifier  (vector of integers)
+% 
+                     
+%%
+function [success,amplifierStruct]=detectAmps()
+
+
+try
+    %% Detection of the amplfiers and creation of amplifier objects
+    amplifierStruct.numberOfAmplifiers=0;
+    while amplifierStruct.numberOfAmplifiers==0
+        amp_info = daqhwinfo('guadaq');  
+        amplifierStruct.numberOfAmplifiers = length(amp_info.InstalledBoardIds);
+        if(amplifierStruct.numberOfAmplifiers==0)
+            disp('No amplifers detected.');
+            disp('Please, check power and USB connections.');
+            tryAgain=input('Try again? (y/n):','s');
+            if(tryAgain=='n')
+                disp('Detecting amplifier(s) aborted by user.')
+                success=0;
+                return;
+            end
+        end
+    end
+    
+    amplifierSerialNums=cell(amplifierStruct.numberOfAmplifiers,1);
+    for ampi = 1:amplifierStruct.numberOfAmplifiers
+        amplifierStruct.ai(ampi)=analoginput('guadaq',amp_info.InstalledBoardIds{ampi});
+        amplifierSerialNums{ampi}= amplifierStruct.ai(ampi).DeviceSerial;
+    end
+   %%  Query slave location in daisy-chain configuration and set the slave flags 
+    if(amplifierStruct.numberOfAmplifiers > 1)
+        string2display=num2str([repmat('  ',amplifierStruct.numberOfAmplifiers,1) ...
+            num2str((1:amplifierStruct.numberOfAmplifiers)')...
+            repmat(':  ',amplifierStruct.numberOfAmplifiers,1) cell2mat(amplifierSerialNums)]);
+        
+        continueFlag=1;
+        while continueFlag
+            disp(' ');
+            disp('The list of the detected amplifiers:');
+            disp(string2display)
+            amplifierStruct.masterIndex=input('Please enter the number corresponding to master amplifier: ');
+            %Slaves should be ordered, if there are more than two amplifiers.
+            amplifierStruct.slaveIndex=setdiff(1:amplifierStruct.numberOfAmplifiers,amplifierStruct.masterIndex); 
+            
+            if(isnumeric(amplifierStruct.masterIndex))
+                if(~isempty(amplifierStruct.masterIndex) && ...
+                        0<amplifierStruct.masterIndex && ...
+                        amplifierStruct.masterIndex<=amplifierStruct.numberOfAmplifiers)
+                    continueFlag=0;
+                else
+                    disp(['Input is not valid, please enter an integer between 1 and ' num2str(amplifierStruct.numberOfAmplifiers) '.']);
+                    
+                end
+            else
+                disp(['Input is not valid, please enter an integer between 1 and ' num2str(amplifierStruct.numberOfAmplifiers) '.']);
+                
+            end
+            
+        end
+        for ampi=1:amplifierStruct.numberOfAmplifiers
+            if(ampi~=amplifierStruct.masterIndex)
+                set(amplifierStruct.ai(ampi),'SlaveMode','on');
+            end
+        end
+    else
+        amplifierStruct.masterIndex=1;
+        amplifierStruct.slaveIndex=[];
+    end
+    amplifierStruct.ai=amplifierStruct.ai([amplifierStruct.masterIndex amplifierStruct.slaveIndex]);
+    success=1;
+catch ME
+    logError(ME);
+    amplifierStruct=[];
+    success=0;
+end
+
+
+
+
+##### SOURCE END #####
+--></body></html>

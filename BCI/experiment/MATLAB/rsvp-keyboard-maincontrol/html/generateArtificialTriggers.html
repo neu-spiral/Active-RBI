@@ -1,0 +1,226 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>function generateArtificialTriggers(amplifierStruct,decision)</title><meta name="generator" content="MATLAB 7.14"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2013-06-13"><meta name="DC.source" content="generateArtificialTriggers.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+
+  </style></head><body><div class="content"><h1>function generateArtificialTriggers(amplifierStruct,decision)</h1><!--introduction--><p>Creates a list of contrived triggers, which are added to the specified amplifier. Triggers are generated based on the given decision.</p><pre class="language-matlab">The <span class="string">inputs</span> <span class="string">of</span> <span class="string">the</span> <span class="string">function:</span>
+</pre><pre>     amplifierStruct - Struct, contains information about the amplifier for which the triggers are being generated. The generated triggers are added to this struct.</pre><pre>     decision - Struct, contains information about the decision made regarding the sequence of trials.</pre><!--/introduction--><pre class="codeinput"><span class="keyword">function</span> generateArtificialTriggers(amplifierStruct,decision)
+
+    <span class="comment">% Check if the decision variable is not empty and if the decision variable contains the field 'nextSequence'</span>
+    <span class="keyword">if</span> ~isempty(decision) &amp;&amp; isfield(decision,<span class="string">'nextSequence'</span>)
+
+        <span class="comment">% Set the value of the variable durations to an array of zeros, where the length of the array is equal to the length of the variable decision.nextSequence.trials plus 4.</span>
+        durations = zeros(4 + length(decision.nextSequence.trials),1);
+
+        <span class="comment">% Make two copies of the variable durations.</span>
+        activeDurations = durations;
+        values = durations;
+
+        <span class="comment">% Check if the variable decisions has the field 'decided'.</span>
+        <span class="keyword">if</span> isfield(decision,<span class="string">'decided'</span>)
+
+            <span class="comment">% Set the value of the first element of the variable durations to the length of the variable decision.decided.</span>
+            durations(1) = length(decision.decided);
+
+        <span class="keyword">else</span>
+
+            <span class="comment">% Set the value of the first element of the variable durations to 1.</span>
+            durations(1) = 1;
+
+        <span class="keyword">end</span>
+
+        <span class="comment">% Checks if the variable decision.nextSequence has the field 'target'.</span>
+        <span class="keyword">if</span> isfield(decision.nextSequence,<span class="string">'target'</span>)
+
+            <span class="comment">% Set the values of the second element of each of the three arrays, using the target data from the given structs.</span>
+            durations(2) = amplifierStruct.Duration.Target;
+            values(2) = decision.nextSequence.target + amplifierStruct.triggerPartitionerStruct.TARGET_TRIGGER_OFFSET;
+            activeDurations(2) = durations(2) * amplifierStruct.DutyCycle.Target;
+
+        <span class="keyword">end</span>
+
+        <span class="comment">% Set the values of the third element of each of the three arrays, using the fixation data from the given structs.</span>
+        durations(3) = amplifierStruct.Duration.Fixation;
+        values(3) = amplifierStruct.triggerPartitionerStruct.fixationID;
+        activeDurations(3) = durations(3) * amplifierStruct.DutyCycle.Fixation;
+
+        <span class="comment">% Set the values of the fourth element to the second last element of each of the three arrays, using the trial data from the given structs.</span>
+        durations(4:3 + length(decision.nextSequence.trials)) = amplifierStruct.Duration.Trial;
+        values(4:3 + length(decision.nextSequence.trials)) = decision.nextSequence.trials;
+        activeDurations(4:3 + length(decision.nextSequence.trials)) = durations(4:3 + length(decision.nextSequence.trials)) * amplifierStruct.DutyCycle.Trial;
+
+        <span class="comment">% Set the values of the last element of each of the three arrays, using the sequence end data from the given structs.</span>
+        durations(4 + length(decision.nextSequence.trials)) = amplifierStruct.Duration.SequenceEnd;
+        values(4 + length(decision.nextSequence.trials)) = amplifierStruct.triggerPartitionerStruct.sequenceEndID;
+        activeDurations(4 + length(decision.nextSequence.trials)) = durations(4 + length(decision.nextSequence.trials)) * amplifierStruct.DutyCycle.SequenceEnd;
+
+        <span class="comment">% Multiply two of the arrays by the variable amplifierStruct.fs, and take the ceiling of the calculated values.</span>
+        durations = ceil(durations * amplifierStruct.fs);
+        activeDurations = ceil(activeDurations * amplifierStruct.fs);
+
+        <span class="comment">% Set the value of the variable cumDurations to an array, such that the array has 2 elements, the first element is 0, and the second element is the cumulative sum of the variable durations.</span>
+        cumDurations = [0;cumsum(durations)];
+
+        <span class="comment">%activeDurations=round(durations*amplifierStruct.Duration.DutyCycle);</span>
+
+        <span class="comment">% Set the value of the variable triggerSignals to an array of zeros, where the length of the array is equal to the cumulative sum of the variable durations.</span>
+        triggerSignal = zeros(cumDurations(end),1);
+
+        <span class="comment">% Iterate over the length of the activeDurations vector.</span>
+        <span class="keyword">for</span> durationIndex = 1:length(activeDurations)
+
+            <span class="comment">% Populate the triggerSignal array with elements from the values array.</span>
+            triggerSignal(cumDurations(durationIndex) + 1:cumDurations(durationIndex) + activeDurations(durationIndex)) = values(durationIndex);
+
+        <span class="keyword">end</span>
+
+        <span class="comment">% Append the generated trigger signals to the data in the amplifier.</span>
+        amplifierStruct.awaitingTriggers.data = [amplifierStruct.awaitingTriggers.data;triggerSignal];
+
+    <span class="keyword">end</span>
+
+<span class="keyword">end</span>
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.14<br></p></div><!--
+##### SOURCE BEGIN #####
+%% function generateArtificialTriggers(amplifierStruct,decision)
+% Creates a list of contrived triggers, which are added to the specified amplifier. Triggers are generated based on the given decision.
+%
+%   The inputs of the function:
+%
+%       amplifierStruct - Struct, contains information about the amplifier for which the triggers are being generated. The generated triggers are added to this struct.
+%
+%       decision - Struct, contains information about the decision made regarding the sequence of trials.
+%
+%%
+
+function generateArtificialTriggers(amplifierStruct,decision)
+
+    % Check if the decision variable is not empty and if the decision variable contains the field 'nextSequence'
+    if ~isempty(decision) && isfield(decision,'nextSequence')
+        
+        % Set the value of the variable durations to an array of zeros, where the length of the array is equal to the length of the variable decision.nextSequence.trials plus 4.
+        durations = zeros(4 + length(decision.nextSequence.trials),1);
+        
+        % Make two copies of the variable durations.
+        activeDurations = durations;
+        values = durations;
+
+        % Check if the variable decisions has the field 'decided'.
+        if isfield(decision,'decided')
+            
+            % Set the value of the first element of the variable durations to the length of the variable decision.decided.
+            durations(1) = length(decision.decided);
+            
+        else
+            
+            % Set the value of the first element of the variable durations to 1.
+            durations(1) = 1;
+            
+        end
+
+        % Checks if the variable decision.nextSequence has the field 'target'.
+        if isfield(decision.nextSequence,'target')
+            
+            % Set the values of the second element of each of the three arrays, using the target data from the given structs.
+            durations(2) = amplifierStruct.Duration.Target;
+            values(2) = decision.nextSequence.target + amplifierStruct.triggerPartitionerStruct.TARGET_TRIGGER_OFFSET;
+            activeDurations(2) = durations(2) * amplifierStruct.DutyCycle.Target;
+            
+        end
+        
+        % Set the values of the third element of each of the three arrays, using the fixation data from the given structs.
+        durations(3) = amplifierStruct.Duration.Fixation;
+        values(3) = amplifierStruct.triggerPartitionerStruct.fixationID;
+        activeDurations(3) = durations(3) * amplifierStruct.DutyCycle.Fixation;
+
+        % Set the values of the fourth element to the second last element of each of the three arrays, using the trial data from the given structs.
+        durations(4:3 + length(decision.nextSequence.trials)) = amplifierStruct.Duration.Trial;
+        values(4:3 + length(decision.nextSequence.trials)) = decision.nextSequence.trials;
+        activeDurations(4:3 + length(decision.nextSequence.trials)) = durations(4:3 + length(decision.nextSequence.trials)) * amplifierStruct.DutyCycle.Trial;
+
+        % Set the values of the last element of each of the three arrays, using the sequence end data from the given structs.
+        durations(4 + length(decision.nextSequence.trials)) = amplifierStruct.Duration.SequenceEnd;
+        values(4 + length(decision.nextSequence.trials)) = amplifierStruct.triggerPartitionerStruct.sequenceEndID;
+        activeDurations(4 + length(decision.nextSequence.trials)) = durations(4 + length(decision.nextSequence.trials)) * amplifierStruct.DutyCycle.SequenceEnd;
+
+        % Multiply two of the arrays by the variable amplifierStruct.fs, and take the ceiling of the calculated values.
+        durations = ceil(durations * amplifierStruct.fs);
+        activeDurations = ceil(activeDurations * amplifierStruct.fs);
+        
+        % Set the value of the variable cumDurations to an array, such that the array has 2 elements, the first element is 0, and the second element is the cumulative sum of the variable durations.
+        cumDurations = [0;cumsum(durations)];
+
+        %activeDurations=round(durations*amplifierStruct.Duration.DutyCycle);
+
+        % Set the value of the variable triggerSignals to an array of zeros, where the length of the array is equal to the cumulative sum of the variable durations.
+        triggerSignal = zeros(cumDurations(end),1);
+
+        % Iterate over the length of the activeDurations vector.
+        for durationIndex = 1:length(activeDurations)
+            
+            % Populate the triggerSignal array with elements from the values array.
+            triggerSignal(cumDurations(durationIndex) + 1:cumDurations(durationIndex) + activeDurations(durationIndex)) = values(durationIndex);
+            
+        end
+        
+        % Append the generated trigger signals to the data in the amplifier.
+        amplifierStruct.awaitingTriggers.data = [amplifierStruct.awaitingTriggers.data;triggerSignal];
+
+    end
+    
+end
+##### SOURCE END #####
+--></body></html>

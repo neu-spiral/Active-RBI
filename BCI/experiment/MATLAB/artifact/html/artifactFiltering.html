@@ -1,0 +1,694 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>function featureExtractionStruct=artifactFiltering(...</title><meta name="generator" content="MATLAB 7.14"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2013-06-13"><meta name="DC.source" content="artifactFiltering.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+
+  </style></head><body><div class="content"><h1>function featureExtractionStruct=artifactFiltering(...</h1><!--introduction--><pre>                                                     amplifierStruct,...
+                                                     dataBufferObject,...
+                                                     cleanDataBufferObject,...
+                                                     artifactInfoBufferObject,...
+                                                     triggerBufferObject,...
+                                                     fs,...
+                                                     triggerPartitionerStruct,...
+                                                     featureExtractionStruct,...
+                                                     numberOfChannels,...
+                                                     artifactFilteringParams,...
+                                                     RSVPKeyboardArtifactFiltering,...
+                                                     sessionID,...
+                                                     RSVPKeyboardParams.artifactFiltering.enabled,...
+                                                     remoteGUI,...
+                                                  )</pre><pre>gets dataBufferObject, apply artifactRemoval on each sequence and fills
+cleanDataBufferObject that is cleaned version of dataBuffer. It also
+gives out artifactInfoBufferObject that has boolean information showing
+that which samples are detected as contaminated.
+ The inputs of the function:
+        amplifierStruct - A structure that contains the amplifier
+        information.</pre><pre>        dataBufferObject - a dataBuffer class object containing the
+        buffer corresponding to non-trigger data. After the call of the
+        function, the object will be modified using the newly acquired
+        data.</pre><pre>        cleanDataBufferObject - cleaned version of dataBufferObject.
+        Note that lastSampleTimeIndex of these two buffers are different
+        but time Indices are exactly match since we fill cleanDataBuffer
+        each time we processed data buffer and we might be waiting for
+        completeness of a sequence in dataBuffer.</pre><pre>        artifactInfoBufferObject - has Boolean data information. It is
+        exactly syncronized with cleanDataBufferObject.
+        for each sample 0 if good, 1 if contaminated</pre><pre>        triggerBufferObject - a dataBuffer class object containing the
+        buffer corresponding to trigger signal. After the call of the
+        function, the object will be modified using the newly acquired
+        data of the trigger channel.</pre><pre class="language-matlab">See <span class="string">also</span> <span class="string">dataBuffer</span>, initializeArtifactFiltering, artifactRemoval
+http://www.sciencedirect.com/science/article/pii/S0165027010003894#
+</pre><!--/introduction--><pre class="codeinput"><span class="keyword">function</span> featureExtractionStruct=artifactFiltering(<span class="keyword">...</span>
+    amplifierStruct,<span class="keyword">...</span>
+    dataBufferObject,<span class="keyword">...</span>
+    cleanDataBufferObject,<span class="keyword">...</span>
+    artifactInfoBufferObject,<span class="keyword">...</span>
+    triggerBufferObject,<span class="keyword">...</span>
+    fs,<span class="keyword">...</span>
+    triggerPartitionerStruct,<span class="keyword">...</span>
+    featureExtractionStruct,<span class="keyword">...</span>
+    numberOfChannels,<span class="keyword">...</span>
+    artifactFilteringParams,<span class="keyword">...</span>
+    RSVPKeyboardArtifactFiltering,<span class="keyword">...</span>
+    sessionID,<span class="keyword">...</span>
+    enabled,<span class="keyword">...</span>
+    remoteGUI<span class="keyword">...</span>
+    )
+
+
+    <span class="keyword">persistent</span> lastProcessedSampleTimeIndex;
+
+    <span class="keyword">if</span> isempty(lastProcessedSampleTimeIndex),
+        lastProcessedSampleTimeIndex=0;
+    <span class="keyword">end</span>
+
+    <span class="keyword">if</span> lastProcessedSampleTimeIndex~=triggerBufferObject.lastSampleTimeIndex &amp;&amp; enabled
+        triggerMat =diff(triggerBufferObject.getOrderedData(lastProcessedSampleTimeIndex,triggerBufferObject.lastSampleTimeIndex));
+        <span class="keyword">if</span> sessionID==1
+            triggerMatSequenceOns=find(triggerMat&lt;=-80);
+            trialOns = find(0&lt;triggerMat &amp; triggerMat&lt;=triggerPartitionerStruct.sequenceEndID-1);
+            triggerMatSeqEnds=find(triggerMat==triggerPartitionerStruct.sequenceEndID);
+            <span class="keyword">if</span> ~isempty(triggerMatSeqEnds)
+                conventionalTriggerMatSeqEnds=trialOns(find(trialOns&lt;triggerMatSeqEnds(end),1,<span class="string">'last'</span>))+triggerPartitionerStruct.windowLengthinSamples;
+                <span class="keyword">if</span> conventionalTriggerMatSeqEnds&lt;=length(triggerMat)
+                    triggerMatSeqEnds=conventionalTriggerMatSeqEnds;
+                <span class="keyword">else</span>
+                    triggerMatSeqEnds=[];
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> dataBufferObject.filledStatus
+                <span class="keyword">if</span> length(triggerMatSequenceOns)&lt;1
+                    cleanDataBufferObject.addData(dataBufferObject.getOrderedData(lastProcessedSampleTimeIndex+1,dataBufferObject.lastSampleTimeIndex));
+                    artifactInfoBufferObject.addData(zeros(dataBufferObject.lastSampleTimeIndex-lastProcessedSampleTimeIndex,numberOfChannels));
+                    lastProcessedSampleTimeIndex=triggerBufferObject.lastSampleTimeIndex;
+
+                <span class="keyword">elseif</span> (length(triggerMatSequenceOns)==1 &amp;&amp; isempty(triggerMatSeqEnds))
+                    <span class="keyword">if</span> triggerMatSequenceOns~=1
+                        cleanDataBufferObject.addData(dataBufferObject.getOrderedData(lastProcessedSampleTimeIndex+1,lastProcessedSampleTimeIndex+triggerMatSequenceOns-1));
+                        artifactInfoBufferObject.addData(zeros(triggerMatSequenceOns-1,numberOfChannels));
+                    <span class="keyword">end</span>
+                    lastProcessedSampleTimeIndex=lastProcessedSampleTimeIndex+triggerMatSequenceOns-1;
+
+                <span class="keyword">elseif</span> length(triggerMatSequenceOns)&gt;=1 &amp;&amp; length(triggerMatSeqEnds)&lt;=length(triggerMatSequenceOns)
+                    <span class="keyword">if</span> triggerMatSequenceOns(1)~=1
+                        cleanDataBufferObject.addData(dataBufferObject.getOrderedData(lastProcessedSampleTimeIndex+1,lastProcessedSampleTimeIndex+triggerMatSequenceOns(1)-1));
+                        artifactInfoBufferObject.addData(zeros(triggerMatSequenceOns(1)-1,numberOfChannels));
+                    <span class="keyword">end</span>
+                    seqOnTime = lastProcessedSampleTimeIndex+triggerMatSequenceOns(1);
+                    lastProcessedSampleTimeIndex = lastProcessedSampleTimeIndex+triggerMatSeqEnds(end);
+
+                    dataMat   = dataBufferObject.getOrderedData(seqOnTime,lastProcessedSampleTimeIndex);
+                    triggerMat =diff(triggerBufferObject.getOrderedData(seqOnTime-1,lastProcessedSampleTimeIndex));
+
+                    seqOnNdx=find(triggerMat&lt;=-80);
+
+                    nonZeroTriggerValues=find((triggerMat)~=0);
+                    [m,ndx]=ismember(seqOnNdx,nonZeroTriggerValues);
+                    ndx=ndx+1;
+                    triggerNdx1=nonZeroTriggerValues(ndx);
+                    triggerNdx2 = find(0&lt;triggerMat &amp; triggerMat&lt;=triggerPartitionerStruct.sequenceEndID-1);
+                    triggerNdx=sort([triggerNdx1;triggerNdx2]);
+
+                    artifactRemovalDataInput.electrodes=amplifierStruct.channelNames;
+                    artifactRemovalDataInput.data=dataMat;
+
+                    [cleanEEG,artifactInfoMat,eyeBlinkFlag] = artifactRemoval(artifactRemovalDataInput,fs,triggerNdx,artifactFilteringParams,numberOfChannels,remoteGUI);
+
+
+                    cleanDataBufferObject.addData(cleanEEG);
+                    artifactInfoBufferObject.addData(artifactInfoMat);
+                    featureExtractionStruct.rejectSequenceFlag=0;
+                    <span class="keyword">if</span> rejectSequence
+                        <span class="keyword">if</span> eyeBlinkFlag==1 || (nnz(artifactInfoMat)/numel(artifactInfoMat))&gt;=artifactFilteringParams.contaminatedSamplesPercentage
+                            featureExtractionStruct.rejectSequenceFlag=1;
+                            featureExtractionStruct.rejectSequenceInfo=[featureExtractionStruct.rejectSequenceInfo 1];
+                        <span class="keyword">else</span>
+                            featureExtractionStruct.rejectSequenceInfo=[featureExtractionStruct.rejectSequenceInfo 0];
+                        <span class="keyword">end</span>
+                    <span class="keyword">end</span>
+                <span class="keyword">end</span>
+            <span class="keyword">else</span>
+                <span class="keyword">if</span> length(triggerMatSequenceOns)&lt;1
+                    cleanDataBufferObject.addData(dataBufferObject.getOrderedData(lastProcessedSampleTimeIndex+1,dataBufferObject.lastSampleTimeIndex));
+                    artifactInfoBufferObject.addData(zeros(dataBufferObject.lastSampleTimeIndex-lastProcessedSampleTimeIndex,numberOfChannels));
+                    lastProcessedSampleTimeIndex=triggerBufferObject.lastSampleTimeIndex;
+
+                <span class="keyword">elseif</span> (length(triggerMatSequenceOns)==1 &amp;&amp; isempty(triggerMatSeqEnds))
+                    triggerMatSequenceOns1=find([0; diff(triggerBufferObject.getOrderedData(1,dataBufferObject.lastSampleTimeIndex))]&lt;=-80);
+                    <span class="keyword">if</span> (triggerMatSequenceOns1(end)-1)~=lastProcessedSampleTimeIndex
+                        cleanDataBufferObject.addData(dataBufferObject.getOrderedData(lastProcessedSampleTimeIndex+1,triggerMatSequenceOns1(end)-1));
+                        artifactInfoBufferObject.addData(zeros((triggerMatSequenceOns1(end)-1)-lastProcessedSampleTimeIndex,numberOfChannels));
+                    <span class="keyword">end</span>
+                    lastProcessedSampleTimeIndex=triggerMatSequenceOns1(end)-1;
+
+                <span class="keyword">elseif</span> length(triggerMatSequenceOns)&gt;=1 &amp;&amp; length(triggerMatSeqEnds)&lt;=length(triggerMatSequenceOns)
+                    triggerMat1=[0; diff(triggerBufferObject.getOrderedData(1,dataBufferObject.lastSampleTimeIndex))];
+                    triggerMatSequenceOns1=find(triggerMat1&lt;=-80);
+                    seqOnTime =triggerMatSequenceOns1(triggerMatSequenceOns1&gt;=lastProcessedSampleTimeIndex,1);
+                    triggerMatSeqEnds1=find(triggerMat1==triggerPartitionerStruct.sequenceEndID);
+                    trialOns1 = find(0&lt;triggerMat1 &amp; triggerMat1&lt;=triggerPartitionerStruct.sequenceEndID-1);
+
+                    conventionalTriggerMatSeqEnds1=trialOns1(find(trialOns1&lt;triggerMatSeqEnds1(end),1,<span class="string">'last'</span>))+triggerPartitionerStruct.windowLengthinSamples;
+                    triggerMatSeqEnds1=conventionalTriggerMatSeqEnds1;
+
+                    <span class="keyword">if</span> (seqOnTime-1)~=lastProcessedSampleTimeIndex
+                        cleanDataBufferObject.addData(dataBufferObject.getOrderedData(lastProcessedSampleTimeIndex+1,seqOnTime-1));
+                        artifactInfoBufferObject.addData(zeros((seqOnTime-1)-lastProcessedSampleTimeIndex,numberOfChannels));
+                    <span class="keyword">end</span>
+                    lastProcessedSampleTimeIndex = triggerMatSeqEnds1(end);
+                    dataMat   = dataBufferObject.getOrderedData(seqOnTime,lastProcessedSampleTimeIndex);
+                    triggerMat =diff(triggerBufferObject.getOrderedData(seqOnTime-1,lastProcessedSampleTimeIndex));
+                    seqOnNdx=find(triggerMat&lt;=-80);
+                    nonZeroTriggerValues=find((triggerMat)~=0);
+                    [m,ndx]=ismember(seqOnNdx,nonZeroTriggerValues);
+                    ndx=ndx+1;
+                    triggerNdx1=nonZeroTriggerValues(ndx);
+                    triggerNdx2 = find(0&lt;triggerMat &amp; triggerMat&lt;=triggerPartitionerStruct.sequenceEndID-1);
+                    seqEndNdx=find(triggerMat==triggerPartitionerStruct.sequenceEndID);
+                    triggerNdx=sort([triggerNdx1;triggerNdx2]);
+
+                    artifactRemovalDataInput.electrodes=amplifierStruct.channelNames;
+                    artifactRemovalDataInput.data=dataMat;
+
+                    [cleanEEG,artifactInfoMat,eyeBlinkFlag] = artifactRemoval(artifactRemovalDataInput,fs,triggerNdx,artifactFilteringParams,numberOfChannels,remoteGUI);
+
+                    cleanDataBufferObject.addData(cleanEEG);
+                    artifactInfoBufferObject.addData(artifactInfoMat);
+                    featureExtractionStruct.rejectSequenceFlag=0;
+                    <span class="keyword">if</span> rejectSequence
+                        <span class="keyword">if</span> eyeBlinkFlag==1 || (nnz(artifactInfoMat)/numel(artifactInfoMat))&gt;=artifactFilteringParams.contaminatedSamplesPercentage
+                            featureExtractionStruct.rejectSequenceFlag=1;
+                            featureExtractionStruct.rejectSequenceInfo=[featureExtractionStruct.rejectSequenceInfo 1];
+                        <span class="keyword">else</span>
+                            featureExtractionStruct.rejectSequenceInfo=[featureExtractionStruct.rejectSequenceInfo 0];
+                        <span class="keyword">end</span>
+                    <span class="keyword">end</span>
+
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+        <span class="keyword">else</span> <span class="comment">% means if sessionID=2,3,4</span>
+            triggerMatSequenceOns=find(triggerMat==triggerPartitionerStruct.fixationID);
+            triggerMatSeqEnds=find(triggerMat==triggerPartitionerStruct.sequenceEndID);
+            trialOns= find(0&lt;triggerMat &amp; triggerMat&lt;=triggerPartitionerStruct.sequenceEndID-1);
+            <span class="keyword">if</span> ~isempty(triggerMatSeqEnds)
+                conventionalTriggerMatSeqEnds=trialOns(find(trialOns&lt;triggerMatSeqEnds(end),1,<span class="string">'last'</span>))+triggerPartitionerStruct.windowLengthinSamples;
+                <span class="keyword">if</span> conventionalTriggerMatSeqEnds&lt;=length(triggerMat)
+                    triggerMatSeqEnds=conventionalTriggerMatSeqEnds;
+                <span class="keyword">else</span>
+                    triggerMatSeqEnds=[];
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> dataBufferObject.filledStatus
+                <span class="keyword">if</span> length(triggerMatSequenceOns)&lt;1
+                    cleanDataBufferObject.addData(dataBufferObject.getOrderedData(lastProcessedSampleTimeIndex+1,dataBufferObject.lastSampleTimeIndex));
+                    artifactInfoBufferObject.addData(zeros(dataBufferObject.lastSampleTimeIndex-lastProcessedSampleTimeIndex,numberOfChannels));
+                    lastProcessedSampleTimeIndex=triggerBufferObject.lastSampleTimeIndex;
+
+                <span class="keyword">elseif</span> (length(triggerMatSequenceOns)==1 &amp;&amp; isempty(triggerMatSeqEnds))
+                    <span class="keyword">if</span> triggerMatSequenceOns~=1
+                        cleanDataBufferObject.addData(dataBufferObject.getOrderedData(lastProcessedSampleTimeIndex+1,lastProcessedSampleTimeIndex+triggerMatSequenceOns-1));
+                        artifactInfoBufferObject.addData(zeros(triggerMatSequenceOns-1,numberOfChannels));
+                    <span class="keyword">end</span>
+                    lastProcessedSampleTimeIndex=lastProcessedSampleTimeIndex+triggerMatSequenceOns-1;
+
+                <span class="keyword">elseif</span> length(triggerMatSequenceOns)&gt;=1 &amp;&amp; length(triggerMatSeqEnds)&lt;=length(triggerMatSequenceOns)
+                    <span class="keyword">if</span> triggerMatSequenceOns(1)~=1
+                        cleanDataBufferObject.addData(dataBufferObject.getOrderedData(lastProcessedSampleTimeIndex+1,lastProcessedSampleTimeIndex+triggerMatSequenceOns(1)-1));
+                        artifactInfoBufferObject.addData(zeros(triggerMatSequenceOns(1)-1,numberOfChannels));
+                    <span class="keyword">end</span>
+                    seqOnTime = lastProcessedSampleTimeIndex+triggerMatSequenceOns(1);
+                    lastProcessedSampleTimeIndex = lastProcessedSampleTimeIndex+triggerMatSeqEnds(end);
+
+                    dataMat   = dataBufferObject.getOrderedData(seqOnTime,lastProcessedSampleTimeIndex);
+                    triggerMat =diff(triggerBufferObject.getOrderedData(seqOnTime-1,lastProcessedSampleTimeIndex));
+                    seqOnNdx=find(triggerMat==triggerPartitionerStruct.fixationID);
+
+                    nonZeroTriggerValues=find((triggerMat)~=0);
+                    [m,ndx]=ismember(seqOnNdx,nonZeroTriggerValues);
+                    ndx=ndx+1;
+                    triggerNdx1=nonZeroTriggerValues(ndx);
+                    triggerNdx2 = find(0&lt;triggerMat &amp; triggerMat&lt;=triggerPartitionerStruct.sequenceEndID-1);
+                    triggerNdx=sort([triggerNdx1;triggerNdx2]);
+
+                    artifactRemovalDataInput.electrodes=amplifierStruct.channelNames;
+                    artifactRemovalDataInput.data=dataMat;
+
+                    [cleanEEG,artifactInfoMat,eyeBlinkFlag] = artifactRemoval(artifactRemovalDataInput,fs,triggerNdx,artifactFilteringParams,numberOfChannels,remoteGUI);
+
+
+                    cleanDataBufferObject.addData(cleanEEG);
+                    artifactInfoBufferObject.addData(artifactInfoMat);
+                    featureExtractionStruct.rejectSequenceFlag=0;
+                    <span class="keyword">if</span> rejectSequence
+                        <span class="keyword">if</span> eyeBlinkFlag==1 || (nnz(artifactInfoMat)/numel(artifactInfoMat))&gt;=artifactFilteringParams.contaminatedSamplesPercentage
+                            featureExtractionStruct.rejectSequenceFlag=1;
+                            featureExtractionStruct.rejectSequenceInfo=[featureExtractionStruct.rejectSequenceInfo 1];
+
+                        <span class="keyword">else</span>
+                            featureExtractionStruct.rejectSequenceInfo=[featureExtractionStruct.rejectSequenceInfo 0];
+                        <span class="keyword">end</span>
+                    <span class="keyword">end</span>
+                <span class="keyword">end</span>
+            <span class="keyword">else</span>
+                <span class="keyword">if</span> length(triggerMatSequenceOns)&lt;1
+                    cleanDataBufferObject.addData(dataBufferObject.getOrderedData(lastProcessedSampleTimeIndex+1,dataBufferObject.lastSampleTimeIndex));
+                    artifactInfoBufferObject.addData(zeros(dataBufferObject.lastSampleTimeIndex-lastProcessedSampleTimeIndex,numberOfChannels));
+                    lastProcessedSampleTimeIndex=triggerBufferObject.lastSampleTimeIndex;
+
+                <span class="keyword">elseif</span> (length(triggerMatSequenceOns)==1 &amp;&amp; isempty(triggerMatSeqEnds))
+                    triggerMatSequenceOns1=find([0; diff(triggerBufferObject.getOrderedData(1,dataBufferObject.lastSampleTimeIndex))]==triggerPartitionerStruct.fixationID);
+                    <span class="keyword">if</span> (triggerMatSequenceOns1(end)-1)~=lastProcessedSampleTimeIndex
+                        cleanDataBufferObject.addData(dataBufferObject.getOrderedData(lastProcessedSampleTimeIndex+1,triggerMatSequenceOns1(end)-1));
+                        artifactInfoBufferObject.addData(zeros((triggerMatSequenceOns1(end)-1)-lastProcessedSampleTimeIndex,numberOfChannels));
+                    <span class="keyword">end</span>
+                    lastProcessedSampleTimeIndex=triggerMatSequenceOns1(end)-1;
+
+                <span class="keyword">elseif</span> length(triggerMatSequenceOns)&gt;=1 &amp;&amp; length(triggerMatSeqEnds)&lt;=length(triggerMatSequenceOns)
+                    triggerMat1=[0; diff(triggerBufferObject.getOrderedData(1,dataBufferObject.lastSampleTimeIndex))];
+                    triggerMatSequenceOns1=find(triggerMat1==triggerPartitionerStruct.fixationID);
+                    seqOnTime =triggerMatSequenceOns1(triggerMatSequenceOns1&gt;=lastProcessedSampleTimeIndex,1);
+                    triggerMatSeqEnds1=find(triggerMat1==triggerPartitionerStruct.sequenceEndID);
+                    trialOns1 = find(0&lt;triggerMat1 &amp; triggerMat1&lt;=triggerPartitionerStruct.sequenceEndID-1);
+
+                    conventionalTriggerMatSeqEnds1=trialOns1(find(trialOns1&lt;triggerMatSeqEnds1(end),1,<span class="string">'last'</span>))+triggerPartitionerStruct.windowLengthinSamples;
+                    triggerMatSeqEnds1=conventionalTriggerMatSeqEnds1;
+                    <span class="keyword">if</span> (seqOnTime-1)~=lastProcessedSampleTimeIndex
+                        cleanDataBufferObject.addData(dataBufferObject.getOrderedData(lastProcessedSampleTimeIndex+1,seqOnTime-1));
+                        artifactInfoBufferObject.addData(zeros((seqOnTime-1)-lastProcessedSampleTimeIndex,numberOfChannels));
+                    <span class="keyword">end</span>
+                    lastProcessedSampleTimeIndex = triggerMatSeqEnds1(end);
+                    dataMat   = dataBufferObject.getOrderedData(seqOnTime,lastProcessedSampleTimeIndex);
+                    triggerMat =diff(triggerBufferObject.getOrderedData(seqOnTime-1,lastProcessedSampleTimeIndex));
+                    seqOnNdx=find(triggerMat==triggerPartitionerStruct.fixationID);
+
+                    nonZeroTriggerValues=find((triggerMat)~=0);
+                    [m,ndx]=ismember(seqOnNdx,nonZeroTriggerValues);
+                    ndx=ndx+1;
+                    triggerNdx1=nonZeroTriggerValues(ndx);
+                    triggerNdx2 = find(0&lt;triggerMat &amp; triggerMat&lt;=triggerPartitionerStruct.sequenceEndID-1);
+                    seqEndNdx=find(triggerMat==triggerPartitionerStruct.sequenceEndID);
+                    triggerNdx=sort([triggerNdx1;triggerNdx2]);
+
+                    artifactRemovalDataInput.electrodes=amplifierStruct.channelNames;
+                    artifactRemovalDataInput.data=dataMat;
+
+                    [cleanEEG,artifactInfoMat,eyeBlinkFlag] = artifactRemoval(artifactRemovalDataInput,fs,triggerNdx,artifactFilteringParams,numberOfChannels,remoteGUI);
+
+                    cleanDataBufferObject.addData(cleanEEG);
+                    artifactInfoBufferObject.addData(artifactInfoMat);
+                    featureExtractionStruct.rejectSequenceFlag=0;
+                    <span class="keyword">if</span> rejectSequence
+                        <span class="keyword">if</span> eyeBlinkFlag==1 || (nnz(artifactInfoMat)/numel(artifactInfoMat))&gt;=artifactFilteringParams.contaminatedSamplesPercentage
+                            featureExtractionStruct.rejectSequenceFlag=1;
+                            featureExtractionStruct.rejectSequenceInfo=[featureExtractionStruct.rejectSequenceInfo 1];
+                        <span class="keyword">else</span>
+                            featureExtractionStruct.rejectSequenceInfo=[featureExtractionStruct.rejectSequenceInfo 0];
+                        <span class="keyword">end</span>
+                    <span class="keyword">end</span>
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.14<br></p></div><!--
+##### SOURCE BEGIN #####
+%% function featureExtractionStruct=artifactFiltering(...
+%                                                       amplifierStruct,...
+%                                                       dataBufferObject,...
+%                                                       cleanDataBufferObject,...
+%                                                       artifactInfoBufferObject,...
+%                                                       triggerBufferObject,...
+%                                                       fs,...
+%                                                       triggerPartitionerStruct,...
+%                                                       featureExtractionStruct,...
+%                                                       numberOfChannels,...
+%                                                       artifactFilteringParams,...
+%                                                       RSVPKeyboardArtifactFiltering,...
+%                                                       sessionID,...
+%                                                       RSVPKeyboardParams.artifactFiltering.enabled,...
+%                                                       remoteGUI,...
+%                                                    )
+%
+%  gets dataBufferObject, apply artifactRemoval on each sequence and fills
+%  cleanDataBufferObject that is cleaned version of dataBuffer. It also
+%  gives out artifactInfoBufferObject that has boolean information showing
+%  that which samples are detected as contaminated.
+%   The inputs of the function:
+%          amplifierStruct - A structure that contains the amplifier
+%          information.
+%
+%          dataBufferObject - a dataBuffer class object containing the
+%          buffer corresponding to non-trigger data. After the call of the
+%          function, the object will be modified using the newly acquired
+%          data.
+%
+%          cleanDataBufferObject - cleaned version of dataBufferObject.
+%          Note that lastSampleTimeIndex of these two buffers are different
+%          but time Indices are exactly match since we fill cleanDataBuffer
+%          each time we processed data buffer and we might be waiting for
+%          completeness of a sequence in dataBuffer.
+%
+%          artifactInfoBufferObject - has Boolean data information. It is
+%          exactly syncronized with cleanDataBufferObject.
+%          for each sample 0 if good, 1 if contaminated
+%
+%          triggerBufferObject - a dataBuffer class object containing the
+%          buffer corresponding to trigger signal. After the call of the
+%          function, the object will be modified using the newly acquired
+%          data of the trigger channel.
+%
+%
+%
+%   See also dataBuffer, initializeArtifactFiltering, artifactRemoval
+%   http://www.sciencedirect.com/science/article/pii/S0165027010003894#
+%%
+function featureExtractionStruct=artifactFiltering(...
+    amplifierStruct,...
+    dataBufferObject,...
+    cleanDataBufferObject,...
+    artifactInfoBufferObject,...
+    triggerBufferObject,...
+    fs,...
+    triggerPartitionerStruct,...
+    featureExtractionStruct,...
+    numberOfChannels,...
+    artifactFilteringParams,...
+    RSVPKeyboardArtifactFiltering,...
+    sessionID,...
+    enabled,...
+    remoteGUI...
+    )
+
+
+    persistent lastProcessedSampleTimeIndex;
+
+    if isempty(lastProcessedSampleTimeIndex),
+        lastProcessedSampleTimeIndex=0;
+    end
+
+    if lastProcessedSampleTimeIndex~=triggerBufferObject.lastSampleTimeIndex && enabled
+        triggerMat =diff(triggerBufferObject.getOrderedData(lastProcessedSampleTimeIndex,triggerBufferObject.lastSampleTimeIndex));
+        if sessionID==1
+            triggerMatSequenceOns=find(triggerMat<=-80);
+            trialOns = find(0<triggerMat & triggerMat<=triggerPartitionerStruct.sequenceEndID-1);
+            triggerMatSeqEnds=find(triggerMat==triggerPartitionerStruct.sequenceEndID);
+            if ~isempty(triggerMatSeqEnds)
+                conventionalTriggerMatSeqEnds=trialOns(find(trialOns<triggerMatSeqEnds(end),1,'last'))+triggerPartitionerStruct.windowLengthinSamples;
+                if conventionalTriggerMatSeqEnds<=length(triggerMat)
+                    triggerMatSeqEnds=conventionalTriggerMatSeqEnds;
+                else
+                    triggerMatSeqEnds=[];
+                end
+            end
+
+            if dataBufferObject.filledStatus
+                if length(triggerMatSequenceOns)<1
+                    cleanDataBufferObject.addData(dataBufferObject.getOrderedData(lastProcessedSampleTimeIndex+1,dataBufferObject.lastSampleTimeIndex));
+                    artifactInfoBufferObject.addData(zeros(dataBufferObject.lastSampleTimeIndex-lastProcessedSampleTimeIndex,numberOfChannels));
+                    lastProcessedSampleTimeIndex=triggerBufferObject.lastSampleTimeIndex;
+
+                elseif (length(triggerMatSequenceOns)==1 && isempty(triggerMatSeqEnds))
+                    if triggerMatSequenceOns~=1
+                        cleanDataBufferObject.addData(dataBufferObject.getOrderedData(lastProcessedSampleTimeIndex+1,lastProcessedSampleTimeIndex+triggerMatSequenceOns-1));
+                        artifactInfoBufferObject.addData(zeros(triggerMatSequenceOns-1,numberOfChannels));
+                    end
+                    lastProcessedSampleTimeIndex=lastProcessedSampleTimeIndex+triggerMatSequenceOns-1;
+
+                elseif length(triggerMatSequenceOns)>=1 && length(triggerMatSeqEnds)<=length(triggerMatSequenceOns)
+                    if triggerMatSequenceOns(1)~=1
+                        cleanDataBufferObject.addData(dataBufferObject.getOrderedData(lastProcessedSampleTimeIndex+1,lastProcessedSampleTimeIndex+triggerMatSequenceOns(1)-1));
+                        artifactInfoBufferObject.addData(zeros(triggerMatSequenceOns(1)-1,numberOfChannels));
+                    end
+                    seqOnTime = lastProcessedSampleTimeIndex+triggerMatSequenceOns(1);
+                    lastProcessedSampleTimeIndex = lastProcessedSampleTimeIndex+triggerMatSeqEnds(end);
+
+                    dataMat   = dataBufferObject.getOrderedData(seqOnTime,lastProcessedSampleTimeIndex);
+                    triggerMat =diff(triggerBufferObject.getOrderedData(seqOnTime-1,lastProcessedSampleTimeIndex));
+
+                    seqOnNdx=find(triggerMat<=-80);
+
+                    nonZeroTriggerValues=find((triggerMat)~=0);
+                    [m,ndx]=ismember(seqOnNdx,nonZeroTriggerValues);
+                    ndx=ndx+1;
+                    triggerNdx1=nonZeroTriggerValues(ndx);
+                    triggerNdx2 = find(0<triggerMat & triggerMat<=triggerPartitionerStruct.sequenceEndID-1);
+                    triggerNdx=sort([triggerNdx1;triggerNdx2]);
+
+                    artifactRemovalDataInput.electrodes=amplifierStruct.channelNames;
+                    artifactRemovalDataInput.data=dataMat;
+
+                    [cleanEEG,artifactInfoMat,eyeBlinkFlag] = artifactRemoval(artifactRemovalDataInput,fs,triggerNdx,artifactFilteringParams,numberOfChannels,remoteGUI);
+
+
+                    cleanDataBufferObject.addData(cleanEEG);
+                    artifactInfoBufferObject.addData(artifactInfoMat);
+                    featureExtractionStruct.rejectSequenceFlag=0;
+                    if rejectSequence
+                        if eyeBlinkFlag==1 || (nnz(artifactInfoMat)/numel(artifactInfoMat))>=artifactFilteringParams.contaminatedSamplesPercentage
+                            featureExtractionStruct.rejectSequenceFlag=1;
+                            featureExtractionStruct.rejectSequenceInfo=[featureExtractionStruct.rejectSequenceInfo 1];
+                        else
+                            featureExtractionStruct.rejectSequenceInfo=[featureExtractionStruct.rejectSequenceInfo 0];
+                        end
+                    end
+                end
+            else
+                if length(triggerMatSequenceOns)<1
+                    cleanDataBufferObject.addData(dataBufferObject.getOrderedData(lastProcessedSampleTimeIndex+1,dataBufferObject.lastSampleTimeIndex));
+                    artifactInfoBufferObject.addData(zeros(dataBufferObject.lastSampleTimeIndex-lastProcessedSampleTimeIndex,numberOfChannels));
+                    lastProcessedSampleTimeIndex=triggerBufferObject.lastSampleTimeIndex;
+
+                elseif (length(triggerMatSequenceOns)==1 && isempty(triggerMatSeqEnds))
+                    triggerMatSequenceOns1=find([0; diff(triggerBufferObject.getOrderedData(1,dataBufferObject.lastSampleTimeIndex))]<=-80);
+                    if (triggerMatSequenceOns1(end)-1)~=lastProcessedSampleTimeIndex
+                        cleanDataBufferObject.addData(dataBufferObject.getOrderedData(lastProcessedSampleTimeIndex+1,triggerMatSequenceOns1(end)-1));
+                        artifactInfoBufferObject.addData(zeros((triggerMatSequenceOns1(end)-1)-lastProcessedSampleTimeIndex,numberOfChannels));
+                    end
+                    lastProcessedSampleTimeIndex=triggerMatSequenceOns1(end)-1;
+
+                elseif length(triggerMatSequenceOns)>=1 && length(triggerMatSeqEnds)<=length(triggerMatSequenceOns)
+                    triggerMat1=[0; diff(triggerBufferObject.getOrderedData(1,dataBufferObject.lastSampleTimeIndex))];
+                    triggerMatSequenceOns1=find(triggerMat1<=-80);
+                    seqOnTime =triggerMatSequenceOns1(triggerMatSequenceOns1>=lastProcessedSampleTimeIndex,1);
+                    triggerMatSeqEnds1=find(triggerMat1==triggerPartitionerStruct.sequenceEndID);
+                    trialOns1 = find(0<triggerMat1 & triggerMat1<=triggerPartitionerStruct.sequenceEndID-1);
+
+                    conventionalTriggerMatSeqEnds1=trialOns1(find(trialOns1<triggerMatSeqEnds1(end),1,'last'))+triggerPartitionerStruct.windowLengthinSamples;
+                    triggerMatSeqEnds1=conventionalTriggerMatSeqEnds1;
+
+                    if (seqOnTime-1)~=lastProcessedSampleTimeIndex
+                        cleanDataBufferObject.addData(dataBufferObject.getOrderedData(lastProcessedSampleTimeIndex+1,seqOnTime-1));
+                        artifactInfoBufferObject.addData(zeros((seqOnTime-1)-lastProcessedSampleTimeIndex,numberOfChannels));
+                    end
+                    lastProcessedSampleTimeIndex = triggerMatSeqEnds1(end);
+                    dataMat   = dataBufferObject.getOrderedData(seqOnTime,lastProcessedSampleTimeIndex);
+                    triggerMat =diff(triggerBufferObject.getOrderedData(seqOnTime-1,lastProcessedSampleTimeIndex));
+                    seqOnNdx=find(triggerMat<=-80);
+                    nonZeroTriggerValues=find((triggerMat)~=0);
+                    [m,ndx]=ismember(seqOnNdx,nonZeroTriggerValues);
+                    ndx=ndx+1;
+                    triggerNdx1=nonZeroTriggerValues(ndx);
+                    triggerNdx2 = find(0<triggerMat & triggerMat<=triggerPartitionerStruct.sequenceEndID-1);
+                    seqEndNdx=find(triggerMat==triggerPartitionerStruct.sequenceEndID);
+                    triggerNdx=sort([triggerNdx1;triggerNdx2]);
+
+                    artifactRemovalDataInput.electrodes=amplifierStruct.channelNames;
+                    artifactRemovalDataInput.data=dataMat;
+
+                    [cleanEEG,artifactInfoMat,eyeBlinkFlag] = artifactRemoval(artifactRemovalDataInput,fs,triggerNdx,artifactFilteringParams,numberOfChannels,remoteGUI);
+
+                    cleanDataBufferObject.addData(cleanEEG);
+                    artifactInfoBufferObject.addData(artifactInfoMat);
+                    featureExtractionStruct.rejectSequenceFlag=0;
+                    if rejectSequence
+                        if eyeBlinkFlag==1 || (nnz(artifactInfoMat)/numel(artifactInfoMat))>=artifactFilteringParams.contaminatedSamplesPercentage
+                            featureExtractionStruct.rejectSequenceFlag=1;
+                            featureExtractionStruct.rejectSequenceInfo=[featureExtractionStruct.rejectSequenceInfo 1];
+                        else
+                            featureExtractionStruct.rejectSequenceInfo=[featureExtractionStruct.rejectSequenceInfo 0];
+                        end
+                    end
+
+                end
+            end
+        else % means if sessionID=2,3,4
+            triggerMatSequenceOns=find(triggerMat==triggerPartitionerStruct.fixationID);
+            triggerMatSeqEnds=find(triggerMat==triggerPartitionerStruct.sequenceEndID);
+            trialOns= find(0<triggerMat & triggerMat<=triggerPartitionerStruct.sequenceEndID-1);
+            if ~isempty(triggerMatSeqEnds)
+                conventionalTriggerMatSeqEnds=trialOns(find(trialOns<triggerMatSeqEnds(end),1,'last'))+triggerPartitionerStruct.windowLengthinSamples;
+                if conventionalTriggerMatSeqEnds<=length(triggerMat)
+                    triggerMatSeqEnds=conventionalTriggerMatSeqEnds;
+                else
+                    triggerMatSeqEnds=[];
+                end
+            end
+
+            if dataBufferObject.filledStatus
+                if length(triggerMatSequenceOns)<1
+                    cleanDataBufferObject.addData(dataBufferObject.getOrderedData(lastProcessedSampleTimeIndex+1,dataBufferObject.lastSampleTimeIndex));
+                    artifactInfoBufferObject.addData(zeros(dataBufferObject.lastSampleTimeIndex-lastProcessedSampleTimeIndex,numberOfChannels));
+                    lastProcessedSampleTimeIndex=triggerBufferObject.lastSampleTimeIndex;
+
+                elseif (length(triggerMatSequenceOns)==1 && isempty(triggerMatSeqEnds))
+                    if triggerMatSequenceOns~=1
+                        cleanDataBufferObject.addData(dataBufferObject.getOrderedData(lastProcessedSampleTimeIndex+1,lastProcessedSampleTimeIndex+triggerMatSequenceOns-1));
+                        artifactInfoBufferObject.addData(zeros(triggerMatSequenceOns-1,numberOfChannels));
+                    end
+                    lastProcessedSampleTimeIndex=lastProcessedSampleTimeIndex+triggerMatSequenceOns-1;
+
+                elseif length(triggerMatSequenceOns)>=1 && length(triggerMatSeqEnds)<=length(triggerMatSequenceOns)
+                    if triggerMatSequenceOns(1)~=1
+                        cleanDataBufferObject.addData(dataBufferObject.getOrderedData(lastProcessedSampleTimeIndex+1,lastProcessedSampleTimeIndex+triggerMatSequenceOns(1)-1));
+                        artifactInfoBufferObject.addData(zeros(triggerMatSequenceOns(1)-1,numberOfChannels));
+                    end
+                    seqOnTime = lastProcessedSampleTimeIndex+triggerMatSequenceOns(1);
+                    lastProcessedSampleTimeIndex = lastProcessedSampleTimeIndex+triggerMatSeqEnds(end);
+
+                    dataMat   = dataBufferObject.getOrderedData(seqOnTime,lastProcessedSampleTimeIndex);
+                    triggerMat =diff(triggerBufferObject.getOrderedData(seqOnTime-1,lastProcessedSampleTimeIndex));
+                    seqOnNdx=find(triggerMat==triggerPartitionerStruct.fixationID);
+
+                    nonZeroTriggerValues=find((triggerMat)~=0);
+                    [m,ndx]=ismember(seqOnNdx,nonZeroTriggerValues);
+                    ndx=ndx+1;
+                    triggerNdx1=nonZeroTriggerValues(ndx);
+                    triggerNdx2 = find(0<triggerMat & triggerMat<=triggerPartitionerStruct.sequenceEndID-1);
+                    triggerNdx=sort([triggerNdx1;triggerNdx2]);
+
+                    artifactRemovalDataInput.electrodes=amplifierStruct.channelNames;
+                    artifactRemovalDataInput.data=dataMat;
+
+                    [cleanEEG,artifactInfoMat,eyeBlinkFlag] = artifactRemoval(artifactRemovalDataInput,fs,triggerNdx,artifactFilteringParams,numberOfChannels,remoteGUI);
+
+
+                    cleanDataBufferObject.addData(cleanEEG);
+                    artifactInfoBufferObject.addData(artifactInfoMat);
+                    featureExtractionStruct.rejectSequenceFlag=0;
+                    if rejectSequence
+                        if eyeBlinkFlag==1 || (nnz(artifactInfoMat)/numel(artifactInfoMat))>=artifactFilteringParams.contaminatedSamplesPercentage
+                            featureExtractionStruct.rejectSequenceFlag=1;
+                            featureExtractionStruct.rejectSequenceInfo=[featureExtractionStruct.rejectSequenceInfo 1];
+
+                        else
+                            featureExtractionStruct.rejectSequenceInfo=[featureExtractionStruct.rejectSequenceInfo 0];
+                        end
+                    end
+                end
+            else
+                if length(triggerMatSequenceOns)<1
+                    cleanDataBufferObject.addData(dataBufferObject.getOrderedData(lastProcessedSampleTimeIndex+1,dataBufferObject.lastSampleTimeIndex));
+                    artifactInfoBufferObject.addData(zeros(dataBufferObject.lastSampleTimeIndex-lastProcessedSampleTimeIndex,numberOfChannels));
+                    lastProcessedSampleTimeIndex=triggerBufferObject.lastSampleTimeIndex;
+
+                elseif (length(triggerMatSequenceOns)==1 && isempty(triggerMatSeqEnds))
+                    triggerMatSequenceOns1=find([0; diff(triggerBufferObject.getOrderedData(1,dataBufferObject.lastSampleTimeIndex))]==triggerPartitionerStruct.fixationID);
+                    if (triggerMatSequenceOns1(end)-1)~=lastProcessedSampleTimeIndex
+                        cleanDataBufferObject.addData(dataBufferObject.getOrderedData(lastProcessedSampleTimeIndex+1,triggerMatSequenceOns1(end)-1));
+                        artifactInfoBufferObject.addData(zeros((triggerMatSequenceOns1(end)-1)-lastProcessedSampleTimeIndex,numberOfChannels));
+                    end
+                    lastProcessedSampleTimeIndex=triggerMatSequenceOns1(end)-1;
+
+                elseif length(triggerMatSequenceOns)>=1 && length(triggerMatSeqEnds)<=length(triggerMatSequenceOns)
+                    triggerMat1=[0; diff(triggerBufferObject.getOrderedData(1,dataBufferObject.lastSampleTimeIndex))];
+                    triggerMatSequenceOns1=find(triggerMat1==triggerPartitionerStruct.fixationID);
+                    seqOnTime =triggerMatSequenceOns1(triggerMatSequenceOns1>=lastProcessedSampleTimeIndex,1);
+                    triggerMatSeqEnds1=find(triggerMat1==triggerPartitionerStruct.sequenceEndID);                
+                    trialOns1 = find(0<triggerMat1 & triggerMat1<=triggerPartitionerStruct.sequenceEndID-1);                
+
+                    conventionalTriggerMatSeqEnds1=trialOns1(find(trialOns1<triggerMatSeqEnds1(end),1,'last'))+triggerPartitionerStruct.windowLengthinSamples;
+                    triggerMatSeqEnds1=conventionalTriggerMatSeqEnds1;               
+                    if (seqOnTime-1)~=lastProcessedSampleTimeIndex
+                        cleanDataBufferObject.addData(dataBufferObject.getOrderedData(lastProcessedSampleTimeIndex+1,seqOnTime-1));
+                        artifactInfoBufferObject.addData(zeros((seqOnTime-1)-lastProcessedSampleTimeIndex,numberOfChannels));
+                    end
+                    lastProcessedSampleTimeIndex = triggerMatSeqEnds1(end);
+                    dataMat   = dataBufferObject.getOrderedData(seqOnTime,lastProcessedSampleTimeIndex);
+                    triggerMat =diff(triggerBufferObject.getOrderedData(seqOnTime-1,lastProcessedSampleTimeIndex));
+                    seqOnNdx=find(triggerMat==triggerPartitionerStruct.fixationID);
+
+                    nonZeroTriggerValues=find((triggerMat)~=0);
+                    [m,ndx]=ismember(seqOnNdx,nonZeroTriggerValues);
+                    ndx=ndx+1;
+                    triggerNdx1=nonZeroTriggerValues(ndx);
+                    triggerNdx2 = find(0<triggerMat & triggerMat<=triggerPartitionerStruct.sequenceEndID-1);
+                    seqEndNdx=find(triggerMat==triggerPartitionerStruct.sequenceEndID);
+                    triggerNdx=sort([triggerNdx1;triggerNdx2]);
+
+                    artifactRemovalDataInput.electrodes=amplifierStruct.channelNames;
+                    artifactRemovalDataInput.data=dataMat;
+
+                    [cleanEEG,artifactInfoMat,eyeBlinkFlag] = artifactRemoval(artifactRemovalDataInput,fs,triggerNdx,artifactFilteringParams,numberOfChannels,remoteGUI);
+
+                    cleanDataBufferObject.addData(cleanEEG);
+                    artifactInfoBufferObject.addData(artifactInfoMat);
+                    featureExtractionStruct.rejectSequenceFlag=0;
+                    if rejectSequence
+                        if eyeBlinkFlag==1 || (nnz(artifactInfoMat)/numel(artifactInfoMat))>=artifactFilteringParams.contaminatedSamplesPercentage
+                            featureExtractionStruct.rejectSequenceFlag=1;
+                            featureExtractionStruct.rejectSequenceInfo=[featureExtractionStruct.rejectSequenceInfo 1];
+                        else
+                            featureExtractionStruct.rejectSequenceInfo=[featureExtractionStruct.rejectSequenceInfo 0];
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+##### SOURCE END #####
+--></body></html>

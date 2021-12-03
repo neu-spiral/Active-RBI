@@ -1,0 +1,689 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>decisionMaker_old</title><meta name="generator" content="MATLAB 7.14"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2013-06-13"><meta name="DC.source" content="decisionMaker_old.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+
+  </style></head><body><div class="content"><pre class="codeinput"><span class="keyword">function</span> [decision,quitFlag]=decisionMaker(results,decisionMakerStruct)
+
+quitFlag=false;
+
+<span class="comment">%</span>
+<span class="comment">%Mastery Task</span>
+masteryTaskLevelUpFlag=0;
+<span class="comment">%</span>
+
+
+<span class="keyword">if</span>(results.decideNextFlag) <span class="comment">% This will stay here%</span>
+            decisionMakerStruct.sequenceCounter.data=decisionMakerStruct.sequenceCounter.data+1; <span class="comment">% Global sequence counter: Increase Task sequence counter.  OK</span>
+<span class="comment">% taskObject.currentInfo.globalSequenceCounter=taskObject.currentInfo.globalSequenceCounter+1;</span>
+<span class="comment">% taskObject.decisionObj.currentInfo.localSequenceCounter=taskObject.decisionObj.currentInfo.localSequenceCounter+1;</span>
+<span class="comment">% Moved these to RKClass and DecisionClass</span>
+    <span class="keyword">if</span>(decisionMakerStruct.sessionID~=1) <span class="comment">% Remove this condition</span>
+
+        canMakeDecision=1; <span class="comment">% This will stay here</span>
+
+
+        <span class="keyword">while</span>(canMakeDecision) <span class="comment">% This will stay here</span>
+
+            <span class="comment">%</span>
+            <span class="comment">%Moved to addTrials function of the DecisionClass  OK</span>
+            <span class="keyword">if</span>(results.completedSequenceCount&gt;0)
+            <span class="keyword">for</span>(trialIndex=1:length(results.trialLabels))
+
+                pT=decisionMakerStruct.scoreStruct.conditionalpdf4targetKDE.probs(results.scores(trialIndex));
+                pN=decisionMakerStruct.scoreStruct.conditionalpdf4nontargetKDE.probs(results.scores(trialIndex));
+
+                <span class="keyword">if</span>(results.trialLabels(trialIndex)&lt;=length(decisionMakerStruct.trialIDs))
+                decisionMakerStruct.epochRepetitionCounts.data(results.trialLabels(trialIndex))=decisionMakerStruct.epochRepetitionCounts.data(results.trialLabels(trialIndex))+1;
+
+                <span class="keyword">if</span>(decisionMakerStruct.scoreStruct.probThresholdTarget &lt; pT || decisionMakerStruct.scoreStruct.probThresholdNontarget &lt; pN)
+
+                    decisionMakerStruct.trialLogCondpdf4Target(results.trialLabels(trialIndex)).insertEnd(log(pT));
+                    decisionMakerStruct.trialLogCondpdf4Nontarget(results.trialLabels(trialIndex)).insertEnd(log(pN));
+                <span class="keyword">end</span>
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+            <span class="keyword">end</span>
+            <span class="comment">%</span>
+
+
+            <span class="comment">%</span>
+            <span class="comment">%Moved to computePosteriorProbs of the DecisionClass   OK</span>
+            logP=zeros(length(decisionMakerStruct.trialIDs),1);
+
+            <span class="keyword">for</span>(symbolIndex=1:length(decisionMakerStruct.trialIDs))
+                logP(symbolIndex)=sum(cell2mat(decisionMakerStruct.trialLogCondpdf4Target(symbolIndex).toCell)-cell2mat(decisionMakerStruct.trialLogCondpdf4Nontarget(symbolIndex).toCell))+<span class="keyword">...</span>
+                    log(decisionMakerStruct.LMprobs.data(symbolIndex))-log(1-decisionMakerStruct.LMprobs.data(symbolIndex));
+            <span class="keyword">end</span>
+            logP(logP==Inf)=log(realmax(<span class="string">'double'</span>));
+            posteriorProbs=exp(logP-max(logP));
+            posteriorProbs=posteriorProbs/sum(posteriorProbs);
+            <span class="comment">%</span>
+
+            <span class="comment">%</span>
+            <span class="comment">% Moved this to DecisonClass</span>
+            decisionMakerStruct.TypingControl.currentEpochNumberofSeqs.data=decisionMakerStruct.TypingControl.currentEpochNumberofSeqs.data+results.completedSequenceCount; <span class="comment">% Local sequence counter: Increase DecisionClass' sequence counter.</span>
+             <span class="comment">%</span>
+             results.completedSequenceCount=0; <span class="comment">% This will stay here</span>
+
+
+            decision.decided=[]; <span class="comment">% This will stay here,</span>
+
+            <span class="comment">%</span>
+            <span class="comment">%Moved to DecisionClass</span>
+            epochEndedFlag=checkEpochEnd(posteriorProbs,decisionMakerStruct.TypingControl);
+            <span class="keyword">if</span>(epochEndedFlag)
+                epochInfo.repetitionCounts=decisionMakerStruct.epochRepetitionCounts.data;
+                decisionMakerStruct.epochRepetitionCounts.data=zeros(size(decisionMakerStruct.epochRepetitionCounts.data));
+
+                tempDecision.posteriorProbs=posteriorProbs;
+                [~, tempDecision.decided]=max(posteriorProbs);
+                <span class="keyword">for</span>(symbolIndex=1:length(decisionMakerStruct.trialLogCondpdf4Target))
+                    decisionMakerStruct.trialLogCondpdf4Target(symbolIndex).empty;
+                    decisionMakerStruct.trialLogCondpdf4Nontarget(symbolIndex).empty;
+                <span class="keyword">end</span>
+                decisionMakerStruct.languageModelWrapper.update(tempDecision);
+                decisionMakerStruct.LMprobs.data=decisionMakerStruct.languageModelWrapper.getProbs;
+                decisionMakerStruct.TypingControl.currentEpochNumberofSeqs.data=0;
+
+                decision.decided=tempDecision.decided;
+
+                epochInfo.decision=decision.decided;
+
+                decisionMakerStruct.epochList.insertEnd(epochInfo);
+                <span class="comment">%decision.text=decisionMakerStruct.languageModelWrapper.getText;</span>
+            <span class="keyword">end</span>
+            <span class="comment">%</span>
+
+            <span class="comment">%</span>
+            <span class="comment">%RSVPKeyboardTask</span>
+            decisionMakerStruct.typingDuration.data=decisionMakerStruct.typingDuration.data + results.duration;
+            <span class="comment">%</span>
+
+            <span class="keyword">switch</span> decisionMakerStruct.sessionID
+                <span class="keyword">case</span> 2 <span class="comment">%SPELL</span>
+                    <span class="comment">%</span>
+                    <span class="comment">%Reformat Feedback text to send to presentation</span>
+                    decision.feedback{1}.Type=<span class="string">'neutral'</span>;
+                    decision.feedback{1}.Text=decisionMakerStruct.languageModelWrapper.getText;
+                    <span class="comment">%</span>
+
+
+                <span class="keyword">case</span> {3,4} <span class="comment">%COPYPHRASE</span>
+                    <span class="comment">%</span>
+                    <span class="comment">%Reformat Feedback text to send to presentation  OK for</span>
+                    <span class="comment">%Copyphrase</span>
+                    nextFeedbackIndex=1;
+                    decision.feedback={};
+                    <span class="keyword">if</span>(~isempty(decisionMakerStruct.copyphrase.sentenceNodeHandle.data.Data.preTarget))
+
+
+                    decision.feedback{nextFeedbackIndex}.Type=<span class="string">'neutral'</span>;
+                    decision.feedback{nextFeedbackIndex}.Text=decisionMakerStruct.copyphrase.sentenceNodeHandle.data.Data.preTarget;
+                    nextFeedbackIndex=nextFeedbackIndex+1;
+
+                    <span class="keyword">end</span>
+
+                    decision.feedback{nextFeedbackIndex}.Type=<span class="string">'positive'</span>;
+                    decision.feedback{nextFeedbackIndex}.Text=decisionMakerStruct.copyphrase.sentenceNodeHandle.data.Data.target;
+                                        nextFeedbackIndex=nextFeedbackIndex+1;
+
+
+                    <span class="keyword">if</span>(~isempty(decisionMakerStruct.copyphrase.sentenceNodeHandle.data.Data.postTarget))
+                    decision.feedback{nextFeedbackIndex}.Type=<span class="string">'neutral'</span>;
+                    decision.feedback{nextFeedbackIndex}.Text=[decisionMakerStruct.copyphrase.sentenceNodeHandle.data.Data.postTarget];
+                                        nextFeedbackIndex=nextFeedbackIndex+1;
+
+                    <span class="keyword">end</span>
+
+                    decision.feedback{nextFeedbackIndex}.Type=<span class="string">'neutral'</span>;
+                    decision.feedback{nextFeedbackIndex}.Text=[<span class="string">'\n'</span> decisionMakerStruct.copyphrase.sentenceNodeHandle.data.Data.preTarget];
+                    nextFeedbackIndex=nextFeedbackIndex+1;
+                    <span class="comment">%</span>
+
+                    <span class="comment">%</span>
+                    <span class="comment">%For each phrase in copyphrase &amp; masteryTask update</span>
+                    <span class="comment">%sequence counter OK for copyphrase</span>
+                    decisionMakerStruct.copyphrase.currentPhraseSequenceCount.data=decisionMakerStruct.copyphrase.currentPhraseSequenceCount.data+results.completedSequenceCount;
+                    <span class="comment">%</span>
+
+                    <span class="comment">%</span>
+                    <span class="comment">%Get current text typed OK for copyphrase</span>
+                    decisionMakerStruct.copyphrase.typedText=decisionMakerStruct.languageModelWrapper.getText;
+                    <span class="comment">%</span>
+
+                    <span class="comment">%</span>
+                    <span class="comment">%Check the correctness of the typed text  OK for</span>
+                    <span class="comment">%copyphrase</span>
+                    [decisionMakerStruct.copyphrase.phraseCompletedFlag,correctSection,incorrectSection]=checkTypingCorrectness(decisionMakerStruct.copyphrase.sentenceNodeHandle.data.Data.target,decisionMakerStruct.languageModelWrapper.getText);
+                    <span class="comment">%</span>
+
+                    <span class="comment">%</span>
+                    <span class="comment">%Mark correct section of the typed text as green OK for</span>
+                    <span class="comment">%copyphrase</span>
+                    <span class="keyword">if</span>(~isempty(correctSection))
+                        decision.feedback{nextFeedbackIndex}.Type=<span class="string">'positive'</span>;
+                        decision.feedback{nextFeedbackIndex}.Text=correctSection;
+                        nextFeedbackIndex=nextFeedbackIndex+1;
+                    <span class="keyword">end</span>
+                    <span class="comment">%</span>
+
+                    <span class="comment">%</span>
+                    <span class="comment">%Mark incorrect section of the typed text as red OK for</span>
+                    <span class="comment">%copyphrase</span>
+                    <span class="keyword">if</span>(~isempty(incorrectSection))
+                        decision.feedback{nextFeedbackIndex}.Type=<span class="string">'negative'</span>;
+                        decision.feedback{nextFeedbackIndex}.Text=incorrectSection;
+                    <span class="keyword">end</span>
+                    <span class="comment">%</span>
+
+                    <span class="comment">%</span>
+                    <span class="comment">%Check if the phrase is finished OK for copyphrase</span>
+                    decisionMakerStruct.copyphrase.phraseTime=decisionMakerStruct.typingDuration.data;  <span class="comment">%Will be unnecessary in the new RSVPKeyboardTask structure</span>
+                    phraseEndedFlag=checkPhraseEnd(decisionMakerStruct.copyphrase);
+                    <span class="comment">%</span>
+
+
+                    <span class="keyword">if</span>(phraseEndedFlag &amp;&amp; epochEndedFlag)
+                        decisionMakerStruct.copyphrase.sentenceNodeHandle.data.Data.epochs = cell2mat(decisionMakerStruct.epochList.toCell); <span class="comment">%OK for copyphrase</span>
+                        decisionMakerStruct.copyphrase.sentenceNodeHandle.data.Data.typedText=decisionMakerStruct.copyphrase.typedText;   <span class="comment">%OK for copyphrase</span>
+                        decisionMakerStruct.copyphrase.sentenceNodeHandle.data.Data.phraseTime=decisionMakerStruct.typingDuration.data;   <span class="comment">%OK for copyphrase</span>
+
+                        <span class="keyword">if</span>(decisionMakerStruct.sessionID==3)
+                        decisionMakerStruct.copyphrase.sentenceNodeHandle.data=decisionMakerStruct.copyphrase.sentenceNodeHandle.data.Next; <span class="comment">%OK</span>
+                        <span class="keyword">else</span>
+                            pastMasteryTaskLevelIndex=decisionMakerStruct.masteryTask.currentLevelIndex.data;
+                            quitFlag=updateMasteryTaskSentenceInformation(decisionMakerStruct.masteryTask,decisionMakerStruct.copyphrase.phraseCompletedFlag);
+                            masteryTaskLevelUpFlag=(decisionMakerStruct.masteryTask.currentLevelIndex.data&gt;pastMasteryTaskLevelIndex);
+
+                            <span class="keyword">if</span>(~quitFlag)
+                                <span class="keyword">try</span>
+                                decisionMakerStruct.copyphrase.phraseList.insertEnd(decisionMakerStruct.masteryTask.levels{decisionMakerStruct.masteryTask.currentLevelIndex.data}{decisionMakerStruct.masteryTask.currentSetIndex.data}{decisionMakerStruct.masteryTask.currentSentenceIndex.data});
+                                <span class="keyword">catch</span> ME
+                                    3;
+                                <span class="keyword">end</span>
+                                decisionMakerStruct.copyphrase.sentenceNodeHandle.data=decisionMakerStruct.copyphrase.sentenceNodeHandle.data.Next;
+                            <span class="keyword">end</span>
+                        <span class="keyword">end</span>
+
+                        <span class="keyword">if</span>(isempty(decisionMakerStruct.copyphrase.sentenceNodeHandle.data))  <span class="comment">%OK for copyphrase</span>
+                            quitFlag=true;
+                        <span class="keyword">else</span>
+
+
+
+                        decisionMakerStruct.languageModelWrapper.initializeState(decisionMakerStruct.copyphrase.sentenceNodeHandle.data.Data.preTarget); <span class="comment">%OK for copyphrase</span>
+
+                        decisionMakerStruct.copyphrase.currentPhraseSequenceCount.data=0; <span class="comment">%OK for copyphrase</span>
+                        <span class="comment">%</span>
+
+                        decisionMakerStruct.typingDuration.data=0;  <span class="comment">%OK for copyphrase</span>
+                        decisionMakerStruct.copyphrase.AvgMaximumNumberofSequencesperChar=decisionMakerStruct.copyphrase.StoppingCriteria.SequenceLimitScale*decisionMakerStruct.TypingControl.MaximumNumberofSequences;  <span class="comment">%Bullshit</span>
+                        decisionMakerStruct.LMprobs.data=decisionMakerStruct.languageModelWrapper.getProbs;  <span class="comment">% OK done in decisionClass</span>
+                        <span class="keyword">end</span>
+                    <span class="keyword">end</span>
+                        results.completedSequenceCount=0; <span class="comment">%Leave it in the while loop</span>
+
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span>(isfield(decision,<span class="string">'decided'</span>) &amp;&amp; ~isempty(decision.decided))
+                sendDecisionPacket(decision);
+                <span class="comment">%----------------------</span>
+                <span class="keyword">if</span> masteryTaskLevelUpFlag
+                  decision.decided=31;
+                  sendDecisionPacket(decision);
+                <span class="keyword">end</span>
+                <span class="comment">%-----------------------</span>
+
+            <span class="keyword">end</span>
+
+            <span class="comment">%</span>
+            <span class="comment">%Leave it in the while loop</span>
+            <span class="keyword">if</span>(quitFlag) <span class="comment">% quitFlag = taskEndedFlag</span>
+               canMakeDecision=false;
+            <span class="keyword">else</span>
+               canMakeDecision= epochEndedFlag;
+            <span class="keyword">end</span>
+            <span class="comment">%</span>
+
+        <span class="keyword">end</span>
+
+
+        <span class="comment">%         unsentDecisions=cell2mat(unsentDecisionList.toCell);</span>
+        <span class="comment">%         if(~isempty(unsentDecisions))</span>
+        <span class="comment">%         decision.decided=unsentDecisions;</span>
+        <span class="comment">%         end</span>
+        <span class="comment">%         decision=[];</span>
+        <span class="comment">%         switch decisionMakerStruct.sessionID</span>
+        <span class="comment">%             case 2 %SPELL</span>
+        <span class="comment">%                 decision.feedback{1}.Type='neutral';</span>
+        <span class="comment">%                 decision.feedback{1}.Text=decisionMakerStruct.languageModelWrapper.getText;</span>
+        <span class="comment">%             case 3 %</span>
+        <span class="comment">%                 decision.feedback{1}.Type='neutral';</span>
+        <span class="comment">%                 decision.feedback{1}.Text=decisionMakerStruct.copyphrase.sentenceNodeHandle.data.Data.preTarget;</span>
+        <span class="comment">%                 decision.feedback{2}.Type='positive';</span>
+        <span class="comment">%                 decision.feedback{2}.Text=decisionMakerStruct.copyphrase.sentenceNodeHandle.data.Data.target;</span>
+        <span class="comment">%                 decision.feedback{3}.Type='neutral';</span>
+        <span class="comment">%                 decision.feedback{3}.Text=[decisionMakerStruct.copyphrase.sentenceNodeHandle.data.Data.postTarget];</span>
+        <span class="comment">%</span>
+        <span class="comment">%                 decision.feedback{4}.Type='neutral';</span>
+        <span class="comment">%                 decision.feedback{4}.Text=['\n' decision.feedback{1}.Text];</span>
+        <span class="comment">%         end</span>
+
+    <span class="keyword">else</span>
+        decision=[];
+        decision.feedback{1}.Text=[num2str(decisionMakerStruct.sequenceCounter.data) <span class="string">'/'</span> num2str(decisionMakerStruct.Calibration.NumberofSequences)];
+        decision.feedback{1}.Type=<span class="string">'neutral'</span>;
+    <span class="keyword">end</span>
+
+    decision.decided=[];
+
+    decision.nextSequence=decideNextTrials(decisionMakerStruct);
+    <span class="keyword">if</span>(~quitFlag)
+    sendDecisionPacket(decision);
+    <span class="keyword">end</span>
+
+
+
+
+<span class="keyword">else</span>
+    decision=[];
+<span class="keyword">end</span>
+
+
+<span class="comment">% if(~isempty(decision))</span>
+<span class="comment">% finalDecision2send=decision;</span>
+<span class="comment">% if(isfield(decision,'decided'))</span>
+<span class="comment">%         for(decisionIndex=1:length(decision.decided))</span>
+<span class="comment">%             tempDecision=[];</span>
+<span class="comment">%             tempDecision.decided=decision.decided(decisionIndex);</span>
+<span class="comment">%             sendDecisionPacket(tempDecision);</span>
+<span class="comment">%         end</span>
+<span class="comment">%         rmfield(finalDecision2send,'decided');</span>
+<span class="comment">% end</span>
+<span class="comment">%     sendDecisionPacket(finalDecision2send);</span>
+<span class="comment">% end</span>
+<span class="comment">%else</span>
+<span class="comment">%    decision=[];</span>
+<span class="comment">%end</span>
+
+<span class="comment">% if(isempty(results))</span>
+<span class="comment">%     decision=[];</span>
+<span class="comment">% else</span>
+<span class="comment">% decision.nextSequence=decideNextTrials(decisionMakerStruct);</span>
+<span class="comment">% sendDecisionPacket(decision);</span>
+<span class="comment">% end</span>
+<span class="comment">% decision.</span>
+
+<span class="comment">%logDecisions(decision)</span>
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.14<br></p></div><!--
+##### SOURCE BEGIN #####
+function [decision,quitFlag]=decisionMaker(results,decisionMakerStruct)
+
+quitFlag=false;
+
+%
+%Mastery Task
+masteryTaskLevelUpFlag=0;
+%
+
+
+if(results.decideNextFlag) % This will stay here% 
+            decisionMakerStruct.sequenceCounter.data=decisionMakerStruct.sequenceCounter.data+1; % Global sequence counter: Increase Task sequence counter.  OK
+% taskObject.currentInfo.globalSequenceCounter=taskObject.currentInfo.globalSequenceCounter+1;
+% taskObject.decisionObj.currentInfo.localSequenceCounter=taskObject.decisionObj.currentInfo.localSequenceCounter+1;
+% Moved these to RKClass and DecisionClass
+    if(decisionMakerStruct.sessionID~=1) % Remove this condition
+        
+        canMakeDecision=1; % This will stay here
+        
+      
+        while(canMakeDecision) % This will stay here
+            
+            %
+            %Moved to addTrials function of the DecisionClass  OK
+            if(results.completedSequenceCount>0)   
+            for(trialIndex=1:length(results.trialLabels))
+                
+                pT=decisionMakerStruct.scoreStruct.conditionalpdf4targetKDE.probs(results.scores(trialIndex));
+                pN=decisionMakerStruct.scoreStruct.conditionalpdf4nontargetKDE.probs(results.scores(trialIndex));
+                
+                if(results.trialLabels(trialIndex)<=length(decisionMakerStruct.trialIDs))
+                decisionMakerStruct.epochRepetitionCounts.data(results.trialLabels(trialIndex))=decisionMakerStruct.epochRepetitionCounts.data(results.trialLabels(trialIndex))+1;
+                
+                if(decisionMakerStruct.scoreStruct.probThresholdTarget < pT || decisionMakerStruct.scoreStruct.probThresholdNontarget < pN)
+                    
+                    decisionMakerStruct.trialLogCondpdf4Target(results.trialLabels(trialIndex)).insertEnd(log(pT));
+                    decisionMakerStruct.trialLogCondpdf4Nontarget(results.trialLabels(trialIndex)).insertEnd(log(pN));
+                end
+                end
+            end
+            end
+            %
+            
+            
+            %
+            %Moved to computePosteriorProbs of the DecisionClass   OK
+            logP=zeros(length(decisionMakerStruct.trialIDs),1);
+            
+            for(symbolIndex=1:length(decisionMakerStruct.trialIDs))
+                logP(symbolIndex)=sum(cell2mat(decisionMakerStruct.trialLogCondpdf4Target(symbolIndex).toCell)-cell2mat(decisionMakerStruct.trialLogCondpdf4Nontarget(symbolIndex).toCell))+...
+                    log(decisionMakerStruct.LMprobs.data(symbolIndex))-log(1-decisionMakerStruct.LMprobs.data(symbolIndex));
+            end
+            logP(logP==Inf)=log(realmax('double'));
+            posteriorProbs=exp(logP-max(logP));
+            posteriorProbs=posteriorProbs/sum(posteriorProbs);
+            %
+            
+            %
+            % Moved this to DecisonClass
+            decisionMakerStruct.TypingControl.currentEpochNumberofSeqs.data=decisionMakerStruct.TypingControl.currentEpochNumberofSeqs.data+results.completedSequenceCount; % Local sequence counter: Increase DecisionClass' sequence counter.
+             %           
+             results.completedSequenceCount=0; % This will stay here
+
+            
+            decision.decided=[]; % This will stay here, 
+            
+            %
+            %Moved to DecisionClass
+            epochEndedFlag=checkEpochEnd(posteriorProbs,decisionMakerStruct.TypingControl);
+            if(epochEndedFlag)
+                epochInfo.repetitionCounts=decisionMakerStruct.epochRepetitionCounts.data;
+                decisionMakerStruct.epochRepetitionCounts.data=zeros(size(decisionMakerStruct.epochRepetitionCounts.data));
+                
+                tempDecision.posteriorProbs=posteriorProbs;
+                [~, tempDecision.decided]=max(posteriorProbs);
+                for(symbolIndex=1:length(decisionMakerStruct.trialLogCondpdf4Target))
+                    decisionMakerStruct.trialLogCondpdf4Target(symbolIndex).empty;
+                    decisionMakerStruct.trialLogCondpdf4Nontarget(symbolIndex).empty;
+                end
+                decisionMakerStruct.languageModelWrapper.update(tempDecision);
+                decisionMakerStruct.LMprobs.data=decisionMakerStruct.languageModelWrapper.getProbs;
+                decisionMakerStruct.TypingControl.currentEpochNumberofSeqs.data=0;
+                
+                decision.decided=tempDecision.decided;
+                
+                epochInfo.decision=decision.decided;
+                
+                decisionMakerStruct.epochList.insertEnd(epochInfo);
+                %decision.text=decisionMakerStruct.languageModelWrapper.getText;
+            end
+            %
+            
+            %
+            %RSVPKeyboardTask
+            decisionMakerStruct.typingDuration.data=decisionMakerStruct.typingDuration.data + results.duration; 
+            %
+            
+            switch decisionMakerStruct.sessionID
+                case 2 %SPELL
+                    %
+                    %Reformat Feedback text to send to presentation
+                    decision.feedback{1}.Type='neutral';
+                    decision.feedback{1}.Text=decisionMakerStruct.languageModelWrapper.getText;
+                    %
+
+                    
+                case {3,4} %COPYPHRASE
+                    %
+                    %Reformat Feedback text to send to presentation  OK for
+                    %Copyphrase
+                    nextFeedbackIndex=1;
+                    decision.feedback={};
+                    if(~isempty(decisionMakerStruct.copyphrase.sentenceNodeHandle.data.Data.preTarget))
+
+
+                    decision.feedback{nextFeedbackIndex}.Type='neutral';
+                    decision.feedback{nextFeedbackIndex}.Text=decisionMakerStruct.copyphrase.sentenceNodeHandle.data.Data.preTarget;
+                    nextFeedbackIndex=nextFeedbackIndex+1;
+                    
+                    end
+                    
+                    decision.feedback{nextFeedbackIndex}.Type='positive';
+                    decision.feedback{nextFeedbackIndex}.Text=decisionMakerStruct.copyphrase.sentenceNodeHandle.data.Data.target;
+                                        nextFeedbackIndex=nextFeedbackIndex+1;
+
+                    
+                    if(~isempty(decisionMakerStruct.copyphrase.sentenceNodeHandle.data.Data.postTarget))
+                    decision.feedback{nextFeedbackIndex}.Type='neutral';
+                    decision.feedback{nextFeedbackIndex}.Text=[decisionMakerStruct.copyphrase.sentenceNodeHandle.data.Data.postTarget];
+                                        nextFeedbackIndex=nextFeedbackIndex+1;
+
+                    end
+                    
+                    decision.feedback{nextFeedbackIndex}.Type='neutral';
+                    decision.feedback{nextFeedbackIndex}.Text=['\n' decisionMakerStruct.copyphrase.sentenceNodeHandle.data.Data.preTarget];
+                    nextFeedbackIndex=nextFeedbackIndex+1;
+                    %
+                    
+                    %
+                    %For each phrase in copyphrase & masteryTask update
+                    %sequence counter OK for copyphrase
+                    decisionMakerStruct.copyphrase.currentPhraseSequenceCount.data=decisionMakerStruct.copyphrase.currentPhraseSequenceCount.data+results.completedSequenceCount;
+                    %
+                    
+                    %
+                    %Get current text typed OK for copyphrase
+                    decisionMakerStruct.copyphrase.typedText=decisionMakerStruct.languageModelWrapper.getText;
+                    %
+                    
+                    %
+                    %Check the correctness of the typed text  OK for
+                    %copyphrase
+                    [decisionMakerStruct.copyphrase.phraseCompletedFlag,correctSection,incorrectSection]=checkTypingCorrectness(decisionMakerStruct.copyphrase.sentenceNodeHandle.data.Data.target,decisionMakerStruct.languageModelWrapper.getText);
+                    %
+                    
+                    %
+                    %Mark correct section of the typed text as green OK for
+                    %copyphrase
+                    if(~isempty(correctSection))
+                        decision.feedback{nextFeedbackIndex}.Type='positive';
+                        decision.feedback{nextFeedbackIndex}.Text=correctSection;
+                        nextFeedbackIndex=nextFeedbackIndex+1;
+                    end
+                    %
+                    
+                    %
+                    %Mark incorrect section of the typed text as red OK for
+                    %copyphrase
+                    if(~isempty(incorrectSection))
+                        decision.feedback{nextFeedbackIndex}.Type='negative';
+                        decision.feedback{nextFeedbackIndex}.Text=incorrectSection;
+                    end
+                    %
+                    
+                    %
+                    %Check if the phrase is finished OK for copyphrase
+                    decisionMakerStruct.copyphrase.phraseTime=decisionMakerStruct.typingDuration.data;  %Will be unnecessary in the new RSVPKeyboardTask structure
+                    phraseEndedFlag=checkPhraseEnd(decisionMakerStruct.copyphrase);
+                    %
+                    
+                    
+                    if(phraseEndedFlag && epochEndedFlag)
+                        decisionMakerStruct.copyphrase.sentenceNodeHandle.data.Data.epochs = cell2mat(decisionMakerStruct.epochList.toCell); %OK for copyphrase
+                        decisionMakerStruct.copyphrase.sentenceNodeHandle.data.Data.typedText=decisionMakerStruct.copyphrase.typedText;   %OK for copyphrase
+                        decisionMakerStruct.copyphrase.sentenceNodeHandle.data.Data.phraseTime=decisionMakerStruct.typingDuration.data;   %OK for copyphrase
+                        
+                        if(decisionMakerStruct.sessionID==3)
+                        decisionMakerStruct.copyphrase.sentenceNodeHandle.data=decisionMakerStruct.copyphrase.sentenceNodeHandle.data.Next; %OK
+                        else
+                            pastMasteryTaskLevelIndex=decisionMakerStruct.masteryTask.currentLevelIndex.data;
+                            quitFlag=updateMasteryTaskSentenceInformation(decisionMakerStruct.masteryTask,decisionMakerStruct.copyphrase.phraseCompletedFlag);
+                            masteryTaskLevelUpFlag=(decisionMakerStruct.masteryTask.currentLevelIndex.data>pastMasteryTaskLevelIndex);
+                            
+                            if(~quitFlag)
+                                try
+                                decisionMakerStruct.copyphrase.phraseList.insertEnd(decisionMakerStruct.masteryTask.levels{decisionMakerStruct.masteryTask.currentLevelIndex.data}{decisionMakerStruct.masteryTask.currentSetIndex.data}{decisionMakerStruct.masteryTask.currentSentenceIndex.data}); 
+                                catch ME
+                                    3;
+                                end
+                                decisionMakerStruct.copyphrase.sentenceNodeHandle.data=decisionMakerStruct.copyphrase.sentenceNodeHandle.data.Next;
+                            end
+                        end
+                        
+                        if(isempty(decisionMakerStruct.copyphrase.sentenceNodeHandle.data))  %OK for copyphrase
+                            quitFlag=true;
+                        else
+                        
+                        
+                            
+                        decisionMakerStruct.languageModelWrapper.initializeState(decisionMakerStruct.copyphrase.sentenceNodeHandle.data.Data.preTarget); %OK for copyphrase
+                        
+                        decisionMakerStruct.copyphrase.currentPhraseSequenceCount.data=0; %OK for copyphrase
+                        %
+                        
+                        decisionMakerStruct.typingDuration.data=0;  %OK for copyphrase
+                        decisionMakerStruct.copyphrase.AvgMaximumNumberofSequencesperChar=decisionMakerStruct.copyphrase.StoppingCriteria.SequenceLimitScale*decisionMakerStruct.TypingControl.MaximumNumberofSequences;  %Bullshit
+                        decisionMakerStruct.LMprobs.data=decisionMakerStruct.languageModelWrapper.getProbs;  % OK done in decisionClass
+                        end
+                    end
+                        results.completedSequenceCount=0; %Leave it in the while loop
+
+            end
+            
+            if(isfield(decision,'decided') && ~isempty(decision.decided))
+                sendDecisionPacket(decision);
+                %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+                if masteryTaskLevelUpFlag
+                  decision.decided=31;
+                  sendDecisionPacket(decision);
+                end
+                %REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-
+                 
+            end
+            
+            %
+            %Leave it in the while loop
+            if(quitFlag) % quitFlag = taskEndedFlag
+               canMakeDecision=false; 
+            else
+               canMakeDecision= epochEndedFlag;
+            end
+            %
+            
+        end
+        
+        
+        %         unsentDecisions=cell2mat(unsentDecisionList.toCell);
+        %         if(~isempty(unsentDecisions))
+        %         decision.decided=unsentDecisions;
+        %         end
+        %         decision=[];
+        %         switch decisionMakerStruct.sessionID
+        %             case 2 %SPELL
+        %                 decision.feedback{1}.Type='neutral';
+        %                 decision.feedback{1}.Text=decisionMakerStruct.languageModelWrapper.getText;
+        %             case 3 %
+        %                 decision.feedback{1}.Type='neutral';
+        %                 decision.feedback{1}.Text=decisionMakerStruct.copyphrase.sentenceNodeHandle.data.Data.preTarget;
+        %                 decision.feedback{2}.Type='positive';
+        %                 decision.feedback{2}.Text=decisionMakerStruct.copyphrase.sentenceNodeHandle.data.Data.target;
+        %                 decision.feedback{3}.Type='neutral';
+        %                 decision.feedback{3}.Text=[decisionMakerStruct.copyphrase.sentenceNodeHandle.data.Data.postTarget];
+        %
+        %                 decision.feedback{4}.Type='neutral';
+        %                 decision.feedback{4}.Text=['\n' decision.feedback{1}.Text];
+        %         end
+        
+    else
+        decision=[];
+        decision.feedback{1}.Text=[num2str(decisionMakerStruct.sequenceCounter.data) '/' num2str(decisionMakerStruct.Calibration.NumberofSequences)];
+        decision.feedback{1}.Type='neutral';
+    end
+    
+    decision.decided=[];
+          
+    decision.nextSequence=decideNextTrials(decisionMakerStruct);
+    if(~quitFlag)
+    sendDecisionPacket(decision);
+    end
+    
+    
+   
+    
+else
+    decision=[];
+end
+
+
+% if(~isempty(decision))
+% finalDecision2send=decision;
+% if(isfield(decision,'decided'))
+%         for(decisionIndex=1:length(decision.decided))
+%             tempDecision=[];
+%             tempDecision.decided=decision.decided(decisionIndex);
+%             sendDecisionPacket(tempDecision);
+%         end
+%         rmfield(finalDecision2send,'decided');
+% end
+%     sendDecisionPacket(finalDecision2send);
+% end
+%else
+%    decision=[];
+%end
+
+% if(isempty(results))
+%     decision=[];
+% else
+% decision.nextSequence=decideNextTrials(decisionMakerStruct);
+% sendDecisionPacket(decision);
+% end
+% decision.
+
+%logDecisions(decision)
+
+##### SOURCE END #####
+--></body></html>

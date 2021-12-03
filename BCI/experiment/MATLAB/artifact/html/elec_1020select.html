@@ -1,0 +1,200 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>elec_1020select</title><meta name="generator" content="MATLAB 7.14"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2013-06-13"><meta name="DC.source" content="elec_1020select.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+
+  </style></head><body><div class="content"><pre class="codeinput"><span class="keyword">function</span> [CHAN1020,XYZ1020] = elec_1020select(CHAN)
+
+<span class="comment">% elec_1020select - select 10-20 locations</span>
+<span class="comment">%</span>
+<span class="comment">% [labels,xyz] = elec_1020select(CHAN)</span>
+<span class="comment">%</span>
+<span class="comment">% where CHAN input is a cell array of channel names from the International</span>
+<span class="comment">% 10-20 nomenclature for EEG electrode placement.  For a list of the 10-20</span>
+<span class="comment">% electrode names, see the elec_1020all_cart function, which is based on:</span>
+<span class="comment">%</span>
+<span class="comment">% Oostenveld, R. &amp; Praamstra, P. (2001). The five percent electrode system</span>
+<span class="comment">% for high-resolution EEG and ERP measurements. Clinical Neurophysiology,</span>
+<span class="comment">% 112:713-719.</span>
+<span class="comment">%</span>
+
+
+
+<span class="comment">% Copyright (C) 2005  Darren L. Weber</span>
+<span class="comment">%</span>
+<span class="comment">% This program is free software; you can redistribute it and/or</span>
+<span class="comment">% modify it under the terms of the GNU General Public License</span>
+<span class="comment">% as published by the Free Software Foundation; either version 2</span>
+<span class="comment">% of the License, or (at your option) any later version.</span>
+<span class="comment">%</span>
+<span class="comment">% This program is distributed in the hope that it will be useful,</span>
+<span class="comment">% but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="comment">% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the</span>
+<span class="comment">% GNU General Public License for more details.</span>
+<span class="comment">%</span>
+<span class="comment">% You should have received a copy of the GNU General Public License</span>
+<span class="comment">% along with this program; if not, write to the Free Software</span>
+<span class="comment">% Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.</span>
+
+<span class="comment">% Modified: 01/2005, Darren.Weber_at_radiology.ucsf.edu</span>
+<span class="comment">%</span>
+<span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+
+
+<span class="comment">% ver = '$Revision: 1.1 $ $Date: 2009-01-30 03:49:28 $';</span>
+<span class="comment">% fprintf('\nELEC_1020SELECT [v %s]\n',ver(11:15));</span>
+
+<span class="comment">% get the 1020 data</span>
+elec = elec_1020all_cart;
+elec = struct2cell(elec);
+labels = squeeze(elec(1,:,:))';
+x = squeeze(elec(2,:,:)); x = x{1};
+y = squeeze(elec(3,:,:)); y = y{1};
+z = squeeze(elec(4,:,:)); z = z{1};
+clear <span class="string">elec</span>
+
+<span class="comment">% find all the electrode names in elec.labels that match CHAN</span>
+CHAN1020 = zeros(1,length(CHAN));
+XYZ1020  = zeros(length(CHAN),3);
+<span class="keyword">for</span> c = 1:length(CHAN),
+    chan = CHAN{c};
+    index = strmatch(lower(chan),lower(labels),<span class="string">'exact'</span>);
+    <span class="keyword">if</span> ~isempty(index),
+        CHAN1020(c) = index;
+        XYZ1020(c,:) = [ x(index), y(index), z(index) ];
+    <span class="keyword">else</span>
+        msg = sprintf(<span class="string">'No match for channel: %s\n'</span>,chan)
+        error(msg)
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+CHAN1020 = labels(CHAN1020);
+
+<span class="keyword">return</span>
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.14<br></p></div><!--
+##### SOURCE BEGIN #####
+function [CHAN1020,XYZ1020] = elec_1020select(CHAN)
+
+% elec_1020select - select 10-20 locations
+% 
+% [labels,xyz] = elec_1020select(CHAN)
+%
+% where CHAN input is a cell array of channel names from the International
+% 10-20 nomenclature for EEG electrode placement.  For a list of the 10-20
+% electrode names, see the elec_1020all_cart function, which is based on:
+%
+% Oostenveld, R. & Praamstra, P. (2001). The five percent electrode system
+% for high-resolution EEG and ERP measurements. Clinical Neurophysiology,
+% 112:713-719.
+%
+
+% $Revision: 1.1 $ $Date: 2009-01-30 03:49:28 $
+
+% Copyright (C) 2005  Darren L. Weber
+% 
+% This program is free software; you can redistribute it and/or
+% modify it under the terms of the GNU General Public License
+% as published by the Free Software Foundation; either version 2
+% of the License, or (at your option) any later version.
+% 
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+% 
+% You should have received a copy of the GNU General Public License
+% along with this program; if not, write to the Free Software
+% Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+% Modified: 01/2005, Darren.Weber_at_radiology.ucsf.edu
+%                    
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+% ver = '$Revision: 1.1 $ $Date: 2009-01-30 03:49:28 $';
+% fprintf('\nELEC_1020SELECT [v %s]\n',ver(11:15));
+
+% get the 1020 data
+elec = elec_1020all_cart;
+elec = struct2cell(elec);
+labels = squeeze(elec(1,:,:))';
+x = squeeze(elec(2,:,:)); x = x{1};
+y = squeeze(elec(3,:,:)); y = y{1};
+z = squeeze(elec(4,:,:)); z = z{1};
+clear elec
+
+% find all the electrode names in elec.labels that match CHAN
+CHAN1020 = zeros(1,length(CHAN));
+XYZ1020  = zeros(length(CHAN),3);
+for c = 1:length(CHAN),
+    chan = CHAN{c};
+    index = strmatch(lower(chan),lower(labels),'exact');
+    if ~isempty(index),
+        CHAN1020(c) = index;
+        XYZ1020(c,:) = [ x(index), y(index), z(index) ];
+    else
+        msg = sprintf('No match for channel: %s\n',chan)
+        error(msg)
+    end
+end
+
+CHAN1020 = labels(CHAN1020);
+
+return
+
+
+##### SOURCE END #####
+--></body></html>

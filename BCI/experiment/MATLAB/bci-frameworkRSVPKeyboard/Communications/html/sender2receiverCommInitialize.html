@@ -1,0 +1,420 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>sender2receiverCommInitialize</title><meta name="generator" content="MATLAB 7.14"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2013-06-13"><meta name="DC.source" content="sender2receiverCommInitialize.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">[success,CommObjectStruct,BCIPacketStruct]=sender2receiverCommInitialize(sender,receiver,CommObjectStruct,receiverIP,receiverPort)</a></li><li><a href="#4">Read TCP/IP connection parameters</a></li><li><a href="#5">Checking for the input variables</a></li><li><a href="#6">Creating the TCP/IP object</a></li></ul></div><h2>[success,CommObjectStruct,BCIPacketStruct]=sender2receiverCommInitialize(sender,receiver,CommObjectStruct,receiverIP,receiverPort)<a name="1"></a></h2><pre class="codeinput"><span class="comment">%sender2receiverCommInitialize(sender,receiver,CommObjectStruct,receiverIP,receiverPort)</span>
+<span class="comment">% is template  function to create TCP/IP object for communication. Properties like - InputBufferSize,OutputBufferSize,Terminator used for</span>
+<span class="comment">% the connection are specified in tcpipParameters file.</span>
+<span class="comment">%</span>
+<span class="comment">%   The inputs of the function</span>
+<span class="comment">%</span>
+<span class="comment">%       sender - is a string specifying name of the sender MATLAB. Options -</span>
+<span class="comment">%       'main', 'presentation', 'GUI', 'DAQ'</span>
+<span class="comment">%       (A a converntion, if sender is set to'main' then TCP/IP object acts as</span>
+<span class="comment">%       server or else is acts as client).</span>
+<span class="comment">%</span>
+<span class="comment">%       reciever - is string specifying name of the reciever MATLAB. Options -</span>
+<span class="comment">%       'main', 'presentation', 'GUI', 'DAQ'.</span>
+<span class="comment">%</span>
+<span class="comment">%       interrupts - is a boolean specifying if the comm object uses the BytesAvailable function.</span>
+<span class="comment">%       WARNING: If interrupts is set to true, then the name of the output variable for</span>
+<span class="comment">%       CommObjectStruct MUST also be named CommObjectStruct, and MUST be declared in the main workspace.</span>
+<span class="comment">%</span>
+<span class="comment">%       CommObjectStruct - is a struct containing TCP/IP objects that has been</span>
+<span class="comment">%       created previously.</span>
+<span class="comment">%</span>
+<span class="comment">%       receiverIP - IP address of the reciver computer .If same computer runs</span>
+<span class="comment">%       both sender and reciever then receiverIP is 'localhost'. Default if</span>
+<span class="comment">%       'localhost'.</span>
+<span class="comment">%</span>
+<span class="comment">%       receiverPort - portnumber that is used for the communication between</span>
+<span class="comment">%       the sender and reciever functions. If no value is mentioned default value is used in the tcp/ip object.</span>
+<span class="comment">%</span>
+<span class="comment">%</span>
+<span class="comment">%   The outputs of the function</span>
+<span class="comment">%</span>
+<span class="comment">%       success (0/1) - A flag that shows the success of the process.</span>
+<span class="comment">%</span>
+<span class="comment">%       CommObjectStruct - Structrue containf TCP/IP object as elements.</span>
+<span class="comment">%</span>
+<span class="comment">%       BCIPacketStruct - A structure containing header, header length and terminator</span>
+<span class="comment">%       information. Having this function as an output variable help passing</span>
+<span class="comment">%       them to receiveMainPacket function ( a callback funtction that</span>
+<span class="comment">%       executes from the base workspace.</span>
+<span class="comment">%</span>
+<span class="comment">%</span>
+<span class="comment">%  See also sendBCIPacket, receiveBCIPacket, tcpipParameters.</span>
+</pre><pre class="codeinput"><span class="keyword">function</span> [success,CommObjectStruct,BCIPacketStruct] = sender2receiverCommInitialize(sender,receiver,interrupts,CommObjectStruct,receiverIP,receiverPort)
+</pre><pre class="codeinput">    <span class="keyword">global</span> errorFilename,
+    <span class="keyword">if</span>(isempty(errorFilename))
+        errorFilename = [sender <span class="string">'2'</span> receiver <span class="string">'CommInitializeErrorFile.txt'</span>];
+    <span class="keyword">end</span>
+    eval([<span class="string">'global '</span> sender <span class="string">'2'</span> receiver <span class="string">'CommInitialize'</span>]);
+    <span class="keyword">if</span>(exist(<span class="string">'logError'</span>,<span class="string">'file'</span>)~=2)
+        addpath(<span class="string">'..\GeneralFramework'</span>);
+        addpath(<span class="string">'..\Parameters'</span>);
+    <span class="keyword">end</span>
+</pre><h2>Read TCP/IP connection parameters<a name="4"></a></h2><pre class="codeinput">    tcpipParameters;
+</pre><h2>Checking for the input variables<a name="5"></a></h2><pre class="codeinput">    <span class="keyword">switch</span>(nargin)
+        <span class="keyword">case</span> {0,1,2}
+            error(<span class="string">'Please specify sender and receiever.'</span>);
+        <span class="keyword">case</span> 3
+            invalidInputArg = isempty(find(strcmpi(sender,{<span class="string">'main'</span>,<span class="string">'presentation'</span>,<span class="string">'GUI'</span>,<span class="string">'DAQ'</span>}), 1));
+            <span class="keyword">if</span>(invalidInputArg)
+                disp(<span class="string">'Valid sender options - ''main'',''presentation'',''GUI'',''DAQ'''</span>);
+                error(<span class="string">'Provide valid sender.'</span>);
+            <span class="keyword">end</span>
+            invalidInputArg = isempty(find(strcmpi(receiver,{<span class="string">'main'</span>,<span class="string">'presentation'</span>,<span class="string">'GUI'</span>,<span class="string">'DAQ'</span>}), 1));
+            <span class="keyword">if</span>(invalidInputArg)
+                disp(<span class="string">'Valid receiver options - ''main'',''presentation'',''GUI'',''DAQ'''</span>);
+                error(<span class="string">'Provide valid receiver.'</span>);
+            <span class="keyword">end</span>
+            receiverIP=input([<span class="string">'Please enter the '</span>,receiver,<span class="string">' IP address [localhost]:'</span>],<span class="string">'s'</span>);
+            <span class="keyword">if</span>(isempty(receiverIP))
+                receiverIP=<span class="string">'localhost'</span>; <span class="comment">% If no IP number is entered, local host option is assumed for the tcp/ip object</span>
+            <span class="keyword">end</span>
+            receiverPort=input([<span class="string">'Please enter the '</span>,receiver,<span class="string">' port number [52957]:'</span>],<span class="string">'s'</span>);
+            <span class="keyword">if</span>(isempty(receiverPort))
+                receiverPort=52957; <span class="comment">% Default port number</span>
+            <span class="keyword">else</span>
+                receiverPort=str2int(receiverPort);
+            <span class="keyword">end</span>
+            CommObjectStruct = [];
+        <span class="keyword">case</span> 4
+            invalidInputArg = isempty(find(strcmpi(sender,{<span class="string">'main'</span>,<span class="string">'presentation'</span>,<span class="string">'GUI'</span>,<span class="string">'DAQ'</span>}), 1));
+            <span class="keyword">if</span>(invalidInputArg)
+                disp(<span class="string">'Valid sender options - ''main'',''presentation'',''GUI'',''DAQ'''</span>);
+                error(<span class="string">'Provide valid sender.'</span>);
+            <span class="keyword">end</span>
+            invalidInputArg = isempty(find(strcmpi(receiver,{<span class="string">'main'</span>,<span class="string">'presentation'</span>,<span class="string">'GUI'</span>,<span class="string">'DAQ'</span>}), 1));
+            <span class="keyword">if</span>(invalidInputArg)
+                disp(<span class="string">'Valid receiver options - ''main'',''presentation'',''GUI'',''DAQ'''</span>);
+                error(<span class="string">'Provide valid receiver.'</span>);
+            <span class="keyword">end</span>
+            receiverIP=input([<span class="string">'Please enter the '</span>,receiver,<span class="string">' IP address [localhost]:'</span>],<span class="string">'s'</span>);
+            <span class="keyword">if</span>(isempty(receiverIP))
+                receiverIP=<span class="string">'localhost'</span>; <span class="comment">% If no IP number is entered, local host option is assumed for the tcp/ip object</span>
+            <span class="keyword">end</span>
+            receiverPort=input([<span class="string">'Please enter the '</span>,receiver,<span class="string">' port number [52957]:'</span>],<span class="string">'s'</span>);
+            <span class="keyword">if</span>(isempty(receiverPort))
+                receiverPort=52957; <span class="comment">% Default port number</span>
+            <span class="keyword">else</span>
+                receiverPort=str2int(receiverPort);
+            <span class="keyword">end</span>
+        <span class="keyword">case</span> 5
+            receiverPort=receiverIP;
+            receiverIP=<span class="string">'localhost'</span>;
+    <span class="keyword">end</span>
+</pre><h2>Creating the TCP/IP object<a name="6"></a></h2><pre class="codeinput">    <span class="keyword">try</span>
+
+        <span class="keyword">if</span> interrupts
+
+            <span class="keyword">if</span>(strcmpi(sender,<span class="string">'main'</span>))
+                eval(<span class="keyword">...</span>
+                        [<span class="keyword">...</span>
+                            <span class="string">'CommObjectStruct.'</span>,sender, <span class="string">'2'</span> , receiver,<span class="string">'CommObject = tcpip(receiverIP,receiverPort,'</span>,<span class="keyword">...</span>
+                            <span class="string">' ''NetworkRole'', ''server'', '</span>,<span class="keyword">...</span>
+                            <span class="string">' ''Terminator'', BCIPacketStruct.terminator, '</span>,<span class="keyword">...</span>
+                            <span class="string">' ''OutputBufferSize'', tcpipBufferSize.output, '</span>,<span class="keyword">...</span>
+                            <span class="string">' ''InputBufferSize'', tcpipBufferSize.input, '</span>,<span class="keyword">...</span>
+                            <span class="string">' ''BytesAvailableFcn'', ''receiveBCIPacket(CommObjectStruct.'</span>,sender,<span class="string">'2'</span>,receiver,<span class="string">'CommObject,BCIPacketStruct)'', '</span>,<span class="keyword">...</span>
+                            <span class="string">' ''BytesAvailableFcnMode'',''terminator'' '</span>,<span class="keyword">...</span>
+                            <span class="string">');'</span><span class="keyword">...</span>
+                        ]<span class="keyword">...</span>
+                    );
+                disp([<span class="string">'TCP/IP server started'</span>]);
+            <span class="keyword">else</span>
+                eval(<span class="keyword">...</span>
+                        [<span class="keyword">...</span>
+                            <span class="string">'CommObjectStruct.'</span>,sender, <span class="string">'2'</span> , receiver,<span class="string">'CommObject = tcpip(receiverIP,receiverPort,'</span>,<span class="keyword">...</span>
+                            <span class="string">' ''NetworkRole'', ''client'', '</span>,<span class="keyword">...</span>
+                            <span class="string">' ''Terminator'', BCIPacketStruct.terminator, '</span>,<span class="keyword">...</span>
+                            <span class="string">' ''OutputBufferSize'', tcpipBufferSize.output, '</span>,<span class="keyword">...</span>
+                            <span class="string">' ''InputBufferSize'', tcpipBufferSize.input '</span>,<span class="keyword">...</span>
+                            <span class="string">' ''BytesAvailableFcn'', ''receiveBCIPacket(CommObjectStruct.'</span>,sender,<span class="string">'2'</span>,receiver,<span class="string">'CommObject,BCIPacketStruct)'', '</span>,<span class="keyword">...</span>
+                            <span class="string">' ''BytesAvailableFcnMode'',''terminator'' '</span>,<span class="keyword">...</span>
+                            <span class="string">');'</span><span class="keyword">...</span>
+                        ]<span class="keyword">...</span>
+                    );
+                disp([<span class="string">'TCP/IP client started'</span>]);
+            <span class="keyword">end</span>
+
+        <span class="keyword">else</span>
+
+            <span class="keyword">if</span>(strcmpi(sender,<span class="string">'main'</span>))
+                eval(<span class="keyword">...</span>
+                        [<span class="keyword">...</span>
+                            <span class="string">'CommObjectStruct.'</span>,sender, <span class="string">'2'</span> , receiver,<span class="string">'CommObject = tcpip(receiverIP,receiverPort,'</span>,<span class="keyword">...</span>
+                            <span class="string">' ''NetworkRole'', ''server'', '</span>,<span class="keyword">...</span>
+                            <span class="string">' ''Terminator'', BCIPacketStruct.terminator, '</span>,<span class="keyword">...</span>
+                            <span class="string">' ''OutputBufferSize'', tcpipBufferSize.output, '</span>,<span class="keyword">...</span>
+                            <span class="string">' ''InputBufferSize'', tcpipBufferSize.input '</span>,<span class="keyword">...</span>
+                            <span class="string">');'</span><span class="keyword">...</span>
+                        ]<span class="keyword">...</span>
+                    );
+                disp([<span class="string">'TCP/IP server started'</span>]);
+            <span class="keyword">else</span>
+                eval(<span class="keyword">...</span>
+                        [<span class="keyword">...</span>
+                            <span class="string">'CommObjectStruct.'</span>,sender, <span class="string">'2'</span> , receiver,<span class="string">'CommObject = tcpip(receiverIP,receiverPort,'</span>,<span class="keyword">...</span>
+                            <span class="string">' ''NetworkRole'', ''client'', '</span>,<span class="keyword">...</span>
+                            <span class="string">' ''Terminator'', BCIPacketStruct.terminator, '</span>,<span class="keyword">...</span>
+                            <span class="string">' ''OutputBufferSize'', tcpipBufferSize.output, '</span>,<span class="keyword">...</span>
+                            <span class="string">' ''InputBufferSize'', tcpipBufferSize.input '</span>,<span class="keyword">...</span>
+                            <span class="string">');'</span><span class="keyword">...</span>
+                        ]<span class="keyword">...</span>
+                    );
+                disp([<span class="string">'TCP/IP client started'</span>]);
+            <span class="keyword">end</span>
+
+        <span class="keyword">end</span>
+
+        eval([<span class="string">'fopen(CommObjectStruct.'</span>,sender,<span class="string">'2'</span>,receiver,<span class="string">'CommObject);'</span>]);
+        success = true;
+    <span class="keyword">catch</span> ME
+        logError(ME);
+        success = false;
+    <span class="keyword">end</span>
+</pre><pre class="codeinput"><span class="keyword">end</span>
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.14<br></p></div><!--
+##### SOURCE BEGIN #####
+%% [success,CommObjectStruct,BCIPacketStruct]=sender2receiverCommInitialize(sender,receiver,CommObjectStruct,receiverIP,receiverPort)
+%sender2receiverCommInitialize(sender,receiver,CommObjectStruct,receiverIP,receiverPort) 
+% is template  function to create TCP/IP object for communication. Properties like - InputBufferSize,OutputBufferSize,Terminator used for
+% the connection are specified in tcpipParameters file.
+%
+%   The inputs of the function
+%
+%       sender - is a string specifying name of the sender MATLAB. Options -
+%       'main', 'presentation', 'GUI', 'DAQ'
+%       (A a converntion, if sender is set to'main' then TCP/IP object acts as
+%       server or else is acts as client).
+%
+%       reciever - is string specifying name of the reciever MATLAB. Options -
+%       'main', 'presentation', 'GUI', 'DAQ'.
+%
+%       interrupts - is a boolean specifying if the comm object uses the BytesAvailable function.
+%       WARNING: If interrupts is set to true, then the name of the output variable for
+%       CommObjectStruct MUST also be named CommObjectStruct, and MUST be declared in the main workspace.
+%
+%       CommObjectStruct - is a struct containing TCP/IP objects that has been
+%       created previously. 
+%
+%       receiverIP - IP address of the reciver computer .If same computer runs
+%       both sender and reciever then receiverIP is 'localhost'. Default if
+%       'localhost'.
+%
+%       receiverPort - portnumber that is used for the communication between
+%       the sender and reciever functions. If no value is mentioned default value is used in the tcp/ip object.
+%
+%
+%   The outputs of the function
+%
+%       success (0/1) - A flag that shows the success of the process.
+%
+%       CommObjectStruct - Structrue containf TCP/IP object as elements.
+%
+%       BCIPacketStruct - A structure containing header, header length and terminator
+%       information. Having this function as an output variable help passing
+%       them to receiveMainPacket function ( a callback funtction that
+%       executes from the base workspace.
+%
+%
+%  See also sendBCIPacket, receiveBCIPacket, tcpipParameters.
+%%
+function [success,CommObjectStruct,BCIPacketStruct] = sender2receiverCommInitialize(sender,receiver,interrupts,CommObjectStruct,receiverIP,receiverPort)
+    global errorFilename,
+    if(isempty(errorFilename))
+        errorFilename = [sender '2' receiver 'CommInitializeErrorFile.txt'];
+    end
+    eval(['global ' sender '2' receiver 'CommInitialize']);
+    if(exist('logError','file')~=2)
+        addpath('..\GeneralFramework');
+        addpath('..\Parameters');
+    end
+
+
+    %% Read TCP/IP connection parameters
+
+    tcpipParameters;
+
+    %% Checking for the input variables
+    switch(nargin)
+        case {0,1,2}
+            error('Please specify sender and receiever.');
+        case 3
+            invalidInputArg = isempty(find(strcmpi(sender,{'main','presentation','GUI','DAQ'}), 1));
+            if(invalidInputArg)
+                disp('Valid sender options - ''main'',''presentation'',''GUI'',''DAQ''');
+                error('Provide valid sender.');
+            end
+            invalidInputArg = isempty(find(strcmpi(receiver,{'main','presentation','GUI','DAQ'}), 1));
+            if(invalidInputArg)
+                disp('Valid receiver options - ''main'',''presentation'',''GUI'',''DAQ''');
+                error('Provide valid receiver.');
+            end
+            receiverIP=input(['Please enter the ',receiver,' IP address [localhost]:'],'s');
+            if(isempty(receiverIP))
+                receiverIP='localhost'; % If no IP number is entered, local host option is assumed for the tcp/ip object
+            end
+            receiverPort=input(['Please enter the ',receiver,' port number [52957]:'],'s');
+            if(isempty(receiverPort))
+                receiverPort=52957; % Default port number
+            else
+                receiverPort=str2int(receiverPort);
+            end
+            CommObjectStruct = [];
+        case 4
+            invalidInputArg = isempty(find(strcmpi(sender,{'main','presentation','GUI','DAQ'}), 1));
+            if(invalidInputArg)
+                disp('Valid sender options - ''main'',''presentation'',''GUI'',''DAQ''');
+                error('Provide valid sender.');
+            end
+            invalidInputArg = isempty(find(strcmpi(receiver,{'main','presentation','GUI','DAQ'}), 1));
+            if(invalidInputArg)
+                disp('Valid receiver options - ''main'',''presentation'',''GUI'',''DAQ''');
+                error('Provide valid receiver.');
+            end
+            receiverIP=input(['Please enter the ',receiver,' IP address [localhost]:'],'s');
+            if(isempty(receiverIP))
+                receiverIP='localhost'; % If no IP number is entered, local host option is assumed for the tcp/ip object
+            end
+            receiverPort=input(['Please enter the ',receiver,' port number [52957]:'],'s');
+            if(isempty(receiverPort))
+                receiverPort=52957; % Default port number
+            else
+                receiverPort=str2int(receiverPort);
+            end
+        case 5
+            receiverPort=receiverIP;
+            receiverIP='localhost';
+    end
+    %% Creating the TCP/IP object
+
+    try
+
+        if interrupts
+
+            if(strcmpi(sender,'main'))
+                eval(...
+                        [...
+                            'CommObjectStruct.',sender, '2' , receiver,'CommObject = tcpip(receiverIP,receiverPort,',...
+                            ' ''NetworkRole'', ''server'', ',...
+                            ' ''Terminator'', BCIPacketStruct.terminator, ',...
+                            ' ''OutputBufferSize'', tcpipBufferSize.output, ',...
+                            ' ''InputBufferSize'', tcpipBufferSize.input, ',...
+                            ' ''BytesAvailableFcn'', ''receiveBCIPacket(CommObjectStruct.',sender,'2',receiver,'CommObject,BCIPacketStruct)'', ',...
+                            ' ''BytesAvailableFcnMode'',''terminator'' ',...
+                            ');'...
+                        ]...
+                    );
+                disp(['TCP/IP server started']);
+            else
+                eval(...
+                        [...
+                            'CommObjectStruct.',sender, '2' , receiver,'CommObject = tcpip(receiverIP,receiverPort,',...
+                            ' ''NetworkRole'', ''client'', ',...
+                            ' ''Terminator'', BCIPacketStruct.terminator, ',...
+                            ' ''OutputBufferSize'', tcpipBufferSize.output, ',...
+                            ' ''InputBufferSize'', tcpipBufferSize.input ',...
+                            ' ''BytesAvailableFcn'', ''receiveBCIPacket(CommObjectStruct.',sender,'2',receiver,'CommObject,BCIPacketStruct)'', ',...
+                            ' ''BytesAvailableFcnMode'',''terminator'' ',...
+                            ');'...
+                        ]...
+                    );
+                disp(['TCP/IP client started']);
+            end
+
+        else
+
+            if(strcmpi(sender,'main'))
+                eval(...
+                        [...
+                            'CommObjectStruct.',sender, '2' , receiver,'CommObject = tcpip(receiverIP,receiverPort,',...
+                            ' ''NetworkRole'', ''server'', ',...
+                            ' ''Terminator'', BCIPacketStruct.terminator, ',...
+                            ' ''OutputBufferSize'', tcpipBufferSize.output, ',...
+                            ' ''InputBufferSize'', tcpipBufferSize.input ',...
+                            ');'...
+                        ]...
+                    );
+                disp(['TCP/IP server started']);
+            else
+                eval(...
+                        [...
+                            'CommObjectStruct.',sender, '2' , receiver,'CommObject = tcpip(receiverIP,receiverPort,',...
+                            ' ''NetworkRole'', ''client'', ',...
+                            ' ''Terminator'', BCIPacketStruct.terminator, ',...
+                            ' ''OutputBufferSize'', tcpipBufferSize.output, ',...
+                            ' ''InputBufferSize'', tcpipBufferSize.input ',...
+                            ');'...
+                        ]...
+                    );
+                disp(['TCP/IP client started']);
+            end
+            
+        end
+        
+        eval(['fopen(CommObjectStruct.',sender,'2',receiver,'CommObject);']);
+        success = true;
+    catch ME
+        logError(ME);
+        success = false;
+    end
+end
+##### SOURCE END #####
+--></body></html>

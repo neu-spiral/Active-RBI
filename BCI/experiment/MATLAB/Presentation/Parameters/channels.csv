@@ -1,0 +1,76 @@
+Master Amplifier
+Channel Number, Electrode Location, Channel Type
+1, Fp1, EEG
+2, Fp2, EEG
+3, F3, EEG
+4, F4, EEG
+5, Fz, EEG
+6, Fc1, EEG
+7, Fc2, EEG
+8, Cz, EEG
+9, P1, EEG
+10, P2, EEG
+11, C1, EEG
+12, C2, EEG
+13, Cp3, EEG
+14, Cp4, EEG
+15, P5, EEG
+16, P6, EEG
+
+Slave Amplifier 1
+Channel Number, Electrode Location, Channel Type
+1, Fp1, NC
+2, Fp2, NC
+3, F3, NC
+4, F4, NC
+5, Fz, NC
+6, Fc1, NC
+7, Fc2, NC
+8, Cz, NC
+9, P1, NC
+10, P2, NC
+11, C1, NC
+12, C2, NC
+13, Cp3, NC
+14, Cp4, NC
+15, P5, NC
+16, P6, NC
+
+Slave Amplifier 2
+Channel Number, Electrode Location, Channel Type
+1, Fp1, NC
+2, Fp2, NC
+3, F3, NC
+4, F4, NC
+5, Fz, NC
+6, Fc1, NC
+7, Fc2, NC
+8, Cz, NC
+9, P1, NC
+10, P2, NC
+11, C1, NC
+12, C2, NC
+13, Cp3, NC
+14, Cp4, NC
+15, P5, NC
+16, P6, NC
+
+Slave Amplifier 3
+Channel Number, Electrode Location, Channel Type
+1, Fp1, NC
+2, Fp2, NC
+3, F3, NC
+4, F4, NC
+5, Fz, NC
+6, Fc1, NC
+7, Fc2, NC
+8, Cz, NC
+9, P1, NC
+10, P2, NC
+11, C1, NC
+12, C2, NC
+13, Cp3, NC
+14, Cp4, NC
+15, P5, NC
+16, P6, NC
+

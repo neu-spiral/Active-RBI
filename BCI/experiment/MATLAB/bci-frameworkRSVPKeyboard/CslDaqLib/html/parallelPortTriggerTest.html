@@ -1,0 +1,343 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>parallelPortTriggerTest</title><meta name="generator" content="MATLAB 7.14"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2013-06-13"><meta name="DC.source" content="parallelPortTriggerTest.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">success=parallelPortTriggerTest(amplifierStruct,recordingFilename,fs)</a></li><li><a href="#3">Setting the properties of the trigger pulses we send to the amplifier</a></li><li><a href="#5">Using the inpout library to communicate with the PCI port.</a></li><li><a href="#6">Reading the trigger data from amplifiers and testing if the received trigger properties are the same as the ones that we sent.</a></li></ul></div><h2>success=parallelPortTriggerTest(amplifierStruct,recordingFilename,fs)<a name="1"></a></h2><pre class="codeinput"><span class="comment">%parallelPortTriggerTest(amplifierStruct,recordingFilename,fs) tests the</span>
+<span class="comment">% triggers received by the amplifiers. This function uses the inpout</span>
+<span class="comment">% library for the communication with the PCI port. The function checks the</span>
+<span class="comment">% following properties of the triggers.</span>
+<span class="comment">%   * The connection of the higher and the lower 4 bits.</span>
+<span class="comment">%   * The number of the triggers sent and received.</span>
+<span class="comment">%   * The values of the triggers sent and received.</span>
+<span class="comment">%   * The pulse width of the triggers sent and received.</span>
+<span class="comment">%   * The values of the first and last triggers sent and received.</span>
+<span class="comment">%</span>
+<span class="comment">%   The inputs of the function</span>
+<span class="comment">%</span>
+<span class="comment">%     amplfierStruct - A structure that contains information about the</span>
+<span class="comment">%     amplifiers connected to the system.</span>
+<span class="comment">%</span>
+<span class="comment">%     recordingFilename - A string that contains the directory and the</span>
+<span class="comment">%     filename of the file where we save the trigger test.</span>
+<span class="comment">%</span>
+<span class="comment">%     fs - Sampling frequency.</span>
+<span class="comment">%</span>
+<span class="comment">%   The outputs of the function</span>
+<span class="comment">%</span>
+<span class="comment">%      success (0/1) - A flag that show the success of the procedure.</span>
+</pre><pre class="codeinput"><span class="keyword">function</span> success=parallelPortTriggerTest(amplifierStruct,recordingFilename,fs,parallelPortIOListinhex)
+</pre><h2>Setting the properties of the trigger pulses we send to the amplifier<a name="3"></a></h2><pre class="codeinput">triggerPulsewidth=10/fs;
+numberOfTestIterations=10;
+triggerTestValues=[15;240];
+triggerPulsewidthStdThreshold=1/fs;
+
+<span class="comment">%decParallelPortNumber=hex2dec('2020'); % the port number of the PCI port.</span>
+
+<span class="comment">%Check the port number of the PCI port under device manager. Once you click</span>
+<span class="comment">%on the PCI port under ports in device manager, the port number is the</span>
+<span class="comment">%first number under the resources tab.</span>
+
+
+initializeParallelPortTriggerSender(parallelPortIOListinhex)
+
+[success]=startAmps(amplifierStruct,[recordingFilename <span class="string">'_TriggerTest'</span>]);
+
+
+triggerTestContinue=1;
+<span class="keyword">while</span>(triggerTestContinue)
+</pre><pre class="codeinput">    pause(0.050);
+</pre><h2>Using the inpout library to communicate with the PCI port.<a name="5"></a></h2><pre class="codeinput">    <span class="keyword">for</span>(ii=1:numberOfTestIterations)
+        <span class="keyword">for</span>(triggerTestIndex=1:length(triggerTestValues))
+            tic;
+            sendTrigger(triggerTestValues(triggerTestIndex));
+            <span class="comment">%calllib('inpout32','Out32',decParallelPortNumber,triggerTestValues(triggerTestIndex));</span>
+            <span class="keyword">while</span>(toc&lt;triggerPulsewidth)
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+    sendTrigger(0);
+
+    <span class="comment">%    calllib('inpout32','Out32',decParallelPortNumber,0);</span>
+
+
+    pause(0.1);
+</pre><h2>Reading the trigger data from amplifiers and testing if the received trigger properties are the same as the ones that we sent.<a name="6"></a></h2><pre class="codeinput">    [success,rawData,triggerData]=getAmpsData(amplifierStruct); <span class="comment">% The function to get the data from amplifiers.</span>
+
+
+
+
+
+    diffTriggerLocs=find(diff(triggerData));
+    triggerChangeValues=triggerData(diffTriggerLocs(1:end-1)+1);
+    firstTriggerValue=triggerData(1);
+    lastTriggerValue=triggerData(end);
+
+    uniqueTriggerValues=unique(triggerData);
+    <span class="keyword">if</span>(isempty(find(uniqueTriggerValues==triggerTestValues(1), 1))) <span class="comment">% Checking if the lower 4 bits are working properly</span>
+        lower4bitsOk=0;
+    <span class="keyword">else</span>
+        lower4bitsOk=1;
+    <span class="keyword">end</span>
+
+    <span class="keyword">if</span>(isempty(find(uniqueTriggerValues==triggerTestValues(2), 1))) <span class="comment">% Checking if the higher 4 bits are working properly</span>
+        higher4bitsOk=0;
+    <span class="keyword">else</span>
+        higher4bitsOk=1;
+    <span class="keyword">end</span>
+
+    <span class="keyword">if</span>(firstTriggerValue~=0 || lastTriggerValue~=0) <span class="comment">% First and last received trigger values should be zero</span>
+        errorMsg=<span class="string">'Trigger test failed: Cannot set the trigger to zero.'</span>;
+        success=0;
+        <span class="comment">%logError(errorMsg,0);</span>
+        <span class="keyword">break</span>;
+    <span class="keyword">end</span>
+
+
+    success=0;
+    expectedTriggerValues=repmat(triggerTestValues,numberOfTestIterations,1);
+    <span class="keyword">if</span>(lower4bitsOk &amp;&amp; higher4bitsOk)
+        <span class="keyword">if</span>(length(expectedTriggerValues)~=length(triggerChangeValues)) <span class="comment">% Checking the number of the received triggers</span>
+            errorMsg=<span class="string">'Trigger test failed: Unexpected number of trigger pulses'</span>;
+        <span class="keyword">else</span>
+            <span class="keyword">if</span>(any(expectedTriggerValues~=round(triggerChangeValues))) <span class="comment">% Checking the values of the received triggers</span>
+                errorMsg=<span class="string">'Trigger test failed: Digital I/O cables might be connected in wrong order. Please swap the cables.'</span>;
+            <span class="keyword">else</span>
+                <span class="keyword">if</span>(std(diff(diffTriggerLocs(2:end)))&gt;triggerPulsewidthStdThreshold) <span class="comment">% Checking the pulsewidth of the received triggers</span>
+                    errorMsg=<span class="string">'Trigger test failed: Trigger timing is not accurate.'</span>;
+                <span class="keyword">else</span>
+                    disp(<span class="string">'Trigger test was successful.'</span>);
+                    success=1;
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+    <span class="keyword">elseif</span>(~lower4bitsOk &amp;&amp; higher4bitsOk)
+        errorMsg=<span class="string">'Trigger test failed: First digital I/O cable is not working.'</span>;
+    <span class="keyword">elseif</span>(lower4bitsOk &amp;&amp; ~higher4bitsOk)
+        errorMsg=<span class="string">'Trigger test failed: Second digital I/O cable is not working.'</span>;
+    <span class="keyword">else</span>
+        errorMsg=<span class="string">'Trigger test failed: No triggers are received. Please check the connections.'</span>;
+    <span class="keyword">end</span>
+
+    <span class="keyword">if</span>(success==1)
+        triggerTestContinue=0;
+    <span class="keyword">else</span>
+        disp(errorMsg);
+        tryAgain=input(<span class="string">'Try again? (y/n):'</span>,<span class="string">'s'</span>);
+        <span class="keyword">if</span>(tryAgain==<span class="string">'n'</span>)
+            triggerTestContinue=0;
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+</pre><pre class="codeinput"><span class="keyword">end</span>
+
+unloadlibrary(<span class="string">'inpout32'</span>);
+[success,~,~]=getAmpsData(amplifierStruct);
+stopAmps(amplifierStruct);
+
+<span class="keyword">if</span>(success==0 &amp;&amp; exist(<span class="string">'errorMsg'</span>,<span class="string">'var'</span>))
+    logError(errorMsg,0);
+<span class="keyword">end</span>
+</pre><pre class="codeinput"><span class="keyword">end</span>
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.14<br></p></div><!--
+##### SOURCE BEGIN #####
+%% success=parallelPortTriggerTest(amplifierStruct,recordingFilename,fs)
+%parallelPortTriggerTest(amplifierStruct,recordingFilename,fs) tests the
+% triggers received by the amplifiers. This function uses the inpout
+% library for the communication with the PCI port. The function checks the
+% following properties of the triggers.
+%   * The connection of the higher and the lower 4 bits.
+%   * The number of the triggers sent and received.
+%   * The values of the triggers sent and received.
+%   * The pulse width of the triggers sent and received.
+%   * The values of the first and last triggers sent and received.
+%
+%   The inputs of the function
+%
+%     amplfierStruct - A structure that contains information about the
+%     amplifiers connected to the system.
+%
+%     recordingFilename - A string that contains the directory and the
+%     filename of the file where we save the trigger test.
+%
+%     fs - Sampling frequency.
+%
+%   The outputs of the function
+%
+%      success (0/1) - A flag that show the success of the procedure.
+%%
+
+
+function success=parallelPortTriggerTest(amplifierStruct,recordingFilename,fs,parallelPortIOListinhex)
+%% Setting the properties of the trigger pulses we send to the amplifier
+
+triggerPulsewidth=10/fs;
+numberOfTestIterations=10;
+triggerTestValues=[15;240];
+triggerPulsewidthStdThreshold=1/fs;
+
+%decParallelPortNumber=hex2dec('2020'); % the port number of the PCI port.
+
+%Check the port number of the PCI port under device manager. Once you click
+%on the PCI port under ports in device manager, the port number is the
+%first number under the resources tab.
+
+
+initializeParallelPortTriggerSender(parallelPortIOListinhex)
+
+[success]=startAmps(amplifierStruct,[recordingFilename '_TriggerTest']);
+
+
+triggerTestContinue=1;
+while(triggerTestContinue)
+    pause(0.050);
+    
+    %% Using the inpout library to communicate with the PCI port.
+    for(ii=1:numberOfTestIterations)
+        for(triggerTestIndex=1:length(triggerTestValues))
+            tic;
+            sendTrigger(triggerTestValues(triggerTestIndex));
+            %calllib('inpout32','Out32',decParallelPortNumber,triggerTestValues(triggerTestIndex));
+            while(toc<triggerPulsewidth)
+            end
+        end
+    end
+    sendTrigger(0);
+    
+    %    calllib('inpout32','Out32',decParallelPortNumber,0);
+    
+    
+    pause(0.1);
+    %% Reading the trigger data from amplifiers and testing if the received trigger properties are the same as the ones that we sent.
+    
+    [success,rawData,triggerData]=getAmpsData(amplifierStruct); % The function to get the data from amplifiers.
+    
+    
+    
+    
+    
+    diffTriggerLocs=find(diff(triggerData));
+    triggerChangeValues=triggerData(diffTriggerLocs(1:end-1)+1);
+    firstTriggerValue=triggerData(1);
+    lastTriggerValue=triggerData(end);
+    
+    uniqueTriggerValues=unique(triggerData);
+    if(isempty(find(uniqueTriggerValues==triggerTestValues(1), 1))) % Checking if the lower 4 bits are working properly
+        lower4bitsOk=0;
+    else
+        lower4bitsOk=1;
+    end
+    
+    if(isempty(find(uniqueTriggerValues==triggerTestValues(2), 1))) % Checking if the higher 4 bits are working properly
+        higher4bitsOk=0;
+    else
+        higher4bitsOk=1;
+    end
+    
+    if(firstTriggerValue~=0 || lastTriggerValue~=0) % First and last received trigger values should be zero
+        errorMsg='Trigger test failed: Cannot set the trigger to zero.';
+        success=0;
+        %logError(errorMsg,0);
+        break;
+    end
+    
+    
+    success=0;
+    expectedTriggerValues=repmat(triggerTestValues,numberOfTestIterations,1);
+    if(lower4bitsOk && higher4bitsOk)
+        if(length(expectedTriggerValues)~=length(triggerChangeValues)) % Checking the number of the received triggers
+            errorMsg='Trigger test failed: Unexpected number of trigger pulses';
+        else
+            if(any(expectedTriggerValues~=round(triggerChangeValues))) % Checking the values of the received triggers
+                errorMsg='Trigger test failed: Digital I/O cables might be connected in wrong order. Please swap the cables.';
+            else
+                if(std(diff(diffTriggerLocs(2:end)))>triggerPulsewidthStdThreshold) % Checking the pulsewidth of the received triggers
+                    errorMsg='Trigger test failed: Trigger timing is not accurate.';
+                else
+                    disp('Trigger test was successful.');
+                    success=1;
+                end
+            end
+        end
+    elseif(~lower4bitsOk && higher4bitsOk)
+        errorMsg='Trigger test failed: First digital I/O cable is not working.';
+    elseif(lower4bitsOk && ~higher4bitsOk)
+        errorMsg='Trigger test failed: Second digital I/O cable is not working.';
+    else
+        errorMsg='Trigger test failed: No triggers are received. Please check the connections.';
+    end
+    
+    if(success==1)
+        triggerTestContinue=0;
+    else
+        disp(errorMsg);
+        tryAgain=input('Try again? (y/n):','s');
+        if(tryAgain=='n')
+            triggerTestContinue=0;
+        end
+    end
+end
+
+unloadlibrary('inpout32');
+[success,~,~]=getAmpsData(amplifierStruct);
+stopAmps(amplifierStruct);
+
+if(success==0 && exist('errorMsg','var'))
+    logError(errorMsg,0);
+end
+
+end
+##### SOURCE END #####
+--></body></html>

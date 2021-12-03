@@ -1,0 +1,709 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>[CleanEEG,artifactInfoMat,eyeBlinkFlag]= artifactRemoval(eeg,srate,triggerNdx,artifactFilteringParams,numberOfChannels)</title><meta name="generator" content="MATLAB 7.14"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2013-06-13"><meta name="DC.source" content="artifactRemoval.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+
+  </style></head><body><div class="content"><h1>[CleanEEG,artifactInfoMat,eyeBlinkFlag]= artifactRemoval(eeg,srate,triggerNdx,artifactFilteringParams,numberOfChannels)</h1><!--introduction--><p>artifactRemoval(eeg,srate,triggerNdx,artifactFilteringParams,numberOfChannels) consists of 4 steps for removing Artifacts. In each step Parameters were estimated for various aspects of data in both the EEG time series and in the independent components of the EEG. Outliers form certain threshold (defined in artifactFilteringParams) are detected and removed.</p><p>1. Channel rejection &amp; interpolation section:  In this step we calculate channel related parameters for each channel.  There are two options; one is rejecting outlier channel and leave rest of  process working with reduced number of channels. Second is interpolating  outlier channels with non-contaminated channels using spherical splines  in 10-20 system.</p><p>2. Epoch rejection section:  In this step contaminated all channels epochs are detected. Note that we  do not have any rejection in this step. We just update artifactInfoMat  matrix which shows that which epochs in all channels are contaminated.</p><p>3. Component rejection section:  In this step we first apply pca ...........(?!?!?!)  Then we just eliminate ICs recognized as sources of artifacts and mix  ICs to recover signals again. Note that in this step we do not reject  any part of EEG signals. So, we just have artifact reduced signal and  artifactInfoMat matrix WILL NOT update in this step.</p><p>4. Channels in epochs rejection &amp; interpolation section:  This step is like the first step but just applied on an epoch instead of  whole eeg data input. So, we have interpolation using spherical splines  and updating artifactInfoMat.</p><pre class="language-matlab">This <span class="string">code</span> <span class="string">is</span> <span class="string">based</span> <span class="string">on</span> <span class="string">H.</span> <span class="string">Nolan</span> <span class="string">work</span> <span class="string">and</span> <span class="string">full</span> <span class="string">decription</span> <span class="string">of</span> <span class="string">approach</span> <span class="string">can</span>
+be <span class="string">find</span> <span class="string">in:</span>
+http://www.sciencedirect.com/science/article/pii/S0165027010003894#
+</pre><pre class="language-matlab">The <span class="string">inputs</span> <span class="string">of</span> <span class="string">the</span> <span class="string">function:</span>
+        eeg - a structure <span class="string">for</span> <span class="string">stroing</span> <span class="string">raw</span> <span class="string">data</span> <span class="string">and</span> <span class="string">electrode</span> <span class="string">locations</span>
+        eeg.data-EEG channels(numberOfSamples x numberOfChannels) matrix
+        eeg.electrodes - same as <span class="string">ampChannelList.electrodeLocations</span>
+        eog_chans:   EOG channels (we dont have it yet,so we construct it by ourselves)
+        srate  : sampling rate
+        trigerNdx: Ndx of <span class="string">stimulus</span>
+</pre><pre class="language-matlab">The <span class="string">outputs</span> <span class="string">of</span> <span class="string">the</span> <span class="string">function:</span>
+        cleanEEG - cleaned EEG <span class="string">channels(numberOfSamples x numberOfChannels)</span> <span class="string">matrix</span>
+        artifactInfoMat - binary matrix <span class="string">with</span> <span class="string">the</span> <span class="string">same</span> <span class="string">size</span> <span class="string">as</span> <span class="string">input</span> <span class="string">eeg</span>
+                        -<span class="keyword">for</span> each sample <span class="string">0</span> <span class="string">if</span> <span class="string">good</span>, 1 <span class="keyword">if</span> contaminated
+See <span class="string">also</span> <span class="string">artifactFiltering</span>, hurst_exponent, h_eeg_interp_spl_m, runica
+http://www.sciencedirect.com/science/article/pii/S0165027010003894#
+</pre><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#3">-------------------------------------------------------------------------</a></li><li><a href="#4">------------------------------------------------------------------------</a></li><li><a href="#5">------------------------------------------------------------------------</a></li><li><a href="#6">------------------------------------------------------------------------</a></li><li><a href="#7">------------------------------------------------------------------------</a></li></ul></div><pre class="codeinput"><span class="keyword">function</span> [CleanEEG,artifactInfoMat,eyeBlinkFlag]= artifactRemoval(eeg,srate,triggerNdx,artifactFilteringParams,numberOfChannels,remoteGUI)
+</pre><pre class="codeinput"><span class="comment">% N ==&gt; Number of channels (n indicates a specific channel)(numberOfChannels)</span>
+<span class="comment">% E ==&gt; Number of epochs   (e indicates a specific epoch)</span>
+<span class="comment">% C ==&gt; Number of ICs      (c indicates a specific IC)</span>
+
+initialData=eeg.data;
+artifactInfoMat=zeros(size(initialData,1),numberOfChannels);
+eyeBlinkFlag=0;
+<span class="comment">% build EOG channels:</span>
+Fp1Index=find(strcmpi(eeg.electrodes,<span class="string">'Fp1'</span>));
+Fp2Index=find(strcmpi(eeg.electrodes,<span class="string">'Fp2'</span>));
+Fc1Index=find(strcmpi(eeg.electrodes,<span class="string">'Fc1'</span>));
+Fc2Index=find(strcmpi(eeg.electrodes,<span class="string">'Fc2'</span>));
+<span class="comment">% EOGh1:  Fp1-Fp2</span>
+eog_chans(:,1)=initialData(:,Fp1Index)-initialData(:,Fp2Index);
+<span class="comment">% EOGh2:  Fc1-Fc2</span>
+eog_chans(:,2)=initialData(:,Fc1Index)-initialData(:,Fc2Index);
+<span class="comment">% EOGv1:  Fp1-Fc1</span>
+eog_chans(:,3)=initialData(:,Fp1Index)-initialData(:,Fc1Index);
+<span class="comment">% EOGv2:  Fp2-Fc2</span>
+eog_chans(:,4)=initialData(:,Fp2Index)-initialData(:,Fc2Index);
+</pre><h2>-------------------------------------------------------------------------<a name="3"></a></h2><pre class="codeinput"><span class="comment">%%%%%%%%%%%%%</span>
+<span class="comment">% Filtering %</span>
+<span class="comment">%%%%%%%%%%%%%</span>
+<span class="comment">% filter data using equiripple filters btw 1Hz and 95Hz with a notch</span>
+<span class="comment">% filter at 50 Hz(BW=6 hz)</span>
+</pre><h2>------------------------------------------------------------------------<a name="4"></a></h2><pre class="codeinput"><span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+<span class="comment">% (1)Channel rejection &amp; interpolation section %</span>
+<span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+<span class="comment">%   artifactFilteringParams.trh1=3;</span>
+<span class="comment">%   Parameter 1: the mean correlation coefficient of channel n, where rxn,xm is the Pearson correlation coefficient between channels n and m</span>
+X1=initialData;
+R=corrcoef(X1);
+par1=mean(R);
+Z1 = zscore(par1);
+<span class="comment">%   Parameter 2: variance</span>
+par2 = var(X1);
+<span class="comment">% m12=min(par2)</span>
+Z2 = zscore(par2);
+<span class="comment">%   Parameter 3: the hurst exponent of channel n</span>
+par3=zeros(1,numberOfChannels);
+<span class="keyword">for</span> n=1:numberOfChannels
+    par3(n)= hurst_exponent((X1(:,n))');
+<span class="keyword">end</span>
+Z3 = zscore(par3);
+Out1=find(abs(Z1)&gt;=artifactFilteringParams.trh1);Out2=find(abs(Z2)&gt;=artifactFilteringParams.trh1);Out3=find(abs(Z3)&gt;=artifactFilteringParams.trh1);
+Outlier_Channels=union(union(Out1,Out2),Out3);
+flatChannels=find(par2&lt;=artifactFilteringParams.flatChannelVarianceThr);
+<span class="comment">%%%% channel dropped detection %%%%</span>
+Out1=find(abs(Z1)&gt;=artifactFilteringParams.trh1d);Out2=find(abs(Z2)&gt;=artifactFilteringParams.trh1d);Out3=find(abs(Z3)&gt;=artifactFilteringParams.trh1d);
+Outlier_Channels_dropped=union(union(Out1,Out2),Out3);
+Outlier_Channels_dropped=[flatChannels Outlier_Channels_dropped];
+<span class="keyword">if</span> ~isempty(remoteGUI) &amp;&amp; artifactFilteringParams.channelDropWarning
+    <span class="keyword">if</span> (Outlier_Channels_dropped)
+        remoteGUI.setChannelStatus(Outlier_Channels_dropped(:),0);
+        BCIPacketStruct.HDR.PAUSE=<span class="string">'02'</span>;
+        thisPacket.header=BCIPacketStruct.HDR.PAUSE;
+        thisPacket.data=num2str(Outlier_Channels_dropped);
+        sendBCIPacket(main2GUICommObjectStruct.main2GUICommObject,thisPacket);
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+<span class="comment">%%%%</span>
+eegn.data=X1';
+eegn.electrodes=eeg.electrodes;
+eeg1 = h_eeg_interp_spl_m(eegn,Outlier_Channels);
+X1_interpolated=eeg1.data';
+artifactInfoMat(:,Outlier_Channels)=1;
+<span class="comment">% fprintf('Number of rejected channels: %d\n', length(Outlier_Channels));</span>
+<span class="comment">%  %% ------------------------------------------------------------------------</span>
+<span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+<span class="comment">% (2)Epoch rejection section %</span>
+<span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+<span class="comment">%     artifactFilteringParams.trh2=3;</span>
+X1= X1_interpolated;
+n=0;
+<span class="comment">% epochLengthAlmost=(triggerNdx(2)-triggerNdx(1));</span>
+epochLengthAlmost=70;
+triggerNdxLength=length(triggerNdx);
+<span class="comment">% triggerNdx</span>
+par4=zeros(1,triggerNdxLength);par5=zeros(1,triggerNdxLength);par6=zeros(1,triggerNdxLength);
+<span class="comment">% for i=1:(triggerNdxLength)</span>
+<span class="comment">%     if  i==triggerNdxLength || (triggerNdx(i+1)-triggerNdx(i))&gt;3*epochLengthAlmost</span>
+<span class="comment">%         endofEpoch=triggerNdx(i)+2*epochLengthAlmost;</span>
+<span class="comment">%     else</span>
+<span class="comment">%         endofEpoch=triggerNdx(i+1)-1;</span>
+<span class="comment">%     end</span>
+<span class="keyword">for</span> i=1:(triggerNdxLength)
+    <span class="keyword">if</span> i==triggerNdxLength
+        endofEpoch=size(initialData,1);   <span class="comment">%change later</span>
+    <span class="keyword">elseif</span> (triggerNdx(i+1)-triggerNdx(i))&gt;2*epochLengthAlmost
+        endofEpoch=triggerNdx(i)+2*epochLengthAlmost;
+    <span class="keyword">else</span>
+        endofEpoch=triggerNdx(i+1)-1;
+    <span class="keyword">end</span>
+    e=X1(triggerNdx(i):endofEpoch,:);
+    <span class="comment">%   baseline correction:</span>
+    <span class="comment">%   When you epoch the data, you will be given the option to perform baseline correction.</span>
+    <span class="comment">%   The baseline correction process subtracts the mean prestimulus voltage</span>
+    <span class="comment">%   (or the voltage over some other range that you specify) from the entire</span>
+    <span class="comment">%   waveform for each channel in each epoch. This eliminates any overall</span>
+    <span class="comment">%   voltage offset from the waveform in each epoch.</span>
+    e1=e-(mean(e)'*ones(1,size(e,1)))';
+    maxe=max(e1,[],1);
+    mine=min(e1,[],1);
+    n=n+1;
+    <span class="comment">%   Parameter 4: the amplitude range in epoch e</span>
+    par4(n)=mean(maxe-mine);
+    <span class="comment">%   Parameter 5:The deviation from the channel average in epoch e</span>
+    par5(n)=mean(mean(e1)-mean(X1));
+    <span class="comment">%   Parameter 6: the variance in epoch e</span>
+    par6(n)=mean(var(e1));
+<span class="keyword">end</span>
+Z4= zscore(par4);
+Z5= zscore(par5);
+Z6= zscore(par6);
+Out4=find(abs(Z4)&gt;=artifactFilteringParams.trh2);Out5=find(abs(Z5)&gt;=artifactFilteringParams.trh2);Out6=find(abs(Z6)&gt;=artifactFilteringParams.trh2);
+Outlier_Epochs=union(union(Out4,Out5),Out6);
+<span class="keyword">for</span> j=Outlier_Epochs;
+    <span class="comment">%     if j==triggerNdxLength || (triggerNdx(j+1)-triggerNdx(j))&gt;2*epochLengthAlmost</span>
+    <span class="keyword">if</span> j==triggerNdxLength
+        endofEpoch=size(initialData,1);   <span class="comment">%change later</span>
+    <span class="keyword">elseif</span> j==(triggerNdx(j+1)-triggerNdx(j))&gt;2*epochLengthAlmost
+        endofEpoch=triggerNdx(j)+2*epochLengthAlmost;
+    <span class="keyword">else</span>
+        endofEpoch=triggerNdx(j+1)-1;
+    <span class="keyword">end</span>
+    <span class="comment">%        X3_modified((k-1)*epoch_length+1:k*epoch_length,:)=epoch1.data';</span>
+    <span class="comment">%        %warning: change this ,we dont wanna reject anything ,we are gonna</span>
+    <span class="comment">%        mark them in artifactbufferinfo</span>
+    <span class="comment">%     X1(triggerNdx(j):endofEpoch,:)=[];     %%%% COMMENT or not?</span>
+    artifactInfoMat(triggerNdx(j):endofEpoch,:)=1;
+<span class="keyword">end</span>
+<span class="comment">%     E_updated=E-length(Outlier_Epochs);</span>
+X2_modified=X1;
+<span class="comment">% if isempty(Outlier_Epochs)</span>
+<span class="comment">%     CleanEEG.state=0;  % should be rejected sequences has the state 1</span>
+<span class="comment">% else</span>
+<span class="comment">%     CleanEEG.state=1;</span>
+<span class="comment">% end</span>
+<span class="comment">% fprintf('Number of rejected epochs: %d\n', length(Outlier_Epochs));</span>
+</pre><h2>------------------------------------------------------------------------<a name="5"></a></h2><pre class="codeinput"><span class="comment">%%%%%%%%%%%%%%%</span>
+<span class="comment">% (3.1)Do ICA %</span>
+<span class="comment">%%%%%%%%%%%%%%%</span>
+<span class="comment">% Ninterpolated=length(Outlier_Channels);</span>
+<span class="comment">% k=25; L=size(X2_modified,1);</span>
+<span class="comment">% Cpca=min(floor(sqrt(L/k)),numberOfChannels-Ninterpolated);</span>
+<span class="comment">%     %   DO PCA</span>
+<span class="comment">% %   [M,N] = size(data);</span>
+<span class="comment">% %   mn = mean(data,2);</span>
+<span class="comment">%     mn = mean(X2_modified',2);</span>
+<span class="comment">%     data3=data2-(mean(data2)'*ones(1,size(data2,1)))';</span>
+X2_modified=X2_modified-(mean(X2_modified)'*ones(1,size(X2_modified,1)))';
+<span class="comment">%     X2_modified = (X2_modified' - repmat(mn,1,size(X1',2)))';</span>
+<span class="comment">%     Y = X2_modified / sqrt(size(X2_modified',2)-1);</span>
+<span class="comment">%     [u,S,PC] = svd(Y);</span>
+<span class="comment">% %   S = diag(S);</span>
+<span class="comment">% %   V = S .* S;</span>
+<span class="comment">%     X3_PCA = PC' * X2_modified';</span>
+<span class="comment">%     X30=X3_PCA(1:Cpca,:)';</span>
+<span class="comment">%     X3=[X30 eog_chans(1:size(X30,1),:)];</span>
+<span class="comment">% ------------------------------------Whitening-----------------------------------------------------------------------------------</span>
+X3=X2_modified;
+<span class="comment">%     [dim, sample]=size(X3');</span>
+<span class="comment">%     X31 = X3' - mean(X3)' * ones( 1, sample );</span>
+<span class="comment">%     C=cov(X31');</span>
+<span class="comment">% %     [E1, D] = eig (C);</span>
+<span class="comment">%     [E1, D,~] = svd (C);</span>
+<span class="comment">%     V =(inv (sqrt (D))) * E1';    % has conflict in some sources and book</span>
+<span class="comment">%     Z = V * X31;</span>
+<span class="comment">% %   figure, plot(Z(1,:),Z(2,:),'.'); title('first two whitened mixed signal');axis equal;</span>
+<span class="comment">%     % ------------------------------------------------------------------------------</span>
+<span class="comment">% SFA</span>
+<span class="comment">% Y = X3(1:end-1,:)-X3(2 : end,:);</span>
+<span class="comment">% [U,V,W,C1,S] = gsvd(X3,Y,0);</span>
+<span class="comment">% extractedSources=U;</span>
+<span class="comment">% S=extractedSources;</span>
+<span class="comment">% disp('sfa')</span>
+<span class="comment">% % ICA</span>
+[weights,sphere] = runica(X3',<span class="string">'verbose'</span>,<span class="string">'off'</span>);
+unmixing_matrix = weights*sphere;
+S=unmixing_matrix*X3';
+S=S';
+<span class="comment">% subplot(15,1,1);plot(S(:,1));subplot(15,1,2);plot(S(:,2));subplot(15,1,3);plot(S(:,3));</span>
+<span class="comment">% subplot(15,1,4);plot(S(:,4));subplot(15,1,5);plot(S(:,5));subplot(15,1,6);plot(S(:,6));subplot(15,1,7);plot(S(:,7));subplot(15,1,8);plot(S(:,8));</span>
+<span class="comment">% subplot(15,1,9);plot(S(:,9));subplot(15,1,10);plot(S(:,10));subplot(15,1,11);plot(S(:,11));subplot(15,1,12);plot(S(:,12));subplot(15,1,13);plot(S(:,13));</span>
+<span class="comment">% subplot(15,1,14);plot(S(:,14));subplot(15,1,15);plot(S(:,15));</span>
+<span class="comment">% figure,</span>
+<span class="comment">% subplot(15,1,1);plot(X3(:,1));subplot(15,1,2);plot(X3(:,2));subplot(15,1,3);plot(X3(:,3));</span>
+<span class="comment">% subplot(15,1,4);plot(X3(:,4));subplot(15,1,5);plot(X3(:,5));subplot(15,1,6);plot(X3(:,6));subplot(15,1,7);plot(X3(:,7));subplot(15,1,8);plot(X3(:,8));</span>
+<span class="comment">% subplot(15,1,9);plot(X3(:,9));subplot(15,1,10);plot(X3(:,10));subplot(15,1,11);plot(X3(:,11));subplot(15,1,12);plot(X3(:,12));subplot(15,1,13);plot(X3(:,13));</span>
+<span class="comment">% subplot(15,1,14);plot(X3(:,14));subplot(15,1,15);plot(X3(:,15));</span>
+
+<span class="comment">%</span>
+</pre><h2>------------------------------------------------------------------------<a name="6"></a></h2><pre class="codeinput"><span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+<span class="comment">% (3.2)Component rejection section %</span>
+<span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+<span class="comment">%     artifactFilteringParams.trh3=3;</span>
+<span class="comment">%   Parameter 8:  kurtosis of the spatial information in component c</span>
+par8= kurtosis(S);
+C=size(S,2);
+par7=zeros(1,C); <span class="comment">% par9=zeros(1,C);</span>
+par10=zeros(1,C);par11=zeros(1,C);
+<span class="keyword">for</span> c=1:C
+    <span class="comment">%   Parameter 7:  the maximum of the absolute correlation coefficient between component c time-course and EOG channels</span>
+    f=zeros(1,size(eog_chans,2));
+    <span class="keyword">for</span> v=1:size(eog_chans,2)
+        cc= corrcoef(eog_chans(1:size(S,1),v),S(:,c));
+        f(v)=cc(1,2);
+    <span class="keyword">end</span>
+    par7(c)=max(abs(f(v)));
+    <span class="comment">%   Parameter 9: the mean slope of the power spectrum of the component c time-course, between the band edges of the low-pass filter band</span>
+    <span class="comment">%   [Pxx,f] = pwelch(x,window,noverlap,nfft,fs); If you specify window as</span>
+    <span class="comment">%   the empty vector [], then the signal data is divided into eight segments, and a Hamming window is used on each one.;</span>
+    <span class="comment">%   If you specify noverlap as the empty vector [], then pwelch determines the segments of x so that there is 50% overlap (default)</span>
+    <span class="comment">%     [Pxx(:,c),freqs] = pwelch((S(:,c))',[],[],srate,srate);</span>
+    <span class="comment">%      [Pxx,freqs] = pwelch((S(:,c))',[],[],srate,srate);</span>
+    <span class="comment">%     par9(c) = mean(diff(10*log10(Pxx(find(freqs&gt;=artifactFilteringParams.lpf1,1):find(freqs&lt;=artifactFilteringParams.lpf2,1,'last'),c))));</span>
+    <span class="comment">%     par9(c) = mean(diff(10*log10(Pxx(find(freqs&gt;=artifactFilteringParams.lpf1,1):find(freqs&lt;=artifactFilteringParams.lpf2)))));</span>
+    <span class="comment">%   srate =&gt; sampling rate</span>
+    <span class="comment">%   Parameter 10: Hxct  , the Hurst exponent of component c time course</span>
+    par10(c)= hurst_exponent((S(:,c))');
+    <span class="comment">%   Parameter 11: the median slope of the component c time-course</span>
+    par11(c)= median(diff((S(:,c))'));
+    <span class="comment">%     par11(c)= mean(abs(diff((S(:,c))')));</span>
+<span class="keyword">end</span>
+Z7 = zscore(par7);
+Z8 = zscore(par8);
+<span class="comment">% Z9 = zscore(par9);</span>
+Z10 = zscore(par10);
+Z11 = zscore(par11);
+Out7=find(abs(Z7)&gt;=artifactFilteringParams.trh3);Out7eyeBlink=find(abs(Z7)&gt;=artifactFilteringParams.trh3eyeBlinkDetector);
+Out8=find(abs(Z8)&gt;=artifactFilteringParams.trh3);
+Out9=[];<span class="comment">% Out9=find(abs(Z9)&gt;=artifactFilteringParams.trh3);</span>
+Out10=find(abs(Z10)&gt;=artifactFilteringParams.trh3);Out11=find(abs(Z11)&gt;=artifactFilteringParams.trh3);
+Outlier_ICs=union(union(union(Out7,Out8),union(Out9,Out10)),Out11);
+<span class="keyword">if</span> Out7eyeBlink
+    eyeBlinkFlag=1;
+<span class="keyword">end</span>
+S(:,Out7)=0; S(:,Out8)=0; <span class="comment">%S(:,out9)=0;</span>
+S(:,Out10)=0; S(:,Out11)=0;
+<span class="comment">% fprintf('Number of rejected ICs: %d\n', length(Outlier_ICs));</span>
+
+<span class="comment">% SFA</span>
+<span class="comment">% X3_modified=S*C1*W';</span>
+X3_modified=(unmixing_matrix\S')';
+<span class="comment">%   X3_modified=X3_modified./(ones(size(X3_modified,1),size(X3_modified,2))*(mean(max(X3_modified))./mean(max(X2_modified))));</span>
+</pre><h2>------------------------------------------------------------------------<a name="7"></a></h2><pre class="codeinput"><span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+<span class="comment">% (4)Channels in epochs rejection &amp; interpolation section %</span>
+<span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+<span class="comment">% for i=1:(triggerNdxLength)</span>
+<span class="comment">%     if i==triggerNdxLength || (triggerNdx(i+1)-triggerNdx(i))&gt;3*epochLengthAlmost</span>
+<span class="comment">%         endofEpoch=triggerNdx(i)+2*epochLengthAlmost;</span>
+<span class="comment">%     else</span>
+<span class="comment">%         endofEpoch=triggerNdx(i+1)-1;</span>
+<span class="comment">%     end</span>
+<span class="keyword">for</span> i=1:(triggerNdxLength-1)
+    <span class="keyword">if</span>  (triggerNdx(i+1)-triggerNdx(i))&gt;2*epochLengthAlmost
+        endofEpoch=triggerNdx(i)+2*epochLengthAlmost;
+    <span class="keyword">else</span>
+        endofEpoch=triggerNdx(i+1)-1;
+    <span class="keyword">end</span>
+
+    e=X3_modified(triggerNdx(i):endofEpoch,:);
+    <span class="comment">%        for i=0:epoch_length:(E_updated-1)*epoch_length  %note to change E_updated</span>
+    <span class="comment">%            e=Y4(i+1:i+epoch_length);</span>
+    maxe=max(e);
+    mine=min(e);
+    <span class="comment">%         j=j+1;</span>
+    <span class="comment">%   Parameter 12:  the variance of channel n in epoch e</span>
+    par12=var(e);
+    <span class="comment">%   Parameter 13: the median slope of the channel n in epoch e</span>
+    par13=median(diff(e));
+    <span class="comment">%   Parameter 14: the amplitude range of channel n in epoch e</span>
+    par14=maxe-mine;
+    <span class="comment">%   Parameter 15: the deviation from the channel average of channel n in epoch e</span>
+    par15=(mean(e)-mean(X3_modified));   <span class="comment">%%CHECK AGAIN</span>
+    Z12 = zscore(par12);Z13 = zscore(par13);Z14 = zscore(par14);Z15 = zscore(par15);
+    Out12=find(abs(Z12)&gt;=artifactFilteringParams.trh4);Out13=find(abs(Z13)&gt;=artifactFilteringParams.trh4);Out14=find(abs(Z14)&gt;=artifactFilteringParams.trh4);Out15=find(abs(Z15)&gt;=artifactFilteringParams.trh4);
+    Outlier_ChannelsWithinEpochs=union(union(Out12,Out13),union(Out14,Out15));
+    artifactInfoMat(triggerNdx(i):endofEpoch,Outlier_ChannelsWithinEpochs)=1;
+    epoch.data=e';
+    epoch.electrodes=eeg.electrodes;
+    epoch1 = h_eeg_interp_spl_m(epoch,Outlier_ChannelsWithinEpochs);
+    X3_modified(triggerNdx(i):endofEpoch,:)=epoch1.data';
+<span class="keyword">end</span>
+CleanEEG=real(X3_modified);
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.14<br></p></div><!--
+##### SOURCE BEGIN #####
+%% [CleanEEG,artifactInfoMat,eyeBlinkFlag]= artifactRemoval(eeg,srate,triggerNdx,artifactFilteringParams,numberOfChannels)
+% artifactRemoval(eeg,srate,triggerNdx,artifactFilteringParams,numberOfChannels)
+% consists of 4 steps for removing Artifacts. In each step Parameters were
+% estimated for various aspects of data in both the EEG time series and in
+% the independent components of the EEG. Outliers form certain threshold
+% (defined in artifactFilteringParams) are detected and removed.
+%
+% 1. Channel rejection & interpolation section:
+%  In this step we calculate channel related parameters for each channel.
+%  There are two options; one is rejecting outlier channel and leave rest of
+%  process working with reduced number of channels. Second is interpolating
+%  outlier channels with non-contaminated channels using spherical splines
+%  in 10-20 system.
+%
+% 2. Epoch rejection section:
+%  In this step contaminated all channels epochs are detected. Note that we
+%  do not have any rejection in this step. We just update artifactInfoMat
+%  matrix which shows that which epochs in all channels are contaminated.
+%
+% 3. Component rejection section:
+%  In this step we first apply pca ...........(?!?!?!)
+%  Then we just eliminate ICs recognized as sources of artifacts and mix
+%  ICs to recover signals again. Note that in this step we do not reject
+%  any part of EEG signals. So, we just have artifact reduced signal and
+%  artifactInfoMat matrix WILL NOT update in this step.
+%
+% 4. Channels in epochs rejection & interpolation section:
+%  This step is like the first step but just applied on an epoch instead of
+%  whole eeg data input. So, we have interpolation using spherical splines
+%  and updating artifactInfoMat.
+%
+%   This code is based on H. Nolan work and full decription of approach can
+%   be find in:
+%   http://www.sciencedirect.com/science/article/pii/S0165027010003894#
+%
+%
+%   The inputs of the function:
+%           eeg - a structure for stroing raw data and electrode locations
+%           eeg.data-EEG channels(numberOfSamples x numberOfChannels) matrix
+%           eeg.electrodes - same as ampChannelList.electrodeLocations
+%           eog_chans:   EOG channels (we dont have it yet,so we construct it by ourselves)
+%           srate  : sampling rate
+%           trigerNdx: Ndx of stimulus
+%
+%   The outputs of the function:
+%           cleanEEG - cleaned EEG channels(numberOfSamples x numberOfChannels) matrix
+%           artifactInfoMat - binary matrix with the same size as input eeg
+%                           -for each sample 0 if good, 1 if contaminated
+%   See also artifactFiltering, hurst_exponent, h_eeg_interp_spl_m, runica
+%   http://www.sciencedirect.com/science/article/pii/S0165027010003894#
+%%
+function [CleanEEG,artifactInfoMat,eyeBlinkFlag]= artifactRemoval(eeg,srate,triggerNdx,artifactFilteringParams,numberOfChannels,remoteGUI)
+% N ==> Number of channels (n indicates a specific channel)(numberOfChannels)
+% E ==> Number of epochs   (e indicates a specific epoch)
+% C ==> Number of ICs      (c indicates a specific IC)
+
+initialData=eeg.data;
+artifactInfoMat=zeros(size(initialData,1),numberOfChannels);
+eyeBlinkFlag=0;
+% build EOG channels:
+Fp1Index=find(strcmpi(eeg.electrodes,'Fp1'));
+Fp2Index=find(strcmpi(eeg.electrodes,'Fp2'));
+Fc1Index=find(strcmpi(eeg.electrodes,'Fc1'));
+Fc2Index=find(strcmpi(eeg.electrodes,'Fc2'));
+% EOGh1:  Fp1-Fp2
+eog_chans(:,1)=initialData(:,Fp1Index)-initialData(:,Fp2Index);
+% EOGh2:  Fc1-Fc2
+eog_chans(:,2)=initialData(:,Fc1Index)-initialData(:,Fc2Index);
+% EOGv1:  Fp1-Fc1
+eog_chans(:,3)=initialData(:,Fp1Index)-initialData(:,Fc1Index);
+% EOGv2:  Fp2-Fc2
+eog_chans(:,4)=initialData(:,Fp2Index)-initialData(:,Fc2Index);
+
+%% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-
+%%%%%%%%%%%%%
+% Filtering %
+%%%%%%%%%%%%%
+% filter data using equiripple filters btw 1Hz and 95Hz with a notch
+% filter at 50 Hz(BW=6 hz)
+
+%% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% (1)Channel rejection & interpolation section %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   artifactFilteringParams.trh1=3;
+%   Parameter 1: the mean correlation coefficient of channel n, where rxn,xm is the Pearson correlation coefficient between channels n and m
+X1=initialData;
+R=corrcoef(X1);
+par1=mean(R);
+Z1 = zscore(par1);
+%   Parameter 2: variance
+par2 = var(X1);
+% m12=min(par2)
+Z2 = zscore(par2);
+%   Parameter 3: the hurst exponent of channel n
+par3=zeros(1,numberOfChannels);
+for n=1:numberOfChannels
+    par3(n)= hurst_exponent((X1(:,n))');
+end
+Z3 = zscore(par3);
+Out1=find(abs(Z1)>=artifactFilteringParams.trh1);Out2=find(abs(Z2)>=artifactFilteringParams.trh1);Out3=find(abs(Z3)>=artifactFilteringParams.trh1);
+Outlier_Channels=union(union(Out1,Out2),Out3);
+flatChannels=find(par2<=artifactFilteringParams.flatChannelVarianceThr);
+%%%% channel dropped detection %%%%
+Out1=find(abs(Z1)>=artifactFilteringParams.trh1d);Out2=find(abs(Z2)>=artifactFilteringParams.trh1d);Out3=find(abs(Z3)>=artifactFilteringParams.trh1d);
+Outlier_Channels_dropped=union(union(Out1,Out2),Out3);
+Outlier_Channels_dropped=[flatChannels Outlier_Channels_dropped];
+if ~isempty(remoteGUI) && artifactFilteringParams.channelDropWarning
+    if (Outlier_Channels_dropped)
+        remoteGUI.setChannelStatus(Outlier_Channels_dropped(:),0);
+        BCIPacketStruct.HDR.PAUSE='02';
+        thisPacket.header=BCIPacketStruct.HDR.PAUSE;
+        thisPacket.data=num2str(Outlier_Channels_dropped);
+        sendBCIPacket(main2GUICommObjectStruct.main2GUICommObject,thisPacket);
+    end
+end
+%%%%
+eegn.data=X1';
+eegn.electrodes=eeg.electrodes;
+eeg1 = h_eeg_interp_spl_m(eegn,Outlier_Channels);
+X1_interpolated=eeg1.data';
+artifactInfoMat(:,Outlier_Channels)=1;
+% fprintf('Number of rejected channels: %d\n', length(Outlier_Channels));
+%  %% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% (2)Epoch rejection section %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%     artifactFilteringParams.trh2=3;
+X1= X1_interpolated;
+n=0;
+% epochLengthAlmost=(triggerNdx(2)-triggerNdx(1));
+epochLengthAlmost=70;
+triggerNdxLength=length(triggerNdx);
+% triggerNdx
+par4=zeros(1,triggerNdxLength);par5=zeros(1,triggerNdxLength);par6=zeros(1,triggerNdxLength);
+% for i=1:(triggerNdxLength)
+%     if  i==triggerNdxLength || (triggerNdx(i+1)-triggerNdx(i))>3*epochLengthAlmost
+%         endofEpoch=triggerNdx(i)+2*epochLengthAlmost;
+%     else
+%         endofEpoch=triggerNdx(i+1)-1;
+%     end
+for i=1:(triggerNdxLength)
+    if i==triggerNdxLength
+        endofEpoch=size(initialData,1);   %change later
+    elseif (triggerNdx(i+1)-triggerNdx(i))>2*epochLengthAlmost
+        endofEpoch=triggerNdx(i)+2*epochLengthAlmost;
+    else
+        endofEpoch=triggerNdx(i+1)-1;
+    end
+    e=X1(triggerNdx(i):endofEpoch,:);
+    %   baseline correction:
+    %   When you epoch the data, you will be given the option to perform baseline correction.
+    %   The baseline correction process subtracts the mean prestimulus voltage
+    %   (or the voltage over some other range that you specify) from the entire
+    %   waveform for each channel in each epoch. This eliminates any overall
+    %   voltage offset from the waveform in each epoch.
+    e1=e-(mean(e)'*ones(1,size(e,1)))';
+    maxe=max(e1,[],1);
+    mine=min(e1,[],1);
+    n=n+1;
+    %   Parameter 4: the amplitude range in epoch e
+    par4(n)=mean(maxe-mine);
+    %   Parameter 5:The deviation from the channel average in epoch e
+    par5(n)=mean(mean(e1)-mean(X1));
+    %   Parameter 6: the variance in epoch e
+    par6(n)=mean(var(e1));
+end
+Z4= zscore(par4);
+Z5= zscore(par5);
+Z6= zscore(par6);
+Out4=find(abs(Z4)>=artifactFilteringParams.trh2);Out5=find(abs(Z5)>=artifactFilteringParams.trh2);Out6=find(abs(Z6)>=artifactFilteringParams.trh2);
+Outlier_Epochs=union(union(Out4,Out5),Out6);
+for j=Outlier_Epochs;
+    %     if j==triggerNdxLength || (triggerNdx(j+1)-triggerNdx(j))>2*epochLengthAlmost
+    if j==triggerNdxLength
+        endofEpoch=size(initialData,1);   %change later
+    elseif j==(triggerNdx(j+1)-triggerNdx(j))>2*epochLengthAlmost
+        endofEpoch=triggerNdx(j)+2*epochLengthAlmost;
+    else
+        endofEpoch=triggerNdx(j+1)-1;
+    end
+    %        X3_modified((k-1)*epoch_length+1:k*epoch_length,:)=epoch1.data';
+    %        %warning: change this ,we dont wanna reject anything ,we are gonna
+    %        mark them in artifactbufferinfo
+    %     X1(triggerNdx(j):endofEpoch,:)=[];     %%%% COMMENT or not?
+    artifactInfoMat(triggerNdx(j):endofEpoch,:)=1;
+end
+%     E_updated=E-length(Outlier_Epochs);
+X2_modified=X1;
+% if isempty(Outlier_Epochs)
+%     CleanEEG.state=0;  % should be rejected sequences has the state 1
+% else
+%     CleanEEG.state=1;
+% end
+% fprintf('Number of rejected epochs: %d\n', length(Outlier_Epochs));
+%% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+%%%%%%%%%%%%%%%
+% (3.1)Do ICA %
+%%%%%%%%%%%%%%%
+% Ninterpolated=length(Outlier_Channels);
+% k=25; L=size(X2_modified,1);
+% Cpca=min(floor(sqrt(L/k)),numberOfChannels-Ninterpolated);
+%     %   DO PCA
+% %   [M,N] = size(data);
+% %   mn = mean(data,2);
+%     mn = mean(X2_modified',2);
+%     data3=data2-(mean(data2)'*ones(1,size(data2,1)))';
+X2_modified=X2_modified-(mean(X2_modified)'*ones(1,size(X2_modified,1)))';
+%     X2_modified = (X2_modified' - repmat(mn,1,size(X1',2)))';
+%     Y = X2_modified / sqrt(size(X2_modified',2)-1);
+%     [u,S,PC] = svd(Y);
+% %   S = diag(S);
+% %   V = S .* S;
+%     X3_PCA = PC' * X2_modified';
+%     X30=X3_PCA(1:Cpca,:)';
+%     X3=[X30 eog_chans(1:size(X30,1),:)];
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHWhiteningREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-
+X3=X2_modified;
+%     [dim, sample]=size(X3');
+%     X31 = X3' - mean(X3)' * ones( 1, sample );
+%     C=cov(X31');
+% %     [E1, D] = eig (C);
+%     [E1, D,~] = svd (C);
+%     V =(inv (sqrt (D))) * E1';    % has conflict in some sources and book
+%     Z = V * X31;
+% %   figure, plot(Z(1,:),Z(2,:),'.'); title('first two whitened mixed signal');axis equal;
+%     % REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+% SFA
+% Y = X3(1:end-1,:)-X3(2 : end,:);
+% [U,V,W,C1,S] = gsvd(X3,Y,0);
+% extractedSources=U;
+% S=extractedSources;
+% disp('sfa')
+% % ICA
+[weights,sphere] = runica(X3','verbose','off');
+unmixing_matrix = weights*sphere;
+S=unmixing_matrix*X3';
+S=S';
+% subplot(15,1,1);plot(S(:,1));subplot(15,1,2);plot(S(:,2));subplot(15,1,3);plot(S(:,3));
+% subplot(15,1,4);plot(S(:,4));subplot(15,1,5);plot(S(:,5));subplot(15,1,6);plot(S(:,6));subplot(15,1,7);plot(S(:,7));subplot(15,1,8);plot(S(:,8));
+% subplot(15,1,9);plot(S(:,9));subplot(15,1,10);plot(S(:,10));subplot(15,1,11);plot(S(:,11));subplot(15,1,12);plot(S(:,12));subplot(15,1,13);plot(S(:,13));
+% subplot(15,1,14);plot(S(:,14));subplot(15,1,15);plot(S(:,15));
+% figure,
+% subplot(15,1,1);plot(X3(:,1));subplot(15,1,2);plot(X3(:,2));subplot(15,1,3);plot(X3(:,3));
+% subplot(15,1,4);plot(X3(:,4));subplot(15,1,5);plot(X3(:,5));subplot(15,1,6);plot(X3(:,6));subplot(15,1,7);plot(X3(:,7));subplot(15,1,8);plot(X3(:,8));
+% subplot(15,1,9);plot(X3(:,9));subplot(15,1,10);plot(X3(:,10));subplot(15,1,11);plot(X3(:,11));subplot(15,1,12);plot(X3(:,12));subplot(15,1,13);plot(X3(:,13));
+% subplot(15,1,14);plot(X3(:,14));subplot(15,1,15);plot(X3(:,15));
+
+%
+%% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% (3.2)Component rejection section %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%     artifactFilteringParams.trh3=3;
+%   Parameter 8:  kurtosis of the spatial information in component c
+par8= kurtosis(S);
+C=size(S,2);
+par7=zeros(1,C); % par9=zeros(1,C);
+par10=zeros(1,C);par11=zeros(1,C);
+for c=1:C
+    %   Parameter 7:  the maximum of the absolute correlation coefficient between component c time-course and EOG channels
+    f=zeros(1,size(eog_chans,2));
+    for v=1:size(eog_chans,2)
+        cc= corrcoef(eog_chans(1:size(S,1),v),S(:,c));
+        f(v)=cc(1,2);
+    end
+    par7(c)=max(abs(f(v)));
+    %   Parameter 9: the mean slope of the power spectrum of the component c time-course, between the band edges of the low-pass filter band
+    %   [Pxx,f] = pwelch(x,window,noverlap,nfft,fs); If you specify window as
+    %   the empty vector [], then the signal data is divided into eight segments, and a Hamming window is used on each one.;
+    %   If you specify noverlap as the empty vector [], then pwelch determines the segments of x so that there is 50% overlap (default)
+    %     [Pxx(:,c),freqs] = pwelch((S(:,c))',[],[],srate,srate);
+    %      [Pxx,freqs] = pwelch((S(:,c))',[],[],srate,srate);
+    %     par9(c) = mean(diff(10*log10(Pxx(find(freqs>=artifactFilteringParams.lpf1,1):find(freqs<=artifactFilteringParams.lpf2,1,'last'),c))));
+    %     par9(c) = mean(diff(10*log10(Pxx(find(freqs>=artifactFilteringParams.lpf1,1):find(freqs<=artifactFilteringParams.lpf2)))));
+    %   srate => sampling rate
+    %   Parameter 10: Hxct  , the Hurst exponent of component c time course
+    par10(c)= hurst_exponent((S(:,c))');
+    %   Parameter 11: the median slope of the component c time-course
+    par11(c)= median(diff((S(:,c))'));
+    %     par11(c)= mean(abs(diff((S(:,c))')));
+end
+Z7 = zscore(par7);
+Z8 = zscore(par8);
+% Z9 = zscore(par9);
+Z10 = zscore(par10);
+Z11 = zscore(par11);
+Out7=find(abs(Z7)>=artifactFilteringParams.trh3);Out7eyeBlink=find(abs(Z7)>=artifactFilteringParams.trh3eyeBlinkDetector);
+Out8=find(abs(Z8)>=artifactFilteringParams.trh3);
+Out9=[];% Out9=find(abs(Z9)>=artifactFilteringParams.trh3);
+Out10=find(abs(Z10)>=artifactFilteringParams.trh3);Out11=find(abs(Z11)>=artifactFilteringParams.trh3);
+Outlier_ICs=union(union(union(Out7,Out8),union(Out9,Out10)),Out11);
+if Out7eyeBlink
+    eyeBlinkFlag=1;
+end
+S(:,Out7)=0; S(:,Out8)=0; %S(:,out9)=0;
+S(:,Out10)=0; S(:,Out11)=0;
+% fprintf('Number of rejected ICs: %d\n', length(Outlier_ICs));
+
+% SFA
+% X3_modified=S*C1*W';
+X3_modified=(unmixing_matrix\S')';
+%   X3_modified=X3_modified./(ones(size(X3_modified,1),size(X3_modified,2))*(mean(max(X3_modified))./mean(max(X2_modified))));
+%% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% (4)Channels in epochs rejection & interpolation section %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% for i=1:(triggerNdxLength)
+%     if i==triggerNdxLength || (triggerNdx(i+1)-triggerNdx(i))>3*epochLengthAlmost
+%         endofEpoch=triggerNdx(i)+2*epochLengthAlmost;
+%     else
+%         endofEpoch=triggerNdx(i+1)-1;
+%     end
+for i=1:(triggerNdxLength-1)
+    if  (triggerNdx(i+1)-triggerNdx(i))>2*epochLengthAlmost
+        endofEpoch=triggerNdx(i)+2*epochLengthAlmost;
+    else
+        endofEpoch=triggerNdx(i+1)-1;
+    end
+    
+    e=X3_modified(triggerNdx(i):endofEpoch,:);
+    %        for i=0:epoch_length:(E_updated-1)*epoch_length  %note to change E_updated
+    %            e=Y4(i+1:i+epoch_length);
+    maxe=max(e);
+    mine=min(e);
+    %         j=j+1;
+    %   Parameter 12:  the variance of channel n in epoch e
+    par12=var(e);
+    %   Parameter 13: the median slope of the channel n in epoch e
+    par13=median(diff(e));
+    %   Parameter 14: the amplitude range of channel n in epoch e
+    par14=maxe-mine;
+    %   Parameter 15: the deviation from the channel average of channel n in epoch e
+    par15=(mean(e)-mean(X3_modified));   %%CHECK AGAIN
+    Z12 = zscore(par12);Z13 = zscore(par13);Z14 = zscore(par14);Z15 = zscore(par15);
+    Out12=find(abs(Z12)>=artifactFilteringParams.trh4);Out13=find(abs(Z13)>=artifactFilteringParams.trh4);Out14=find(abs(Z14)>=artifactFilteringParams.trh4);Out15=find(abs(Z15)>=artifactFilteringParams.trh4);
+    Outlier_ChannelsWithinEpochs=union(union(Out12,Out13),union(Out14,Out15));
+    artifactInfoMat(triggerNdx(i):endofEpoch,Outlier_ChannelsWithinEpochs)=1;
+    epoch.data=e';
+    epoch.electrodes=eeg.electrodes;
+    epoch1 = h_eeg_interp_spl_m(epoch,Outlier_ChannelsWithinEpochs);
+    X3_modified(triggerNdx(i):endofEpoch,:)=epoch1.data';
+end
+CleanEEG=real(X3_modified);
+
+##### SOURCE END #####
+--></body></html>

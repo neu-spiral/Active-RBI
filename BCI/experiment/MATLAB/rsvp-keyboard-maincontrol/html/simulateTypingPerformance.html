@@ -1,0 +1,282 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>simulationResults=simulateTypingPerformance(scoreStruct,imageStructs,sessionType,RSVPKeyboardParams)</title><meta name="generator" content="MATLAB 7.14"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2013-06-13"><meta name="DC.source" content="simulateTypingPerformance.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+
+  </style></head><body><div class="content"><h1>simulationResults=simulateTypingPerformance(scoreStruct,imageStructs,sessionType,RSVPKeyboardParams)</h1><!--introduction--><p>Applies simulation of the copy task to estimate the typing performance. It uses the scores obtained after cross validation and their KDEs to sample new score samples for simulation. In principle a copy phrase task is performed using the random sampling of scores replacing the EEG trials.</p><pre class="language-matlab">Inputs:
+    scoreStruct - structure containing <span class="string">the</span> <span class="string">KDE</span> <span class="string">objects</span> <span class="string">to</span> <span class="string">be</span> <span class="string">used</span> <span class="string">in</span> <span class="string">the</span> <span class="string">estimation</span> <span class="string">of</span> <span class="string">conditional</span>
+    probability <span class="string">densities</span> <span class="string">and</span> <span class="string">probability</span> <span class="string">thresholds</span> <span class="string">for</span> <span class="string">the</span> <span class="string">scores.</span>
+</pre><pre>         scoreStruct.conditionalpdf4targetKDE - kde1d object constructed using the scores
+         corresponding to the target symbols</pre><pre>         scoreStruct.conditionalpdf4nontargetKDE - kde1d object constructed using the scores
+         corresponding to the target symbols</pre><pre>         scoreStruct.probThresholdTarget - probability threshold on target KDE to reject a trial as an outlier</pre><pre>         scoreStruct.probThresholdNontarget - probability threshold on nontarget KDE to reject a trial as an outlier</pre><pre>     symbolStructArray - a struct vector containing list of symbols or images used in
+     presentations. Loaded using xls2Structs function called on imageList.xls.</pre><pre>     RSVPKeyboardParams - RSVPKeyboard parameters from the parameter file RSVPKeyboardParameters.m.</pre><pre class="language-matlab">Outputs:
+</pre><pre>     simulationResults - structure containing the results of the simulation</pre><pre>           simulationResults.successfullyCompletedFlag - h+2 dimensional tensor containing
+           booleans indicating the successful completion (h is the number of hyperparameters to
+           search over). First dimension is for different Monte Carlo simulations, second
+           dimension is for different phrases, the rest of the dimensions are for the
+           hyperparameters being searched over.</pre><pre>           simulationResults.sequenceCounter - the number of sequences that was shown for each
+           phrase (same dimensionality as simulationResults.successfullyCompletedFlag)</pre><pre>           simulationResults.typingDuration - the estimated duration for each phrase (same dimensionality as simulationResults.successfullyCompletedFlag)</pre><pre>           simulationResults.targetPhraseLength - one dimensional vector containing the length of
+           phrases to be used in simulation.</pre><!--/introduction--><pre class="codeinput"><span class="keyword">function</span> simulationResults=simulateTypingPerformance(scoreStruct,imageStructs,sessionType,RSVPKeyboardParams)
+presentationParameters
+<span class="keyword">if</span>(~exist(<span class="string">'RSVPKeyboardParams'</span>,<span class="string">'var'</span>) || isempty(RSVPKeyboardParams))
+    RSVPKeyboardParameters
+<span class="keyword">end</span>
+
+[simulationGridSearchParameters{1:length(RSVPKeyboardParams.Simulation.HyperparameterValues)}]=ndgrid(RSVPKeyboardParams.Simulation.HyperparameterValues{1:length(RSVPKeyboardParams.Simulation.HyperparameterValues)});
+
+simulationGridSearchParameters = reshape(cat(length(simulationGridSearchParameters)+1,simulationGridSearchParameters{:}),numel(simulationGridSearchParameters{1}),length(RSVPKeyboardParams.Simulation.HyperparameterValues));
+
+simulationGridSearchParameterIndices=zeros(size(simulationGridSearchParameters));
+<span class="keyword">for</span>(hyperparameterIndex=1:size(simulationGridSearchParameters,2))
+    [~,simulationGridSearchParameterIndices(:,hyperparameterIndex)]=ismember(simulationGridSearchParameters(:,hyperparameterIndex),RSVPKeyboardParams.Simulation.HyperparameterValues{hyperparameterIndex});
+<span class="keyword">end</span>
+
+firstIterationBool=true;
+<span class="keyword">for</span>(repetition=1:RSVPKeyboardParams.Simulation.MonteCarloRepetitionCount)
+    tic;
+
+    <span class="keyword">for</span>(simulationIndex=1:size(simulationGridSearchParameters,1))
+        <span class="keyword">for</span>(hyperparameterIndex=1:size(simulationGridSearchParameters,2))
+            eval([<span class="string">'RSVPKeyboardParams.'</span> RSVPKeyboardParams.Simulation.HyperparameterNames{hyperparameterIndex} <span class="string">'='</span> num2str(simulationGridSearchParameters(simulationIndex,hyperparameterIndex)) <span class="string">';'</span>]);
+        <span class="keyword">end</span>
+
+        RSVPKeyboardTaskObject=feval(sessionType,imageStructs,RSVPKeyboardParams,scoreStruct,1);
+
+        imageStructIDList=[imageStructs.ID];
+        deleteCharacterID=imageStructIDList(strcmp({imageStructs.Name},<span class="string">'DeleteCharacter'</span>));
+
+        results.decideNextFlag=1;
+        results.trialLabels=[];
+        results.completedSequenceCount=0;
+        results.duration=0;
+        [~,decision]=decisionMaker(results,RSVPKeyboardTaskObject);
+
+        continueMainLoop=true;
+        <span class="keyword">while</span> continueMainLoop
+
+            <span class="keyword">if</span>(isempty(RSVPKeyboardTaskObject.currentInfo.phrase.incorrectSection))
+                targetSymbol=imageStructIDList(strcmp({imageStructs.Text},RSVPKeyboardTaskObject.currentInfo.phrase.target(length(RSVPKeyboardTaskObject.currentInfo.phrase.correctSection)+1)));
+
+            <span class="keyword">else</span> <span class="comment">%Backspace</span>
+                targetSymbol=deleteCharacterID;
+            <span class="keyword">end</span>
+
+            resultTargetness=decision.nextSequence.trials==targetSymbol;
+            targetCount=sum(resultTargetness);
+
+            results.scores=zeros(length(resultTargetness),1);
+            results.scores(resultTargetness)=scoreStruct.conditionalpdf4targetKDE.getSample(targetCount);
+            results.scores(~resultTargetness)=scoreStruct.conditionalpdf4nontargetKDE.getSample(length(resultTargetness)-targetCount);
+            results.trialLabels=decision.nextSequence.trials;
+            results.completedSequenceCount=1;
+            results.duration=length(resultTargetness)*presentationStruct.Duration.Trial+presentationStruct.Duration.Fixation;
+
+            [continueMainLoop,decision]=decisionMaker(results,RSVPKeyboardTaskObject);
+        <span class="keyword">end</span>
+
+        sessionInfo = RSVPKeyboardTaskObject.saveTaskHistory();
+
+        <span class="keyword">if</span>(firstIterationBool)
+            simulationResults.successfullyCompletedFlag=zeros([RSVPKeyboardParams.Simulation.MonteCarloRepetitionCount,length(sessionInfo.taskHistory),cellfun(@length,RSVPKeyboardParams.Simulation.HyperparameterValues)]);
+            simulationResults.sequenceCounter=simulationResults.successfullyCompletedFlag;
+            simulationResults.typingDuration=simulationResults.successfullyCompletedFlag;
+            simulationResults.targetPhraseLength=zeros(length(sessionInfo.taskHistory),1);
+            <span class="keyword">for</span>(phraseIndex=1:length(sessionInfo.taskHistory))
+                simulationResults.targetPhraseLength(phraseIndex)=length(sessionInfo.taskHistory{phraseIndex}.target);
+            <span class="keyword">end</span>
+            firstIterationBool=false;
+        <span class="keyword">end</span>
+
+        <span class="keyword">for</span>(phraseIndex=1:length(sessionInfo.taskHistory))
+            resultLocation=num2cell([repetition,phraseIndex,simulationGridSearchParameterIndices(simulationIndex,:)]);
+            simulationResults.successfullyCompletedFlag(resultLocation{:})=sessionInfo.taskHistory{phraseIndex}.successfullyCompletedFlag;
+            simulationResults.sequenceCounter(resultLocation{:})=sessionInfo.taskHistory{phraseIndex}.sequenceCounter;
+            simulationResults.typingDuration(resultLocation{:})=sessionInfo.taskHistory{phraseIndex}.typingDuration;
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+    disp([<span class="string">'Simulation '</span> num2str(repetition) <span class="string">'/'</span> num2str(RSVPKeyboardParams.Simulation.MonteCarloRepetitionCount) <span class="string">' completed in '</span> num2str(toc) <span class="string">' seconds.'</span>]);
+<span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.14<br></p></div><!--
+##### SOURCE BEGIN #####
+%% simulationResults=simulateTypingPerformance(scoreStruct,imageStructs,sessionType,RSVPKeyboardParams)
+% Applies simulation_dir of the copy task to estimate the typing performance. It uses the scores
+% obtained after cross validation and their KDEs to sample new score samples for simulation_dir. In
+% principle a copy phrase task is performed using the random sampling of scores replacing the EEG
+% trials.
+%
+%   Inputs:
+%       scoreStruct - structure containing the KDE objects to be used in the estimation of conditional
+%       probability densities and probability thresholds for the scores.
+%
+%           scoreStruct.conditionalpdf4targetKDE - kde1d object constructed using the scores
+%           corresponding to the target symbols
+%
+%           scoreStruct.conditionalpdf4nontargetKDE - kde1d object constructed using the scores
+%           corresponding to the target symbols
+%
+%           scoreStruct.probThresholdTarget - probability threshold on target KDE to reject a trial as an outlier
+%
+%           scoreStruct.probThresholdNontarget - probability threshold on nontarget KDE to reject a trial as an outlier
+%
+%       symbolStructArray - a struct vector containing list of symbols or images used in
+%       presentations. Loaded using xls2Structs function called on imageList.xls.
+%
+%       RSVPKeyboardParams - RSVPKeyboard parameters from the parameter file RSVPKeyboardParameters.m.
+%
+%   Outputs:
+%
+%       simulationResults - structure containing the results of the simulation_dir
+%
+%             simulationResults.successfullyCompletedFlag - h+2 dimensional tensor containing
+%             booleans indicating the successful completion (h is the number of hyperparameters to
+%             search over). First dimension is for different Monte Carlo simulations, second
+%             dimension is for different phrases, the rest of the dimensions are for the
+%             hyperparameters being searched over.
+%
+%             simulationResults.sequenceCounter - the number of sequences that was shown for each
+%             phrase (same dimensionality as simulationResults.successfullyCompletedFlag)
+%
+%             simulationResults.typingDuration - the estimated duration for each phrase (same dimensionality as simulationResults.successfullyCompletedFlag)
+%
+%             simulationResults.targetPhraseLength - one dimensional vector containing the length of
+%             phrases to be used in simulation_dir.
+%
+%%
+
+function simulationResults=simulateTypingPerformance(scoreStruct,imageStructs,sessionType,RSVPKeyboardParams)
+presentationParameters
+if(~exist('RSVPKeyboardParams','var') || isempty(RSVPKeyboardParams))
+    RSVPKeyboardParameters
+end
+
+[simulationGridSearchParameters{1:length(RSVPKeyboardParams.Simulation.HyperparameterValues)}]=ndgrid(RSVPKeyboardParams.Simulation.HyperparameterValues{1:length(RSVPKeyboardParams.Simulation.HyperparameterValues)});
+
+simulationGridSearchParameters = reshape(cat(length(simulationGridSearchParameters)+1,simulationGridSearchParameters{:}),numel(simulationGridSearchParameters{1}),length(RSVPKeyboardParams.Simulation.HyperparameterValues));
+
+simulationGridSearchParameterIndices=zeros(size(simulationGridSearchParameters));
+for(hyperparameterIndex=1:size(simulationGridSearchParameters,2))
+    [~,simulationGridSearchParameterIndices(:,hyperparameterIndex)]=ismember(simulationGridSearchParameters(:,hyperparameterIndex),RSVPKeyboardParams.Simulation.HyperparameterValues{hyperparameterIndex});
+end
+
+firstIterationBool=true;
+for(repetition=1:RSVPKeyboardParams.Simulation.MonteCarloRepetitionCount)
+    tic;
+    
+    for(simulationIndex=1:size(simulationGridSearchParameters,1))
+        for(hyperparameterIndex=1:size(simulationGridSearchParameters,2))
+            eval(['RSVPKeyboardParams.' RSVPKeyboardParams.Simulation.HyperparameterNames{hyperparameterIndex} '=' num2str(simulationGridSearchParameters(simulationIndex,hyperparameterIndex)) ';']);
+        end
+        
+        RSVPKeyboardTaskObject=feval(sessionType,imageStructs,RSVPKeyboardParams,scoreStruct,1);
+        
+        imageStructIDList=[imageStructs.ID];
+        deleteCharacterID=imageStructIDList(strcmp({imageStructs.Name},'DeleteCharacter'));
+        
+        results.decideNextFlag=1;
+        results.trialLabels=[];
+        results.completedSequenceCount=0;
+        results.duration=0;
+        [~,decision]=decisionMaker(results,RSVPKeyboardTaskObject);
+        
+        continueMainLoop=true;
+        while continueMainLoop
+            
+            if(isempty(RSVPKeyboardTaskObject.currentInfo.phrase.incorrectSection))
+                targetSymbol=imageStructIDList(strcmp({imageStructs.Text},RSVPKeyboardTaskObject.currentInfo.phrase.target(length(RSVPKeyboardTaskObject.currentInfo.phrase.correctSection)+1)));
+                
+            else %Backspace
+                targetSymbol=deleteCharacterID;
+            end
+            
+            resultTargetness=decision.nextSequence.trials==targetSymbol;
+            targetCount=sum(resultTargetness);
+            
+            results.scores=zeros(length(resultTargetness),1);
+            results.scores(resultTargetness)=scoreStruct.conditionalpdf4targetKDE.getSample(targetCount);
+            results.scores(~resultTargetness)=scoreStruct.conditionalpdf4nontargetKDE.getSample(length(resultTargetness)-targetCount);
+            results.trialLabels=decision.nextSequence.trials;
+            results.completedSequenceCount=1;
+            results.duration=length(resultTargetness)*presentationStruct.Duration.Trial+presentationStruct.Duration.Fixation;
+            
+            [continueMainLoop,decision]=decisionMaker(results,RSVPKeyboardTaskObject);
+        end
+        
+        sessionInfo = RSVPKeyboardTaskObject.saveTaskHistory();
+        
+        if(firstIterationBool)
+            simulationResults.successfullyCompletedFlag=zeros([RSVPKeyboardParams.Simulation.MonteCarloRepetitionCount,length(sessionInfo.taskHistory),cellfun(@length,RSVPKeyboardParams.Simulation.HyperparameterValues)]);
+            simulationResults.sequenceCounter=simulationResults.successfullyCompletedFlag;
+            simulationResults.typingDuration=simulationResults.successfullyCompletedFlag;
+            simulationResults.targetPhraseLength=zeros(length(sessionInfo.taskHistory),1);
+            for(phraseIndex=1:length(sessionInfo.taskHistory))
+                simulationResults.targetPhraseLength(phraseIndex)=length(sessionInfo.taskHistory{phraseIndex}.target);
+            end
+            firstIterationBool=false;
+        end
+        
+        for(phraseIndex=1:length(sessionInfo.taskHistory))
+            resultLocation=num2cell([repetition,phraseIndex,simulationGridSearchParameterIndices(simulationIndex,:)]);
+            simulationResults.successfullyCompletedFlag(resultLocation{:})=sessionInfo.taskHistory{phraseIndex}.successfullyCompletedFlag;
+            simulationResults.sequenceCounter(resultLocation{:})=sessionInfo.taskHistory{phraseIndex}.sequenceCounter;
+            simulationResults.typingDuration(resultLocation{:})=sessionInfo.taskHistory{phraseIndex}.typingDuration;
+        end
+    end
+    disp(['Simulation ' num2str(repetition) '/' num2str(RSVPKeyboardParams.Simulation.MonteCarloRepetitionCount) ' completed in ' num2str(toc) ' seconds.']);
+end
+end
+##### SOURCE END #####
+--></body></html>

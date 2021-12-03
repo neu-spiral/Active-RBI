@@ -1,0 +1,997 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>function [continueFlag,pauseFlag] = updatePresentationQueue(presentationQueue,presentationInfo,updateType,standaloneFlag,CommObjectStruct,BCIPacketStruct)</title><meta name="generator" content="MATLAB 7.14"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2013-06-13"><meta name="DC.source" content="updatePresentationQueue.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+
+  </style></head><body><div class="content"><h1>function [continueFlag,pauseFlag] = updatePresentationQueue(presentationQueue,presentationInfo,updateType,standaloneFlag,CommObjectStruct,BCIPacketStruct)</h1><!--introduction--><p>Provides the presentation queue with new nodes, depending on the commands given to the presentation module.</p><pre class="language-matlab">The <span class="string">inputs</span> <span class="string">of</span> <span class="string">the</span> <span class="string">function:</span>
+</pre><pre>     presentationQueue - Object, linked list of presentation nodes.</pre><pre>     presentationInfo - Struct, contains data about the presentation.</pre><pre>     updateType - String, used to determine the nature of the update to be made to the presentation.</pre><pre>     standaloneFlag - Boolean, used to determine if the presentation is running on the same system as the main control.</pre><pre>     CommObjectStruct - Struct, contains the communication object.</pre><pre>     BCIPacketStruct - Struct, contains data about the communication protocols.</pre><pre class="language-matlab">The <span class="string">outputs</span> <span class="string">of</span> <span class="string">the</span> <span class="string">function:</span>
+</pre><pre>     continueFlag - Boolean, used to determine if the presentation should continue.</pre><pre>     pauseFlag - Boolean, used to determine if the presentation should pause.</pre><!--/introduction--><pre class="codeinput"><span class="keyword">function</span> [continueFlag,pauseFlag] = updatePresentationQueue(presentationQueue,presentationInfo,updateType,standaloneFlag,CommObjectStruct,BCIPacketStruct)
+
+    <span class="comment">% Declare global and persistent variables.</span>
+    <span class="keyword">persistent</span> pauseBackgroundNode
+    <span class="keyword">persistent</span> fullBackgroundNode
+    <span class="keyword">persistent</span> droppedChannels
+
+    <span class="comment">% Sets the output value to true. The value returned is true in most cases, and so is set to true at the beginning of the program.</span>
+    continueFlag = true;
+    pauseFlag = false;
+
+    <span class="comment">% Check the nature of the update.</span>
+    <span class="keyword">switch</span> updateType
+
+        <span class="keyword">case</span> <span class="string">'sequence'</span> <span class="comment">% If the value is 'sequence', add a sequence of nodes to the presentation queue.</span>
+
+            <span class="comment">% Check if the presentation is running in standalone mode.</span>
+            <span class="keyword">if</span> standaloneFlag
+
+                <span class="comment">% Generate an array of 10 random integers between 1 and 26.</span>
+                p = randperm(26);
+                p = p(1:10);
+
+                <span class="comment">% Create a pause background node.</span>
+                pauseBackgroundNode = screenNode(presentationInfo.window,presentationInfo.interFlipInterval);
+
+                <span class="comment">% Create a full background node, and adds a text label to the background. Then inserts the node into the presentation queue.</span>
+                fullBackgroundNode = copy(pauseBackgroundNode);
+                tempElement = textElement(<span class="string">'inactivePauseBar'</span>,[],presentationInfo);
+                fullBackgroundNode.addGraphicElement(tempElement);
+                presentationQueue.insertEnd(listNode(fullBackgroundNode));
+
+                <span class="comment">% Select a random integer from the generated array of random integers. Use this selected integer to select an image struct to be the stimuls struct.</span>
+                T = randi(10);
+                stimulusStruct = presentationInfo.imageStructs(p(T));
+
+                <span class="comment">% Add the full background node as a new stimulus node to the presentation queue. This is to be added as a target node.</span>
+                insertStimulusNode(presentationQueue,stimulusStruct,presentationInfo,<span class="string">'Target'</span>,fullBackgroundNode);
+
+                <span class="comment">% Add the full background node as another new stimulus node to the presentation queue. This is to be added as a fixation node.</span>
+                stimulusStruct = presentationInfo.imageStructs(strcmpi({presentationInfo.imageStructs.Name},<span class="string">'Fixation'</span>));
+                insertStimulusNode(presentationQueue,stimulusStruct,presentationInfo,<span class="string">'Fixation'</span>,fullBackgroundNode);
+
+                <span class="comment">% Iterate over the length of the generated array of random values.</span>
+                <span class="keyword">for</span> ii = 1:length(p)
+
+                    <span class="comment">% For each element in the array of random values, add the full background node as another new stimulus node to the presentation queue. These are to be added as trial nodes.</span>
+                    stimulusStruct = presentationInfo.imageStructs(p(ii));
+                    insertStimulusNode(presentationQueue,stimulusStruct,presentationInfo,<span class="string">'Trial'</span>,fullBackgroundNode);
+
+                    <span class="comment">% Adding blank screen and fixeation after it for subject to rest.</span>
+
+                    <span class="keyword">if</span> (ii-fix(ii/(presentationInfo.SequenceBreakInterval))*(presentationInfo.SequenceBreakInterval)==0) &amp;&amp; ~(ii&lt;length(p)) &amp;&amp;(presentationInfo.SequenceBreakInterval&gt;0)
+                        stimulusStruct=presentationInfo.imageStructs(strcmpi({presentationInfo.imageStructs.Name},<span class="string">'BlankScreen'</span>));
+                        stimulusStruct.ID=0;
+                        <span class="comment">%stimulusStruct=presentationInfo.blankScreen;</span>
+                        insertStimulusNode(presentationQueue,stimulusStruct,presentationInfo,<span class="string">'BlankScreen'</span>,fullBackgroundNode);
+
+                        stimulusStruct=presentationInfo.imageStructs(strcmpi({presentationInfo.imageStructs.Name},<span class="string">'Fixation'</span>));
+                        stimulusStruct.ID=0;
+                        insertStimulusNode(presentationQueue,stimulusStruct,presentationInfo,<span class="string">'Fixation'</span>,fullBackgroundNode);
+
+
+                    <span class="keyword">end</span>
+
+                <span class="keyword">end</span>
+
+
+            <span class="keyword">else</span>
+
+                <span class="comment">% Obtain a data packet from the main presentation.</span>
+                receivedPacket = receiveBCIPacket(CommObjectStruct.presentation2mainCommObject,BCIPacketStruct);
+
+                <span class="comment">% Check if the droppedChannels is not empty.</span>
+                <span class="keyword">if</span> ~isempty(droppedChannels)
+                    clear <span class="string">droppedChannels</span>;
+                <span class="keyword">end</span>
+                <span class="comment">% Check if the received packet is not empty.</span>
+                <span class="keyword">if</span> receivedPacket.header ~= 0
+
+                    <span class="comment">% Check the header of the received packet.</span>
+                    <span class="keyword">switch</span> receivedPacket.header
+
+                        <span class="keyword">case</span> BCIPacketStruct.HDR.MESSAGE <span class="comment">% If the value is that of a message, process the packet as such.</span>
+
+                            <span class="comment">% Evaluate the data in the received packet.</span>
+                            eval(receivedPacket.data);
+
+                            <span class="comment">% Create a pause background node.</span>
+                            pauseBackgroundNode = screenNode(presentationInfo.window,presentationInfo.interFlipInterval);
+
+                            <span class="comment">% Check if the variable f exists.</span>
+                            <span class="keyword">if</span> exist(<span class="string">'f'</span>,<span class="string">'var'</span>)
+
+                                <span class="comment">% Check if the variable f is not a cell array.</span>
+                                <span class="keyword">if</span> ~iscell(f)
+
+                                    <span class="comment">% Set the first cell element of the variable f to itself.</span>
+                                    f{1} = f;
+
+                                    <span class="comment">% The variable f is supposed to be a cell array comprised of elements that are standard arrays. So if f is a standard array, it is cast into a cell array, where the first element is the standard array that f originally represented.</span>
+
+                                <span class="keyword">end</span>
+
+                                <span class="comment">% Set the parent element to the pause background node.</span>
+                                parentElement = pauseBackgroundNode;
+
+                                <span class="comment">% Iterate over the length of the variable f.</span>
+                                <span class="keyword">for</span> feedbackTextIndex = 1:length(f)
+
+                                    <span class="comment">% Check the value of the first element of the current cell element of the variable f.</span>
+                                    <span class="keyword">switch</span> f{feedbackTextIndex}(1)
+
+                                        <span class="keyword">case</span> <span class="string">'+'</span> <span class="comment">% If the value is '+', specify that the mood is positive.</span>
+
+                                            <span class="comment">% Set the mood to positive.</span>
+                                            temp.mood = <span class="string">'positive'</span>;
+
+                                        <span class="keyword">case</span> <span class="string">'-'</span> <span class="comment">% If the value is '-', specify that the mood is negative.</span>
+
+                                            <span class="comment">% Set the mood to negative.</span>
+                                            temp.mood = <span class="string">'negative'</span>;
+
+                                        <span class="keyword">case</span> <span class="string">'0'</span> <span class="comment">% If the value is '0', specify that the mood is neutral.</span>
+
+                                            <span class="comment">% Set the mood to neutral.</span>
+                                            temp.mood = <span class="string">'neutral'</span>;
+
+                                        <span class="keyword">otherwise</span>
+
+                                            <span class="comment">% Do nothing.</span>
+
+                                    <span class="keyword">end</span>
+
+                                    <span class="comment">% Create a buffer struct and give it a label that is set to the values of the second element to the last element of the current cell element.</span>
+                                    temp.text = f{feedbackTextIndex}(2:end);
+
+                                    <span class="comment">% Check if the buffer struct has an empty text label.</span>
+                                    <span class="keyword">if</span> isempty(temp.text)
+
+                                        <span class="comment">% Set the text label to ' '.</span>
+                                        temp.text = <span class="string">' '</span>;
+
+                                    <span class="keyword">end</span>
+
+                                    <span class="comment">% Add the buffer text label as a text element to the parent element.</span>
+                                    tempElement = textElement(<span class="string">'typingFeedback'</span>,temp,presentationInfo);
+                                    parentElement.addGraphicElement(tempElement);
+
+                                    <span class="comment">% Set the parent element to the created text element.</span>
+                                    parentElement = tempElement;
+
+                                <span class="keyword">end</span>
+
+                                <span class="comment">% Create a line element and add it to the parent element.</span>
+                                tempElement = lineElement(presentationInfo);
+                                parentElement.addGraphicElement(tempElement);
+
+                            <span class="keyword">end</span>
+
+                            <span class="comment">% Set the full background node to an independent copy of the pause background node.</span>
+                            fullBackgroundNode = copy(pauseBackgroundNode);
+
+                            <span class="comment">% Create a text element and add it to the full background node.</span>
+                            tempElement = textElement(<span class="string">'inactivePauseBar'</span>,[],presentationInfo);
+                            fullBackgroundNode.addGraphicElement(tempElement);
+
+                            <span class="comment">% Add the full background node to the presentation queue.</span>
+                            presentationQueue.insertEnd(listNode(fullBackgroundNode));
+
+                            <span class="comment">% Check if the variable D exists.</span>
+                            <span class="keyword">if</span> exist(<span class="string">'D'</span>,<span class="string">'var'</span>)
+
+                                <span class="comment">% Create a target background node as a copy of the full background node.</span>
+                                stimulusStruct = presentationInfo.imageStructs([presentationInfo.imageStructs.ID]==D);
+
+                                <span class="keyword">if</span> exist(<span class="string">'LU'</span>,<span class="string">'var'</span>) &amp;&amp; LU
+
+                                    stimulusStruct = presentationInfo.imageStructs(strcmpi({presentationInfo.imageStructs.Name},<span class="string">'LevelUpSign'</span>));
+                                    stimulusStruct.ID = 0;
+                                    targetBackgroundNode = copy(fullBackgroundNode);
+                                    tempElement = imageElement(<span class="string">'LevelUpSign'</span>,stimulusStruct,presentationInfo);
+                                    targetBackgroundNode.addGraphicElement(tempElement);
+
+                                    <span class="keyword">if</span> presentationInfo.decisionProbabilityFeedback.isVisible
+
+                                        <span class="comment">% Create decision feedback array</span>
+                                        sizeMatrix = size(presentationInfo.imageStructs);
+                                        numSymbols = 0;
+                                        <span class="keyword">for</span> i = 1:sizeMatrix(1)
+
+                                            <span class="keyword">if</span> presentationInfo.imageStructs(i).IsTrial
+
+                                                numSymbols = numSymbols + 1;
+
+                                            <span class="keyword">end</span>
+
+                                        <span class="keyword">end</span>
+
+                                        feedbackArr = cell(numSymbols,2); <span class="comment">% Symbol, probability</span>
+
+                                        <span class="comment">% Set symbols</span>
+                                        counter = 1;
+                                        <span class="keyword">for</span> i = 1:sizeMatrix(1)
+
+                                            <span class="keyword">if</span> presentationInfo.imageStructs(i).IsTrial
+
+                                                feedbackArr{counter,1} = presentationInfo.imageStructs(i).Stimulus;
+                                                counter = counter + 1;
+
+                                            <span class="keyword">end</span>
+                                        <span class="keyword">end</span>
+
+                                        <span class="comment">% Construct probability array</span>
+                                        <span class="keyword">for</span> i = 1:numSymbols
+
+                                            feedbackArr{i,2} = round(p(i) * presentationInfo.decisionProbabilityFeedback.maxIndicators);
+
+                                        <span class="keyword">end</span>
+
+                                        <span class="comment">% Create string representation of feedback array</span>
+                                        feedbackList = cell(numSymbols,1);
+
+                                        <span class="comment">% Set strings</span>
+                                        <span class="keyword">for</span> i = 1:numSymbols
+
+                                            feedbackList{i} = [feedbackArr{i,1},<span class="string">' '</span>,repmat(presentationInfo.decisionProbabilityFeedback.indicator,[1,feedbackArr{i,2}])];
+
+                                        <span class="keyword">end</span>
+
+                                        <span class="comment">% Generate color matrix</span>
+                                        colorMatrix = repmat(presentationInfo.decisionProbabilityFeedback.generalColor,[numSymbols,1]);
+                                        <span class="keyword">if</span> 1 &lt;= D &amp;&amp; D &lt;= numSymbols
+
+                                            colorMatrix(D,:) = presentationInfo.decisionProbabilityFeedback.decidedColor;
+
+                                        <span class="keyword">end</span>
+
+                                        <span class="comment">% Create and add a list graphic element to the target background node.</span>
+                                        tempElement = listGraphicElement(<span class="keyword">...</span>
+                                            feedbackList,<span class="keyword">...</span>
+                                            colorMatrix,<span class="keyword">...</span>
+                                            presentationInfo.windowRect(1) + round( ( presentationInfo.decisionProbabilityFeedback.x_shift / 100) * (presentationInfo.windowRect(3) - ((2 + presentationInfo.decisionProbabilityFeedback.maxIndicators) * presentationInfo.decisionProbabilityFeedback.fontSize ))),<span class="keyword">...</span>
+                                            presentationInfo.windowRect(2) + round( ( presentationInfo.decisionProbabilityFeedback.y_shift / 100) * (presentationInfo.windowRect(4) - (numSymbols * (presentationInfo.decisionProbabilityFeedback.fontSize * 1.25)))),<span class="keyword">...</span>
+                                            presentationInfo.decisionProbabilityFeedback.fontSize,<span class="keyword">...</span>
+                                            presentationInfo<span class="keyword">...</span>
+                                            );
+                                        targetBackgroundNode.addGraphicElement(tempElement);
+
+                                    <span class="keyword">end</span>
+
+                                    insertStimulusNode(presentationQueue,stimulusStruct,presentationInfo,<span class="string">'LevelUpSign'</span>,targetBackgroundNode);
+
+                                    pauseFlag = true;
+
+                                <span class="keyword">else</span>
+                                    targetBackgroundNode = copy(fullBackgroundNode);
+
+                                    <span class="comment">% Create and add a text element to the target background node.</span>
+                                    tempElement = textElement(<span class="string">'DecisionIndicator'</span>,[],presentationInfo);
+                                    targetBackgroundNode.addGraphicElement(tempElement);
+
+                                    <span class="keyword">if</span> presentationInfo.decisionProbabilityFeedback.isVisible
+
+                                        <span class="comment">% Create decision feedback array</span>
+                                        sizeMatrix = size(presentationInfo.imageStructs);
+                                        numSymbols = 0;
+                                        <span class="keyword">for</span> i = 1:sizeMatrix(1)
+
+                                            <span class="keyword">if</span> presentationInfo.imageStructs(i).IsTrial
+
+                                                numSymbols = numSymbols + 1;
+
+                                            <span class="keyword">end</span>
+
+                                        <span class="keyword">end</span>
+
+                                        feedbackArr = cell(numSymbols,2); <span class="comment">% Symbol, probability</span>
+
+                                        <span class="comment">% Set symbols</span>
+                                        counter = 1;
+                                        <span class="keyword">for</span> i = 1:sizeMatrix(1)
+
+                                            <span class="keyword">if</span> presentationInfo.imageStructs(i).IsTrial
+
+                                                feedbackArr{counter,1} = presentationInfo.imageStructs(i).Stimulus;
+                                                counter = counter + 1;
+
+                                            <span class="keyword">end</span>
+                                        <span class="keyword">end</span>
+
+                                        <span class="comment">% Construct probability array</span>
+                                        <span class="keyword">for</span> i = 1:numSymbols
+
+                                            feedbackArr{i,2} = round(p(i) * presentationInfo.decisionProbabilityFeedback.maxIndicators);
+
+                                        <span class="keyword">end</span>
+
+                                        <span class="comment">% Create string representation of feedback array</span>
+                                        feedbackList = cell(numSymbols,1);
+
+                                        <span class="comment">% Set strings</span>
+                                        <span class="keyword">for</span> i = 1:numSymbols
+
+                                            feedbackList{i} = [feedbackArr{i,1},<span class="string">' '</span>,repmat(presentationInfo.decisionProbabilityFeedback.indicator,[1,feedbackArr{i,2}])];
+
+                                        <span class="keyword">end</span>
+
+                                        <span class="comment">% Generate color matrix</span>
+                                        colorMatrix = repmat(presentationInfo.decisionProbabilityFeedback.generalColor,[numSymbols,1]);
+                                        <span class="keyword">if</span> 1 &lt;= D &amp;&amp; D &lt;= numSymbols
+
+                                            colorMatrix(D,:) = presentationInfo.decisionProbabilityFeedback.decidedColor;
+
+                                        <span class="keyword">end</span>
+
+                                        <span class="comment">% Create and add a list graphic element to the target background node.</span>
+                                        tempElement = listGraphicElement(<span class="keyword">...</span>
+                                            feedbackList,<span class="keyword">...</span>
+                                            colorMatrix,<span class="keyword">...</span>
+                                            presentationInfo.windowRect(1) + round( ( presentationInfo.decisionProbabilityFeedback.x_shift / 100) * (presentationInfo.windowRect(3) - ((2 + presentationInfo.decisionProbabilityFeedback.maxIndicators) * presentationInfo.decisionProbabilityFeedback.fontSize ))),<span class="keyword">...</span>
+                                            presentationInfo.windowRect(2) + round( ( presentationInfo.decisionProbabilityFeedback.y_shift / 100) * (presentationInfo.windowRect(4) - (numSymbols * (presentationInfo.decisionProbabilityFeedback.fontSize * 1.25)))),<span class="keyword">...</span>
+                                            presentationInfo.decisionProbabilityFeedback.fontSize,<span class="keyword">...</span>
+                                            presentationInfo<span class="keyword">...</span>
+                                            );
+                                        targetBackgroundNode.addGraphicElement(tempElement);
+
+                                    <span class="keyword">end</span>
+
+                                    <span class="comment">% Set the stimulus struct to one of the image structs in the presentation info struct.</span>
+                                    stimulusStruct = presentationInfo.imageStructs([presentationInfo.imageStructs.ID] == D);
+
+                                    <span class="comment">% Add the target background node as a new stimulus node to the presentation queue using the information from the stimulus struct. This is added as a decision node.</span>
+                                    insertStimulusNode(presentationQueue,stimulusStruct,presentationInfo,<span class="string">'Decision'</span>,targetBackgroundNode);
+                                <span class="keyword">end</span>
+
+
+                            <span class="keyword">else</span>
+
+                                <span class="comment">% Add the full background node as a new stimulus node to the presentation queue. This is added as a target node.</span>
+                                insertStimulusNode(presentationQueue,[],presentationInfo,<span class="string">'Target'</span>,fullBackgroundNode);
+
+                            <span class="keyword">end</span>
+
+                            <span class="comment">% Check if the variable T exists.</span>
+                            <span class="keyword">if</span> exist(<span class="string">'T'</span>,<span class="string">'var'</span>)
+
+                                <span class="comment">% Create a target background node as a copy of the full background node.</span>
+                                targetBackgroundNode = copy(fullBackgroundNode);
+
+                                <span class="comment">% Create and add a text element to the target background node.</span>
+                                tempElement = textElement(<span class="string">'TargetIndicator'</span>,[],presentationInfo);
+                                targetBackgroundNode.addGraphicElement(tempElement);
+
+                                <span class="comment">% Set the stimulus struct to one of the image structs in the presentation info struct.</span>
+                                stimulusStruct = presentationInfo.imageStructs([presentationInfo.imageStructs.ID] == T);
+
+                                <span class="comment">% Add the target background node as a new stimulus node to the presentation queue using the information from the stimulus struct. This is added as a decision node.</span>
+                                insertStimulusNode(presentationQueue,stimulusStruct,presentationInfo,<span class="string">'Target'</span>,targetBackgroundNode);
+
+                            <span class="keyword">else</span>
+
+                                <span class="comment">% Add the full background node as a new stimulus node to the presentation queue. This is added as a target node.</span>
+                                insertStimulusNode(presentationQueue,[],presentationInfo,<span class="string">'Target'</span>,fullBackgroundNode);
+
+                            <span class="keyword">end</span>
+
+                            <span class="comment">% Check if the variable T exists.</span>
+                            <span class="keyword">if</span> exist(<span class="string">'t'</span>,<span class="string">'var'</span>)
+                                    <span class="keyword">if</span> exist(<span class="string">'ST'</span>,<span class="string">'var'</span>)
+                                        <span class="keyword">if</span> ST
+                                            targetBackgroundNode = copy(fullBackgroundNode);
+                                            <span class="comment">% Create and add a TargetIndicator as a text element to the target background node.</span>
+                                            tempElement = textElement(<span class="string">'TargetIndicator'</span>,[],presentationInfo);
+                                            targetBackgroundNode.addGraphicElement(tempElement);
+                                            insertStimulusNode(presentationQueue, f{2}(2:end),presentationInfo,<span class="string">'copyTaskTarget'</span>,targetBackgroundNode);
+                                        <span class="keyword">end</span>
+                                     <span class="keyword">end</span>
+                                <span class="comment">% Set the stimulus struct to one of the image structs in the presentation info struct, using fixation properties.</span>
+                                stimulusStruct = presentationInfo.imageStructs(strcmpi({presentationInfo.imageStructs.Name},<span class="string">'Fixation'</span>));
+
+                                <span class="comment">% Add the full background node as a new stimulus node to the presentation queue. This is added as a fixation node.</span>
+                                insertStimulusNode(presentationQueue,stimulusStruct,presentationInfo,<span class="string">'Fixation'</span>,fullBackgroundNode);
+
+                                <span class="comment">% Iterate over the length of the variable t.</span>
+                                <span class="keyword">for</span> trialIndex = 1:length(t)
+
+                                    <span class="comment">% Set the stimulus struct to one of the image structs in the presentation info struct.</span>
+                                    stimulusStruct = presentationInfo.imageStructs(t(trialIndex));
+
+                                    <span class="comment">% Add the full background node as a new stimulus node to the presentation queue. This is added as a trial node.</span>
+                                    insertStimulusNode(presentationQueue,stimulusStruct,presentationInfo,<span class="string">'Trial'</span>,fullBackgroundNode);
+                                    <span class="comment">% Adding blank screen and fixeation after it for subject to rest.</span>
+                                    <span class="keyword">if</span> (trialIndex-fix(trialIndex/(presentationInfo.SequenceBreakInterval))*(presentationInfo.SequenceBreakInterval)==0) &amp;&amp; (trialIndex&lt;length(t)) &amp;&amp;(presentationInfo.SequenceBreakInterval&gt;0)
+                                        stimulusStruct=presentationInfo.imageStructs(strcmpi({presentationInfo.imageStructs.Name},<span class="string">'BlankScreen'</span>));
+                                        stimulusStruct.ID=0;
+
+                                        insertStimulusNode(presentationQueue,stimulusStruct,presentationInfo,<span class="string">'BlankScreen'</span>,fullBackgroundNode);
+
+                                        stimulusStruct=presentationInfo.imageStructs(strcmpi({presentationInfo.imageStructs.Name},<span class="string">'Fixation'</span>));
+                                        stimulusStruct.ID=0;
+                                        insertStimulusNode(presentationQueue,stimulusStruct,presentationInfo,<span class="string">'Fixation'</span>,fullBackgroundNode);
+
+                                    <span class="keyword">end</span>
+
+                                <span class="keyword">end</span>
+
+                                <span class="comment">% Set the stimulus struct to one of the image structs in the presentation info struct, using sequence end properties.</span>
+                                stimulusStruct = presentationInfo.imageStructs(strcmpi({presentationInfo.imageStructs.Name},<span class="string">'SequenceEnd'</span>));
+
+                                <span class="comment">% Add the full background node as a new stimulus node to the presentation queue. This is added as a trial node.</span>
+                                insertStimulusNode(presentationQueue,stimulusStruct,presentationInfo,<span class="string">'Trial'</span>,fullBackgroundNode);
+
+                            <span class="keyword">end</span>
+
+                        <span class="keyword">case</span> BCIPacketStruct.HDR.STOP <span class="comment">% If the value is that of an stop command, process the packet as such.</span>
+
+                            <span class="comment">% Reset the continue flag, stopping the presentation.</span>
+                            continueFlag = 0;
+
+                        <span class="keyword">case</span> str2double(BCIPacketStruct.HDR.PAUSE) <span class="comment">% If the value is that of an pause command, process the packet as such.</span>
+
+                            pauseFlag = true;
+                            droppedChannels=receivedPacket.data;
+                            <span class="comment">%                             Add the pause background node as a new stimulus node to the presentation queue. This is added as an active pause bar node.</span>
+                            presentationInfo.pauseBar.activeTextChannelDrop=[<span class="string">'WARNING!\n Dropped channels are detected.\n channels: '</span> num2str(droppedChannels)];
+                            insertStimulusNode(presentationQueue,[],presentationInfo,<span class="string">'activePauseBarChannelDrop'</span>,pauseBackgroundNode);
+
+                        <span class="keyword">otherwise</span>
+
+                            <span class="comment">% Do nothing.</span>
+
+                    <span class="keyword">end</span>
+
+                <span class="keyword">end</span>
+
+            <span class="keyword">end</span>
+
+        <span class="keyword">case</span> <span class="string">'pause'</span> <span class="comment">% If the value is 'pause', add a pause node to the presentation queue.</span>
+
+            <span class="keyword">if</span> ~isempty(droppedChannels)
+                presentationInfo.pauseBar.activeTextChannelDrop=[<span class="string">'WARNING!\n Dropped channels are detected.\n channels: '</span> num2str(droppedChannels)];
+                insertStimulusNode(presentationQueue,[],presentationInfo,<span class="string">'activePauseBarChannelDrop'</span>,pauseBackgroundNode);
+            <span class="keyword">else</span>
+                <span class="comment">% Add the pause background node as a new stimulus node to the presentation queue. This is added as an active pause bar node.</span>
+                insertStimulusNode(presentationQueue,[],presentationInfo,<span class="string">'activePauseBar'</span>,pauseBackgroundNode);
+            <span class="keyword">end</span>
+
+        <span class="keyword">otherwise</span>
+            <span class="comment">% Do nothing.</span>
+
+    <span class="keyword">end</span>
+
+<span class="keyword">end</span>
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.14<br></p></div><!--
+##### SOURCE BEGIN #####
+%% function [continueFlag,pauseFlag] = updatePresentationQueue(presentationQueue,presentationInfo,updateType,standaloneFlag,CommObjectStruct,BCIPacketStruct)
+% Provides the presentation queue with new nodes, depending on the commands given to the presentation module.
+%
+%   The inputs of the function:
+%
+%       presentationQueue - Object, linked list of presentation nodes.
+%
+%       presentationInfo - Struct, contains data about the presentation.
+%
+%       updateType - String, used to determine the nature of the update to be made to the presentation.
+%
+%       standaloneFlag - Boolean, used to determine if the presentation is running on the same system as the main control.
+%
+%       CommObjectStruct - Struct, contains the communication object.
+%
+%       BCIPacketStruct - Struct, contains data about the communication protocols.
+%
+%   The outputs of the function:
+%
+%       continueFlag - Boolean, used to determine if the presentation should continue.
+%
+%       pauseFlag - Boolean, used to determine if the presentation should pause.
+%
+%%
+
+function [continueFlag,pauseFlag] = updatePresentationQueue(presentationQueue,presentationInfo,updateType,standaloneFlag,CommObjectStruct,BCIPacketStruct)
+
+    % Declare global and persistent variables.
+    persistent pauseBackgroundNode
+    persistent fullBackgroundNode
+    persistent droppedChannels
+
+    % Sets the output value to true. The value returned is true in most cases, and so is set to true at the beginning of the program.
+    continueFlag = true;
+    pauseFlag = false;
+
+    % Check the nature of the update.
+    switch updateType
+
+        case 'sequence' % If the value is 'sequence', add a sequence of nodes to the presentation queue.
+
+            % Check if the presentation is running in standalone mode.
+            if standaloneFlag
+
+                % Generate an array of 10 random integers between 1 and 26.
+                p = randperm(26);
+                p = p(1:10);
+
+                % Create a pause background node.
+                pauseBackgroundNode = screenNode(presentationInfo.window,presentationInfo.interFlipInterval);
+
+                % Create a full background node, and adds a text label to the background. Then inserts the node into the presentation queue.
+                fullBackgroundNode = copy(pauseBackgroundNode);
+                tempElement = textElement('inactivePauseBar',[],presentationInfo);
+                fullBackgroundNode.addGraphicElement(tempElement);
+                presentationQueue.insertEnd(listNode(fullBackgroundNode));
+
+                % Select a random integer from the generated array of random integers. Use this selected integer to select an image struct to be the stimuls struct.
+                T = randi(10);
+                stimulusStruct = presentationInfo.imageStructs(p(T));
+
+                % Add the full background node as a new stimulus node to the presentation queue. This is to be added as a target node.
+                insertStimulusNode(presentationQueue,stimulusStruct,presentationInfo,'Target',fullBackgroundNode);
+
+                % Add the full background node as another new stimulus node to the presentation queue. This is to be added as a fixation node.
+                stimulusStruct = presentationInfo.imageStructs(strcmpi({presentationInfo.imageStructs.Name},'Fixation'));
+                insertStimulusNode(presentationQueue,stimulusStruct,presentationInfo,'Fixation',fullBackgroundNode);
+
+                % Iterate over the length of the generated array of random values.
+                for ii = 1:length(p)
+
+                    % For each element in the array of random values, add the full background node as another new stimulus node to the presentation queue. These are to be added as trial nodes.
+                    stimulusStruct = presentationInfo.imageStructs(p(ii));
+                    insertStimulusNode(presentationQueue,stimulusStruct,presentationInfo,'Trial',fullBackgroundNode);
+
+                    % Adding blank screen and fixeation after it for subject to rest.
+
+                    if (ii-fix(ii/(presentationInfo.SequenceBreakInterval))*(presentationInfo.SequenceBreakInterval)==0) && ~(ii<length(p)) &&(presentationInfo.SequenceBreakInterval>0)
+                        stimulusStruct=presentationInfo.imageStructs(strcmpi({presentationInfo.imageStructs.Name},'BlankScreen'));
+                        stimulusStruct.ID=0;
+                        %stimulusStruct=presentationInfo.blankScreen;
+                        insertStimulusNode(presentationQueue,stimulusStruct,presentationInfo,'BlankScreen',fullBackgroundNode);
+
+                        stimulusStruct=presentationInfo.imageStructs(strcmpi({presentationInfo.imageStructs.Name},'Fixation'));
+                        stimulusStruct.ID=0;
+                        insertStimulusNode(presentationQueue,stimulusStruct,presentationInfo,'Fixation',fullBackgroundNode);
+
+
+                    end
+
+                end
+
+
+            else
+
+                % Obtain a data packet from the main presentation.
+                receivedPacket = receiveBCIPacket(CommObjectStruct.presentation2mainCommObject,BCIPacketStruct);
+
+                % Check if the droppedChannels is not empty.
+                if ~isempty(droppedChannels)
+                    clear droppedChannels;
+                end
+                % Check if the received packet is not empty.
+                if receivedPacket.header ~= 0
+
+                    % Check the header of the received packet.
+                    switch receivedPacket.header
+
+                        case BCIPacketStruct.HDR.MESSAGE % If the value is that of a message, process the packet as such.
+
+                            % Evaluate the data in the received packet.
+                            eval(receivedPacket.data);
+
+                            % Create a pause background node.
+                            pauseBackgroundNode = screenNode(presentationInfo.window,presentationInfo.interFlipInterval);
+
+                            % Check if the variable f exists.
+                            if exist('f','var')
+
+                                % Check if the variable f is not a cell array.
+                                if ~iscell(f)
+
+                                    % Set the first cell element of the variable f to itself.
+                                    f{1} = f;
+
+                                    % The variable f is supposed to be a cell array comprised of elements that are standard arrays. So if f is a standard array, it is cast into a cell array, where the first element is the standard array that f originally represented.
+
+                                end
+
+                                % Set the parent element to the pause background node.
+                                parentElement = pauseBackgroundNode;
+
+                                % Iterate over the length of the variable f.
+                                for feedbackTextIndex = 1:length(f)
+
+                                    % Check the value of the first element of the current cell element of the variable f.
+                                    switch f{feedbackTextIndex}(1)
+
+                                        case '+' % If the value is '+', specify that the mood is positive.
+
+                                            % Set the mood to positive.
+                                            temp.mood = 'positive';
+
+                                        case '-' % If the value is '-', specify that the mood is negative.
+
+                                            % Set the mood to negative.
+                                            temp.mood = 'negative';
+
+                                        case '0' % If the value is '0', specify that the mood is neutral.
+
+                                            % Set the mood to neutral.
+                                            temp.mood = 'neutral';
+
+                                        otherwise
+
+                                            % Do nothing.
+
+                                    end
+
+                                    % Create a buffer struct and give it a label that is set to the values of the second element to the last element of the current cell element.
+                                    temp.text = f{feedbackTextIndex}(2:end);
+
+                                    % Check if the buffer struct has an empty text label.
+                                    if isempty(temp.text)
+
+                                        % Set the text label to ' '.
+                                        temp.text = ' ';
+
+                                    end
+
+                                    % Add the buffer text label as a text element to the parent element.
+                                    tempElement = textElement('typingFeedback',temp,presentationInfo);
+                                    parentElement.addGraphicElement(tempElement);
+
+                                    % Set the parent element to the created text element.
+                                    parentElement = tempElement;
+
+                                end
+
+                                % Create a line element and add it to the parent element.
+                                tempElement = lineElement(presentationInfo);
+                                parentElement.addGraphicElement(tempElement);
+
+                            end
+
+                            % Set the full background node to an independent copy of the pause background node.
+                            fullBackgroundNode = copy(pauseBackgroundNode);
+
+                            % Create a text element and add it to the full background node.
+                            tempElement = textElement('inactivePauseBar',[],presentationInfo);
+                            fullBackgroundNode.addGraphicElement(tempElement);
+
+                            % Add the full background node to the presentation queue.
+                            presentationQueue.insertEnd(listNode(fullBackgroundNode));
+
+                            % Check if the variable D exists.
+                            if exist('D','var')
+
+                                % Create a target background node as a copy of the full background node.
+                                stimulusStruct = presentationInfo.imageStructs([presentationInfo.imageStructs.ID]==D);
+
+                                if exist('LU','var') && LU
+
+                                    stimulusStruct = presentationInfo.imageStructs(strcmpi({presentationInfo.imageStructs.Name},'LevelUpSign'));
+                                    stimulusStruct.ID = 0;
+                                    targetBackgroundNode = copy(fullBackgroundNode);
+                                    tempElement = imageElement('LevelUpSign',stimulusStruct,presentationInfo);
+                                    targetBackgroundNode.addGraphicElement(tempElement);
+
+                                    if presentationInfo.decisionProbabilityFeedback.isVisible
+
+                                        % Create decision feedback array
+                                        sizeMatrix = size(presentationInfo.imageStructs);
+                                        numSymbols = 0;
+                                        for i = 1:sizeMatrix(1)
+
+                                            if presentationInfo.imageStructs(i).IsTrial
+
+                                                numSymbols = numSymbols + 1;
+
+                                            end
+
+                                        end
+
+                                        feedbackArr = cell(numSymbols,2); % Symbol, probability
+
+                                        % Set symbols
+                                        counter = 1;
+                                        for i = 1:sizeMatrix(1)
+
+                                            if presentationInfo.imageStructs(i).IsTrial
+
+                                                feedbackArr{counter,1} = presentationInfo.imageStructs(i).Stimulus;
+                                                counter = counter + 1;
+
+                                            end
+                                        end
+
+                                        % Construct probability array
+                                        for i = 1:numSymbols
+
+                                            feedbackArr{i,2} = round(p(i) * presentationInfo.decisionProbabilityFeedback.maxIndicators);
+
+                                        end
+
+                                        % Create string representation of feedback array
+                                        feedbackList = cell(numSymbols,1);
+
+                                        % Set strings
+                                        for i = 1:numSymbols
+
+                                            feedbackList{i} = [feedbackArr{i,1},' ',repmat(presentationInfo.decisionProbabilityFeedback.indicator,[1,feedbackArr{i,2}])];
+
+                                        end
+
+                                        % Generate color matrix
+                                        colorMatrix = repmat(presentationInfo.decisionProbabilityFeedback.generalColor,[numSymbols,1]);
+                                        if 1 <= D && D <= numSymbols
+
+                                            colorMatrix(D,:) = presentationInfo.decisionProbabilityFeedback.decidedColor;
+
+                                        end
+
+                                        % Create and add a list graphic element to the target background node.
+                                        tempElement = listGraphicElement(...
+                                            feedbackList,...
+                                            colorMatrix,...
+                                            presentationInfo.windowRect(1) + round( ( presentationInfo.decisionProbabilityFeedback.x_shift / 100) * (presentationInfo.windowRect(3) - ((2 + presentationInfo.decisionProbabilityFeedback.maxIndicators) * presentationInfo.decisionProbabilityFeedback.fontSize ))),...
+                                            presentationInfo.windowRect(2) + round( ( presentationInfo.decisionProbabilityFeedback.y_shift / 100) * (presentationInfo.windowRect(4) - (numSymbols * (presentationInfo.decisionProbabilityFeedback.fontSize * 1.25)))),...
+                                            presentationInfo.decisionProbabilityFeedback.fontSize,...
+                                            presentationInfo...
+                                            );
+                                        targetBackgroundNode.addGraphicElement(tempElement);
+
+                                    end
+
+                                    insertStimulusNode(presentationQueue,stimulusStruct,presentationInfo,'LevelUpSign',targetBackgroundNode);
+
+                                    pauseFlag = true;
+
+                                else
+                                    targetBackgroundNode = copy(fullBackgroundNode);
+
+                                    % Create and add a text element to the target background node.
+                                    tempElement = textElement('DecisionIndicator',[],presentationInfo);
+                                    targetBackgroundNode.addGraphicElement(tempElement);
+
+                                    if presentationInfo.decisionProbabilityFeedback.isVisible
+
+                                        % Create decision feedback array
+                                        sizeMatrix = size(presentationInfo.imageStructs);
+                                        numSymbols = 0;
+                                        for i = 1:sizeMatrix(1)
+
+                                            if presentationInfo.imageStructs(i).IsTrial
+
+                                                numSymbols = numSymbols + 1;
+
+                                            end
+
+                                        end
+
+                                        feedbackArr = cell(numSymbols,2); % Symbol, probability
+
+                                        % Set symbols
+                                        counter = 1;
+                                        for i = 1:sizeMatrix(1)
+
+                                            if presentationInfo.imageStructs(i).IsTrial
+
+                                                feedbackArr{counter,1} = presentationInfo.imageStructs(i).Stimulus;
+                                                counter = counter + 1;
+
+                                            end
+                                        end
+
+                                        % Construct probability array
+                                        for i = 1:numSymbols
+
+                                            feedbackArr{i,2} = round(p(i) * presentationInfo.decisionProbabilityFeedback.maxIndicators);
+
+                                        end
+
+                                        % Create string representation of feedback array
+                                        feedbackList = cell(numSymbols,1);
+
+                                        % Set strings
+                                        for i = 1:numSymbols
+
+                                            feedbackList{i} = [feedbackArr{i,1},' ',repmat(presentationInfo.decisionProbabilityFeedback.indicator,[1,feedbackArr{i,2}])];
+
+                                        end
+
+                                        % Generate color matrix
+                                        colorMatrix = repmat(presentationInfo.decisionProbabilityFeedback.generalColor,[numSymbols,1]);
+                                        if 1 <= D && D <= numSymbols
+
+                                            colorMatrix(D,:) = presentationInfo.decisionProbabilityFeedback.decidedColor;
+
+                                        end
+
+                                        % Create and add a list graphic element to the target background node.
+                                        tempElement = listGraphicElement(...
+                                            feedbackList,...
+                                            colorMatrix,...
+                                            presentationInfo.windowRect(1) + round( ( presentationInfo.decisionProbabilityFeedback.x_shift / 100) * (presentationInfo.windowRect(3) - ((2 + presentationInfo.decisionProbabilityFeedback.maxIndicators) * presentationInfo.decisionProbabilityFeedback.fontSize ))),...
+                                            presentationInfo.windowRect(2) + round( ( presentationInfo.decisionProbabilityFeedback.y_shift / 100) * (presentationInfo.windowRect(4) - (numSymbols * (presentationInfo.decisionProbabilityFeedback.fontSize * 1.25)))),...
+                                            presentationInfo.decisionProbabilityFeedback.fontSize,...
+                                            presentationInfo...
+                                            );
+                                        targetBackgroundNode.addGraphicElement(tempElement);
+
+                                    end
+
+                                    % Set the stimulus struct to one of the image structs in the presentation info struct.
+                                    stimulusStruct = presentationInfo.imageStructs([presentationInfo.imageStructs.ID] == D);
+
+                                    % Add the target background node as a new stimulus node to the presentation queue using the information from the stimulus struct. This is added as a decision node.
+                                    insertStimulusNode(presentationQueue,stimulusStruct,presentationInfo,'Decision',targetBackgroundNode);
+                                end
+
+
+                            else
+
+                                % Add the full background node as a new stimulus node to the presentation queue. This is added as a target node.
+                                insertStimulusNode(presentationQueue,[],presentationInfo,'Target',fullBackgroundNode);
+
+                            end
+
+                            % Check if the variable T exists.
+                            if exist('T','var')
+
+                                % Create a target background node as a copy of the full background node.
+                                targetBackgroundNode = copy(fullBackgroundNode);
+
+                                % Create and add a text element to the target background node.
+                                tempElement = textElement('TargetIndicator',[],presentationInfo);
+                                targetBackgroundNode.addGraphicElement(tempElement);
+
+                                % Set the stimulus struct to one of the image structs in the presentation info struct.
+                                stimulusStruct = presentationInfo.imageStructs([presentationInfo.imageStructs.ID] == T);
+
+                                % Add the target background node as a new stimulus node to the presentation queue using the information from the stimulus struct. This is added as a decision node.
+                                insertStimulusNode(presentationQueue,stimulusStruct,presentationInfo,'Target',targetBackgroundNode);
+
+                            else
+
+                                % Add the full background node as a new stimulus node to the presentation queue. This is added as a target node.
+                                insertStimulusNode(presentationQueue,[],presentationInfo,'Target',fullBackgroundNode);
+
+                            end
+
+                            % Check if the variable T exists.
+                            if exist('t','var')
+                                    if exist('ST','var')
+                                        if ST
+                                            targetBackgroundNode = copy(fullBackgroundNode);
+                                            % Create and add a TargetIndicator as a text element to the target background node.
+                                            tempElement = textElement('TargetIndicator',[],presentationInfo);
+                                            targetBackgroundNode.addGraphicElement(tempElement);
+                                            insertStimulusNode(presentationQueue, f{2}(2:end),presentationInfo,'copyTaskTarget',targetBackgroundNode);
+                                        end
+                                     end
+                                % Set the stimulus struct to one of the image structs in the presentation info struct, using fixation properties.
+                                stimulusStruct = presentationInfo.imageStructs(strcmpi({presentationInfo.imageStructs.Name},'Fixation'));
+
+                                % Add the full background node as a new stimulus node to the presentation queue. This is added as a fixation node.
+                                insertStimulusNode(presentationQueue,stimulusStruct,presentationInfo,'Fixation',fullBackgroundNode);
+
+                                % Iterate over the length of the variable t.
+                                for trialIndex = 1:length(t)
+
+                                    % Set the stimulus struct to one of the image structs in the presentation info struct.
+                                    stimulusStruct = presentationInfo.imageStructs(t(trialIndex));
+
+                                    % Add the full background node as a new stimulus node to the presentation queue. This is added as a trial node.
+                                    insertStimulusNode(presentationQueue,stimulusStruct,presentationInfo,'Trial',fullBackgroundNode);
+                                    % Adding blank screen and fixeation after it for subject to rest.
+                                    if (trialIndex-fix(trialIndex/(presentationInfo.SequenceBreakInterval))*(presentationInfo.SequenceBreakInterval)==0) && (trialIndex<length(t)) &&(presentationInfo.SequenceBreakInterval>0)
+                                        stimulusStruct=presentationInfo.imageStructs(strcmpi({presentationInfo.imageStructs.Name},'BlankScreen'));
+                                        stimulusStruct.ID=0;
+
+                                        insertStimulusNode(presentationQueue,stimulusStruct,presentationInfo,'BlankScreen',fullBackgroundNode);
+
+                                        stimulusStruct=presentationInfo.imageStructs(strcmpi({presentationInfo.imageStructs.Name},'Fixation'));
+                                        stimulusStruct.ID=0;
+                                        insertStimulusNode(presentationQueue,stimulusStruct,presentationInfo,'Fixation',fullBackgroundNode);
+
+                                    end
+
+                                end
+
+                                % Set the stimulus struct to one of the image structs in the presentation info struct, using sequence end properties.
+                                stimulusStruct = presentationInfo.imageStructs(strcmpi({presentationInfo.imageStructs.Name},'SequenceEnd'));
+
+                                % Add the full background node as a new stimulus node to the presentation queue. This is added as a trial node.
+                                insertStimulusNode(presentationQueue,stimulusStruct,presentationInfo,'Trial',fullBackgroundNode);
+
+                            end
+
+                        case BCIPacketStruct.HDR.STOP % If the value is that of an stop command, process the packet as such.
+
+                            % Reset the continue flag, stopping the presentation.
+                            continueFlag = 0;
+
+                        case str2double(BCIPacketStruct.HDR.PAUSE) % If the value is that of an pause command, process the packet as such.
+
+                            pauseFlag = true;
+                            droppedChannels=receivedPacket.data;
+                            %                             Add the pause background node as a new stimulus node to the presentation queue. This is added as an active pause bar node.
+                            presentationInfo.pauseBar.activeTextChannelDrop=['WARNING!\n Dropped channels are detected.\n channels: ' num2str(droppedChannels)];
+                            insertStimulusNode(presentationQueue,[],presentationInfo,'activePauseBarChannelDrop',pauseBackgroundNode);
+
+                        otherwise
+
+                            % Do nothing.
+
+                    end
+
+                end
+
+            end
+
+        case 'pause' % If the value is 'pause', add a pause node to the presentation queue.
+
+            if ~isempty(droppedChannels)
+                presentationInfo.pauseBar.activeTextChannelDrop=['WARNING!\n Dropped channels are detected.\n channels: ' num2str(droppedChannels)];
+                insertStimulusNode(presentationQueue,[],presentationInfo,'activePauseBarChannelDrop',pauseBackgroundNode);
+            else
+                % Add the pause background node as a new stimulus node to the presentation queue. This is added as an active pause bar node.
+                insertStimulusNode(presentationQueue,[],presentationInfo,'activePauseBar',pauseBackgroundNode);
+            end
+
+        otherwise
+            % Do nothing.
+
+    end
+
+end
+##### SOURCE END #####
+--></body></html>

@@ -1,0 +1,105 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>signalProcessingParameters</title><meta name="generator" content="MATLAB 7.14"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2013-06-13"><meta name="DC.source" content="signalProcessingParameters.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+
+  </style></head><body><div class="content"><h1>signalProcessingParameters</h1><!--introduction--><p>Contains user adjustable parameter file corresponding to signal processing. It creates the following structure,</p><pre class="language-matlab">mainBuffer: Contains the <span class="string">parameters</span> <span class="string">for</span> <span class="string">the</span> <span class="string">initial</span> <span class="string">signal</span> <span class="string">processing</span> <span class="string">after</span> <span class="string">fetching</span> <span class="string">the</span> <span class="string">data.</span>
+The <span class="string">processing</span> <span class="string">consists</span> <span class="string">of</span> <span class="string">bandpass</span> <span class="string">filtering</span> <span class="string">and</span> <span class="string">buffering.</span> <span class="string">The</span> <span class="string">following</span> <span class="string">fields</span> <span class="string">are</span> <span class="string">set</span> <span class="string">as</span>
+parameters,
+* mainBuffer.bufferingMethod - Buffering type (<span class="string">'linear'</span>/<span class="string">'circular'</span>)
+* mainBuffer.bufferDurationSec - Length of <span class="string">the</span> <span class="string">buffer</span> <span class="string">in</span> <span class="string">seconds</span>
+* mainBuffer.frontendFilteringFlag - Enables (1)/disables (0) the <span class="string">frontend</span> <span class="string">filtering</span> <span class="string">before</span>
+buffering
+</pre><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Buffering type</a></li><li><a href="#2">Buffer duration</a></li><li><a href="#3">Front end filtering enabled flag</a></li></ul></div><h2>Buffering type<a name="1"></a></h2><p>Sets the buffering data structure, it can be set to linear or circular. If it is set to linear, setting a high buffer duration might cause delays in the system.</p><pre class="codeinput">mainBuffer.bufferingMethod = <span class="string">'circular'</span>; <span class="comment">% 'linear' / 'circular'</span>
+</pre><h2>Buffer duration<a name="2"></a></h2><p>Sets the size of the data buffer in seconds.</p><pre class="codeinput">mainBuffer.bufferDurationSec=100; <span class="comment">%in seconds.</span>
+</pre><h2>Front end filtering enabled flag<a name="3"></a></h2><p>Enables (1)/disables (0) the frontend filtering before buffering. The filter coefficients contained in inputFilterCoef.mat. Filter information is hold in a structure named frontendFilter with the fields groupDelay, Den and Num.</p><pre class="codeinput">mainBuffer.frontendFilteringFlag=1;
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.14<br></p></div><!--
+##### SOURCE BEGIN #####
+%% signalProcessingParameters
+% Contains user adjustable parameter file corresponding to signal processing. It creates the
+% following structure,
+%
+%   mainBuffer: Contains the parameters for the initial signal processing after fetching the data.
+%   The processing consists of bandpass filtering and buffering. The following fields are set as
+%   parameters,
+% * mainBuffer.bufferingMethod - Buffering type ('linear'/'circular')
+% * mainBuffer.bufferDurationSec - Length of the buffer in seconds
+% * mainBuffer.frontendFilteringFlag - Enables (1)/disables (0) the frontend filtering before
+% buffering
+%
+%%
+
+%% Buffering type
+% Sets the buffering data structure, it can be set to linear or circular.
+% If it is set to linear, setting a high buffer duration might cause delays
+% in the system.
+mainBuffer.bufferingMethod = 'circular'; % 'linear' / 'circular'
+
+%% Buffer duration
+% Sets the size of the data buffer in seconds.
+mainBuffer.bufferDurationSec=100; %in seconds.
+
+%% Front end filtering enabled flag
+% Enables (1)/disables (0) the frontend filtering before buffering. The
+% filter coefficients contained in inputFilterCoef.mat. Filter information
+% is hold in a structure named frontendFilter with the fields groupDelay,
+% Den and Num.
+mainBuffer.frontendFilteringFlag=1;
+
+
+
+##### SOURCE END #####
+--></body></html>

@@ -1,0 +1,413 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>function [firstUnprocessedTimeIndex,completedSequenceCount,trialSampleTimeIndices,trialTargetness,trialLabels]=triggerDecoder(triggerBufferObject,triggerPartitionerStruct)</title><meta name="generator" content="MATLAB 7.14"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2013-06-13"><meta name="DC.source" content="triggerDecoder.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+
+  </style></head><body><div class="content"><h1>function [firstUnprocessedTimeIndex,completedSequenceCount,trialSampleTimeIndices,trialTargetness,trialLabels]=triggerDecoder(triggerBufferObject,triggerPartitionerStruct)</h1><!--introduction--><p>Trigger Control and Partitioning</p><pre class="language-matlab">Inputs : triggerBufferObject      - a dataBuffer <span class="string">class</span> <span class="string">object</span> <span class="string">containing</span> <span class="string">the</span>
+                                    buffer <span class="string">corresponding</span> <span class="string">to</span> <span class="string">trigger</span> <span class="string">signal.</span>
+</pre><pre>         triggerPartitionerStruct  - a struct for tirgger partitioner</pre><pre class="language-matlab">Outputs : firstUnprocessedTimeIndex  - the time <span class="string">index</span> <span class="string">of</span> <span class="string">first</span>
+                                       unprocessed <span class="string">sequence</span>
+          completedSequenceCount     - number of <span class="string">completed</span> <span class="string">sequence</span>
+          trialSampleTimeIndices     - time index <span class="string">for</span> <span class="string">specific</span> <span class="string">trial</span>
+                                       sample
+          trialTargetness
+          trialLabels                - labels of <span class="string">trials</span>
+</pre><!--/introduction--><pre class="codeinput"><span class="keyword">function</span> [firstUnprocessedTimeIndex,completedSequenceCount,trialSampleTimeIndices,trialTargetness,trialLabels]=triggerDecoder(triggerBufferObject,triggerPartitionerStruct)
+
+
+<span class="keyword">try</span>
+    trialSampleTimeIndices=[];
+    trialTargetness=[];
+    trialLabels=[];
+    completedSequenceCount=0;
+
+    <span class="comment">%Initialize first unprocessed time index</span>
+    firstUnprocessedTimeIndex=triggerPartitionerStruct.firstUnprocessedTimeIndex;
+    <span class="keyword">if</span>(isa(triggerBufferObject,<span class="string">'dataBuffer'</span>))
+        <span class="comment">%check whether triggerBufferObject is of type dataBuffer</span>
+        <span class="comment">%if so,set last sample time index from triggerBufferObject</span>
+        lastSampleTimeIndex=triggerBufferObject.lastSampleTimeIndex;
+    <span class="keyword">else</span>
+        <span class="comment">%else set last sample time index to the difference between the</span>
+        <span class="comment">%length of triggerOfBufferObject and windowLengthinSample</span>
+        lastSampleTimeIndex=length(triggerBufferObject)-triggerPartitionerStruct.windowLengthinSamples;
+    <span class="keyword">end</span>
+
+    <span class="keyword">if</span>(lastSampleTimeIndex&gt;firstUnprocessedTimeIndex)<span class="comment">%whether the last sample index greater than first unprocessed time index</span>
+
+        <span class="keyword">if</span>(isa(triggerBufferObject,<span class="string">'dataBuffer'</span>))
+            <span class="comment">%check whether triggerBufferObject is of type dataBuffer</span>
+            <span class="comment">%if so,get data from triggerBufferObject.getOrderedData</span>
+            <span class="comment">%ranging from firstUnprocessedTimeIndex to lastSampleTimeIndex</span>
+            t=triggerBufferObject.getOrderedData(firstUnprocessedTimeIndex,lastSampleTimeIndex);
+        <span class="keyword">else</span>
+            <span class="comment">%else,get data from triggerBufferObject(1 to lastSampleTimeIndex)</span>
+            t=triggerBufferObject(1:lastSampleTimeIndex);
+        <span class="keyword">end</span>
+
+        <span class="comment">%index of element not equal to previous element</span>
+        tChangeLocAllRaw=find(diff(t)~=0)+1;
+        <span class="comment">%values of element not equal to previous element</span>
+        tChangeValues=t(tChangeLocAllRaw);
+        <span class="comment">%find the last zero that not equal to previous element</span>
+        lastChangetoZero=find(tChangeValues==0,1,<span class="string">'last'</span>);
+        <span class="comment">%update index of tChangeValues,select elements previous to lastChangetoZero</span>
+        tChangeLocAll=tChangeLocAllRaw(1:lastChangetoZero);
+        <span class="comment">%update values of tChangeValues</span>
+        tChangeValues=tChangeValues(1:lastChangetoZero);
+        <span class="comment">%find tChangeValues greater than zero</span>
+        tChangeValuesispositive=(tChangeValues&gt;0);
+        <span class="comment">%index of non-zero tChangeValues</span>
+        tChangeValuesispositiveIndices=find(tChangeValuesispositive);
+
+        tChangeLoc=tChangeLocAll(tChangeValuesispositive);
+        <span class="comment">%update tChangeValues</span>
+        tChangeValues=round(tChangeValues(tChangeValuesispositive));
+
+        <span class="comment">%index of sequence end flag</span>
+        sequenceEndIndices=find(tChangeValues==triggerPartitionerStruct.sequenceEndID);
+
+        <span class="keyword">if</span>(isempty(sequenceEndIndices))
+            <span class="comment">%check if sequenceEndIndices is empty</span>
+            <span class="comment">%if so,set complete sequence count to zero</span>
+            completedSequenceCount=0;
+
+
+        <span class="keyword">else</span>
+
+            <span class="keyword">if</span>(tChangeLoc(sequenceEndIndices(end)-1)+triggerPartitionerStruct.windowLengthinSamples&gt;length(t))
+                <span class="comment">%compare the length of sequence end indices (end -1) plus</span>
+                <span class="comment">%length of sample with length of triggerData</span>
+                <span class="comment">%update sequence end index from (1 to end-1)</span>
+                sequenceEndIndices=sequenceEndIndices(1:end-1);
+            <span class="keyword">end</span>
+            <span class="keyword">if</span>(isempty(sequenceEndIndices))
+                <span class="comment">%check if sequenceEndIndices is empty</span>
+                <span class="comment">%if so,set complete sequence count to zero</span>
+                completedSequenceCount=0;
+
+            <span class="keyword">else</span>
+                <span class="comment">%else,set the completed sequence count to the length of</span>
+                <span class="comment">%sequence end sequences</span>
+                completedSequenceCount=length(sequenceEndIndices);
+                <span class="comment">%update index of tChangeLoc(1 to sequenceEndIndices(end))</span>
+                tChangeLoc=tChangeLoc(1:sequenceEndIndices(end));
+                <span class="comment">%update values of tChangeValues(1 to sequenceEndIndices(end))</span>
+                tChangeValues=tChangeValues(1:sequenceEndIndices(end));
+                <span class="comment">%index of fixation flag</span>
+                fixationIndices=find(tChangeValues==triggerPartitionerStruct.fixationID);
+                <span class="comment">%number of total trial times</span>
+                trialCount=sum(sequenceEndIndices-fixationIndices-1);
+                <span class="comment">%initialize trial labels,trialSampleTimeIndices,trialTargetness,trial index</span>
+                trialLabels=zeros(1,trialCount);
+                trialSampleTimeIndices=zeros(1,trialCount);
+                trialTargetness=repmat(-1,1,trialCount);
+                trialIndex=1;
+
+                <span class="keyword">for</span>(ii=1:completedSequenceCount)
+                    sequenceEndIndex=sequenceEndIndices(ii);
+                    <span class="comment">% find the begin index of sequence</span>
+                    <span class="keyword">if</span>(ii&gt;1)
+                        <span class="comment">%update sequence begin index from</span>
+                        sequenceBeginIndex=sequenceEndIndices(ii-1)+1;
+                    <span class="keyword">else</span>
+                        sequenceBeginIndex=1;
+                    <span class="keyword">end</span>
+
+
+                    <span class="keyword">if</span>(sequenceBeginIndex==fixationIndices(ii))
+
+
+                        sequenceTrialCount=sequenceEndIndex-1-sequenceBeginIndex;
+                        <span class="comment">%check whether sequence begin index equal to</span>
+                        <span class="comment">%fixation index,if so</span>
+                        <span class="comment">%update trialLabels from tChaneValues(sequenceBeginIndex+1 to SequenceEndIndex-1)</span>
+                        trialLabels(trialIndex:trialIndex+sequenceTrialCount-1)=tChangeValues((sequenceBeginIndex+1):sequenceEndIndex-1);
+                        <span class="comment">%update trialSampleIndices to the sum of</span>
+                        <span class="comment">%firstUnprocessedTimeIndex plus tChangeLoc(sequenceBeginIndex+1 to sequenceEndIndex-1)-1</span>
+                        trialSampleTimeIndices(trialIndex:trialIndex+sequenceTrialCount-1)=firstUnprocessedTimeIndex+tChangeLoc((sequenceBeginIndex+1):sequenceEndIndex-1)-1;
+
+                        <span class="comment">%update trialIndex equal to the old value of trialIndex plus sequenceTrialCount</span>
+                        trialIndex=trialIndex+sequenceTrialCount;
+                    <span class="keyword">else</span>
+                        <span class="comment">%update</span>
+                        targetLabel=tChangeValues(sequenceBeginIndex)-triggerPartitionerStruct.TARGET_TRIGGER_OFFSET;
+                        sequenceTrialCount=sequenceEndIndex-2-sequenceBeginIndex;
+                        tempTrialLabels=tChangeValues((sequenceBeginIndex+2):sequenceEndIndex-1);
+                        <span class="comment">%update trialLabels from tChaneValues(sequenceBeginIndex+2 to SequenceEndIndex-1)</span>
+                        trialLabels(trialIndex:trialIndex+sequenceTrialCount-1)=tempTrialLabels;
+                        <span class="comment">%update trialTargetness</span>
+                        trialTargetness(trialIndex:trialIndex+sequenceTrialCount-1)=(tempTrialLabels==targetLabel);
+                        <span class="comment">%update trialSampleIndices to the sum of</span>
+                        <span class="comment">%firstUnprocessedTimeIndex plus tChangeLoc(sequenceBeginIndex+2 to sequenceEndIndex-1)-1</span>
+                        trialSampleTimeIndices(trialIndex:trialIndex+sequenceTrialCount-1)=firstUnprocessedTimeIndex+tChangeLoc((sequenceBeginIndex+2):sequenceEndIndex-1)-1;
+                        <span class="comment">%update trialIndex equal to the old value of trialIndex plus sequenceTrialCount</span>
+                        trialIndex=trialIndex+sequenceTrialCount;
+
+                    <span class="keyword">end</span>
+
+
+
+                <span class="keyword">end</span>
+                <span class="comment">%update firstUnprocessedTimeIndex</span>
+                firstUnprocessedTimeIndex=firstUnprocessedTimeIndex+tChangeLocAll(tChangeValuesispositiveIndices(sequenceEndIndex)+1)-1;
+
+
+
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+        <span class="comment">%check if complete sequence count equal to zero</span>
+        <span class="keyword">if</span>(completedSequenceCount==0)
+            <span class="keyword">if</span>(~isempty(tChangeLocAllRaw))
+                <span class="comment">%if tChangeLocAllRaw is empty,update firstUnprocessedTimeIndex</span>
+                <span class="comment">%to firstUnprocessedTimeIndex plus tChangeLocALLRaw(1) -2</span>
+                firstUnprocessedTimeIndex=firstUnprocessedTimeIndex+tChangeLocAllRaw(1)-2;
+            <span class="keyword">else</span>
+                <span class="comment">%otherwise,update firstUnprocessedTimeIndex to</span>
+                <span class="comment">%lastSampleTimeIndex</span>
+                firstUnprocessedTimeIndex=lastSampleTimeIndex;
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+    <span class="keyword">end</span>
+
+<span class="keyword">catch</span> exception
+    keyboard;
+
+<span class="keyword">end</span>
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.14<br></p></div><!--
+##### SOURCE BEGIN #####
+%% function [firstUnprocessedTimeIndex,completedSequenceCount,trialSampleTimeIndices,trialTargetness,trialLabels]=triggerDecoder(triggerBufferObject,triggerPartitionerStruct)
+% Trigger Control and Partitioning
+%
+%   Inputs : triggerBufferObject      - a dataBuffer class object containing the
+%                                       buffer corresponding to trigger signal.
+%
+%           triggerPartitionerStruct  - a struct for tirgger partitioner
+%
+%   Outputs : firstUnprocessedTimeIndex  - the time index of first
+%                                          unprocessed sequence
+%             completedSequenceCount     - number of completed sequence
+%             trialSampleTimeIndices     - time index for specific trial
+%                                          sample
+%             trialTargetness
+%             trialLabels                - labels of trials
+%%
+function [firstUnprocessedTimeIndex,completedSequenceCount,trialSampleTimeIndices,trialTargetness,trialLabels]=triggerDecoder(triggerBufferObject,triggerPartitionerStruct)
+
+
+try
+    trialSampleTimeIndices=[];
+    trialTargetness=[];
+    trialLabels=[];
+    completedSequenceCount=0;
+    
+    %Initialize first unprocessed time index
+    firstUnprocessedTimeIndex=triggerPartitionerStruct.firstUnprocessedTimeIndex;
+    if(isa(triggerBufferObject,'dataBuffer'))
+        %check whether triggerBufferObject is of type dataBuffer
+        %if so,set last sample time index from triggerBufferObject
+        lastSampleTimeIndex=triggerBufferObject.lastSampleTimeIndex;
+    else
+        %else set last sample time index to the difference between the
+        %length of triggerOfBufferObject and windowLengthinSample
+        lastSampleTimeIndex=length(triggerBufferObject)-triggerPartitionerStruct.windowLengthinSamples;
+    end
+    
+    if(lastSampleTimeIndex>firstUnprocessedTimeIndex)%whether the last sample index greater than first unprocessed time index
+        
+        if(isa(triggerBufferObject,'dataBuffer'))
+            %check whether triggerBufferObject is of type dataBuffer
+            %if so,get data from triggerBufferObject.getOrderedData
+            %ranging from firstUnprocessedTimeIndex to lastSampleTimeIndex
+            t=triggerBufferObject.getOrderedData(firstUnprocessedTimeIndex,lastSampleTimeIndex);
+        else
+            %else,get data from triggerBufferObject(1 to lastSampleTimeIndex)
+            t=triggerBufferObject(1:lastSampleTimeIndex);
+        end
+        
+        %index of element not equal to previous element
+        tChangeLocAllRaw=find(diff(t)~=0)+1;
+        %values of element not equal to previous element
+        tChangeValues=t(tChangeLocAllRaw);
+        %find the last zero that not equal to previous element
+        lastChangetoZero=find(tChangeValues==0,1,'last');
+        %update index of tChangeValues,select elements previous to lastChangetoZero
+        tChangeLocAll=tChangeLocAllRaw(1:lastChangetoZero);
+        %update values of tChangeValues
+        tChangeValues=tChangeValues(1:lastChangetoZero);
+        %find tChangeValues greater than zero
+        tChangeValuesispositive=(tChangeValues>0);
+        %index of non-zero tChangeValues
+        tChangeValuesispositiveIndices=find(tChangeValuesispositive);
+        
+        tChangeLoc=tChangeLocAll(tChangeValuesispositive);
+        %update tChangeValues
+        tChangeValues=round(tChangeValues(tChangeValuesispositive));
+        
+        %index of sequence end flag
+        sequenceEndIndices=find(tChangeValues==triggerPartitionerStruct.sequenceEndID);
+        
+        if(isempty(sequenceEndIndices))
+            %check if sequenceEndIndices is empty
+            %if so,set complete sequence count to zero
+            completedSequenceCount=0;
+            
+            
+        else
+            
+            if(tChangeLoc(sequenceEndIndices(end)-1)+triggerPartitionerStruct.windowLengthinSamples>length(t))
+                %compare the length of sequence end indices (end -1) plus
+                %length of sample with length of triggerData
+                %update sequence end index from (1 to end-1)
+                sequenceEndIndices=sequenceEndIndices(1:end-1);
+            end
+            if(isempty(sequenceEndIndices))
+                %check if sequenceEndIndices is empty
+                %if so,set complete sequence count to zero
+                completedSequenceCount=0;
+                
+            else
+                %else,set the completed sequence count to the length of
+                %sequence end sequences
+                completedSequenceCount=length(sequenceEndIndices);
+                %update index of tChangeLoc(1 to sequenceEndIndices(end))
+                tChangeLoc=tChangeLoc(1:sequenceEndIndices(end));
+                %update values of tChangeValues(1 to sequenceEndIndices(end))
+                tChangeValues=tChangeValues(1:sequenceEndIndices(end));
+                %index of fixation flag
+                fixationIndices=find(tChangeValues==triggerPartitionerStruct.fixationID);
+                %number of total trial times
+                trialCount=sum(sequenceEndIndices-fixationIndices-1);
+                %initialize trial labels,trialSampleTimeIndices,trialTargetness,trial index
+                trialLabels=zeros(1,trialCount);
+                trialSampleTimeIndices=zeros(1,trialCount);
+                trialTargetness=repmat(-1,1,trialCount);
+                trialIndex=1;
+                
+                for(ii=1:completedSequenceCount)
+                    sequenceEndIndex=sequenceEndIndices(ii);
+                    % find the begin index of sequence
+                    if(ii>1)
+                        %update sequence begin index from
+                        sequenceBeginIndex=sequenceEndIndices(ii-1)+1;
+                    else
+                        sequenceBeginIndex=1;
+                    end
+                    
+                    
+                    if(sequenceBeginIndex==fixationIndices(ii))
+                        
+                        
+                        sequenceTrialCount=sequenceEndIndex-1-sequenceBeginIndex;
+                        %check whether sequence begin index equal to
+                        %fixation index,if so
+                        %update trialLabels from tChaneValues(sequenceBeginIndex+1 to SequenceEndIndex-1)
+                        trialLabels(trialIndex:trialIndex+sequenceTrialCount-1)=tChangeValues((sequenceBeginIndex+1):sequenceEndIndex-1);
+                        %update trialSampleIndices to the sum of
+                        %firstUnprocessedTimeIndex plus tChangeLoc(sequenceBeginIndex+1 to sequenceEndIndex-1)-1
+                        trialSampleTimeIndices(trialIndex:trialIndex+sequenceTrialCount-1)=firstUnprocessedTimeIndex+tChangeLoc((sequenceBeginIndex+1):sequenceEndIndex-1)-1;
+                        
+                        %update trialIndex equal to the old value of trialIndex plus sequenceTrialCount
+                        trialIndex=trialIndex+sequenceTrialCount;
+                    else
+                        %update
+                        targetLabel=tChangeValues(sequenceBeginIndex)-triggerPartitionerStruct.TARGET_TRIGGER_OFFSET;
+                        sequenceTrialCount=sequenceEndIndex-2-sequenceBeginIndex;
+                        tempTrialLabels=tChangeValues((sequenceBeginIndex+2):sequenceEndIndex-1);
+                        %update trialLabels from tChaneValues(sequenceBeginIndex+2 to SequenceEndIndex-1)
+                        trialLabels(trialIndex:trialIndex+sequenceTrialCount-1)=tempTrialLabels;
+                        %update trialTargetness
+                        trialTargetness(trialIndex:trialIndex+sequenceTrialCount-1)=(tempTrialLabels==targetLabel);
+                        %update trialSampleIndices to the sum of
+                        %firstUnprocessedTimeIndex plus tChangeLoc(sequenceBeginIndex+2 to sequenceEndIndex-1)-1
+                        trialSampleTimeIndices(trialIndex:trialIndex+sequenceTrialCount-1)=firstUnprocessedTimeIndex+tChangeLoc((sequenceBeginIndex+2):sequenceEndIndex-1)-1;
+                        %update trialIndex equal to the old value of trialIndex plus sequenceTrialCount
+                        trialIndex=trialIndex+sequenceTrialCount;
+                        
+                    end
+                    
+                    
+                    
+                end
+                %update firstUnprocessedTimeIndex
+                firstUnprocessedTimeIndex=firstUnprocessedTimeIndex+tChangeLocAll(tChangeValuesispositiveIndices(sequenceEndIndex)+1)-1;
+                
+                
+                
+            end
+        end
+        %check if complete sequence count equal to zero
+        if(completedSequenceCount==0)
+            if(~isempty(tChangeLocAllRaw))
+                %if tChangeLocAllRaw is empty,update firstUnprocessedTimeIndex
+                %to firstUnprocessedTimeIndex plus tChangeLocALLRaw(1) -2
+                firstUnprocessedTimeIndex=firstUnprocessedTimeIndex+tChangeLocAllRaw(1)-2;
+            else
+                %otherwise,update firstUnprocessedTimeIndex to
+                %lastSampleTimeIndex
+                firstUnprocessedTimeIndex=lastSampleTimeIndex;
+            end
+        end
+        
+    end
+    
+catch exception
+    keyboard;
+    
+end
+##### SOURCE END #####
+--></body></html>

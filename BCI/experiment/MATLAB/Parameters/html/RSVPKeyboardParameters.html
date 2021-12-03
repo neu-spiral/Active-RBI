@@ -1,0 +1,397 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>RSVPKeyboardParameters</title><meta name="generator" content="MATLAB 7.14"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2013-06-13"><meta name="DC.source" content="RSVPKeyboardParameters.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+
+  </style></head><body><div class="content"><h1>RSVPKeyboardParameters</h1><!--introduction--><p>Parameter file for the general operation of RSVPKeyboard</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Mode of acquisition system.</a></li><li><a href="#2">List of I/O ports to use in parallel port communication.</a></li><li><a href="#3">Language Model</a></li><li><a href="#10">Modules</a></li><li><a href="#11">Presentation</a></li><li><a href="#13">GUI</a></li><li><a href="#16">Trigger Offset Constant</a></li><li><a href="#17">Window Duration for Classification</a></li><li><a href="#18">Calibration Parameters</a></li><li><a href="#20">Typing Parameters</a></li><li><a href="#27">Phrase stopping criteria</a></li><li><a href="#31">Mastery task level completion criteria</a></li><li><a href="#32">Feature Extraction Methodology</a></li><li><a href="#35">Cross Validation</a></li><li><a href="#37">Simulation to estimate the typing performance</a></li><li><a href="#40">Offline Analysis Screen</a></li><li><a href="#46">Attention Monitoring - Asieh</a></li></ul></div><h2>Mode of acquisition system.<a name="1"></a></h2><p>Available options are 'gUSBAmp' and 'noAmp'.</p><div><ul><li>'gUSBAmp': Acquires data from gTec's g.USBAmp amplifier</li><li>'noAmp' : Uses no amplifiers to record. It generates artificial signals or can play a previously recorded '.daq' file</li></ul></div><pre class="codeinput">RSVPKeyboardParams.DAQType=<span class="string">'gUSBAmp'</span>;<span class="comment">%'gUSBAmp';</span>
+</pre><h2>List of I/O ports to use in parallel port communication.<a name="2"></a></h2><p>The program will send triggers to all of these ports. If there is a new device or new computer, please check the port from the Resources of the device in Device Manager.</p><pre class="codeinput">RSVPKeyboardParams.parallelPortIOList={<span class="string">'4020'</span>,<span class="string">'2020'</span>,<span class="string">'2FD8'</span>,<span class="string">'4FD8'</span>};
+</pre><h2>Language Model<a name="3"></a></h2><p>Enables or disables the language model. Enabled = 1 (default), Disabled = 0.</p><pre class="codeinput">RSVPKeyboardParams.languageModelEnabled=1;
+</pre><p>Language model file to use. The model files are stored in btlmserver/models/. Default value is 'nyt.200.36char.m6.greg.fromfst.mod'.</p><pre class="codeinput">RSVPKeyboardParams.languageModel=<span class="string">'nyt.200.36char.m6.greg.fromfst.mod'</span>;
+</pre><p>Method to calculate the language model probabilities corresponding to special characters, e.g. delete character. There are two options 'fixed', which assigns a fixed probability for the special characters and 'adaptive', which changes the probability adaptively. In the current implementation only Delete character is considered as the special character.</p><pre class="codeinput">RSVPKeyboardParams.languageModelWrapper.specialProbCalcType=<span class="string">'fixed'</span>;
+</pre><p>The fixed probability corresponding to the delete symbol. It should take a real value in [0,1]. The default value is 0.05.</p><pre class="codeinput">RSVPKeyboardParams.languageModelWrapper.fixedProbability.DeleteCharacter=0.05;
+</pre><p>The maximum value that can be assigned to the delete symbol</p><pre class="codeinput">RSVPKeyboardParams.languageModelWrapper.adaptiveProbability.DeleteCharacter.upperLimit=0.2;
+</pre><p>The minimum value that can be assigned to the delete symbol</p><pre class="codeinput">RSVPKeyboardParams.languageModelWrapper.adaptiveProbability.DeleteCharacter.lowerLimit=0.03;
+</pre><p>Language model scaling factor in <img src="RSVPKeyboardParameters_eq49598.png" alt="$[0,\infty)$">. It takes the power of the probabilities obtained from the language model by the given factor. Lower the number closer to giving equal probability for each symbol.</p><div><ul><li>1 : No modification on the language model probabilities</li><li>0: The probabilities coming from the language model are made equal</li><li>0.5 : Takes the square root of the probabilities that makes the probabilities closer to each other. (used in v1.3)</li></ul></div><pre class="codeinput">RSVPKeyboardParams.languageModelWrapper.LANGUAGEMODELSCALINGHACK=0.5;
+</pre><h2>Modules<a name="10"></a></h2><pre class="codeinput">RSVPKeyboardParams.modules = {<span class="string">'Presentation'</span>,<span class="string">'GUI'</span>};
+</pre><h2>Presentation<a name="11"></a></h2><p>Parameters that affect the remote presentation</p><p>TCP/IP Communication with the Presentation IP and Port address of the main controller side. These shouldn't be changed unless trying to run the presentation on a separate computer.</p><pre class="codeinput">RSVPKeyboardParams.IP_main=<span class="string">'localhost'</span>;
+RSVPKeyboardParams.IP_presentation=<span class="string">'localhost'</span>;
+RSVPKeyboardParams.IP_GUI=<span class="string">'localhost'</span>;
+RSVPKeyboardParams.port_mainAndPresentation=52957;
+RSVPKeyboardParams.port_mainAndGUI=52958;
+</pre><h2>GUI<a name="13"></a></h2><p>Parameters pertaining to the remote GUI</p><p>GUI automatic launch flag Determines if the GUI is automatically launched on the same computer as the main module, or if it has to be manually launched, which allows it to be launched on any computer.</p><pre class="codeinput">RSVPKeyboardParams.GUI.autoLaunch = true;
+</pre><p>GUI stream flag Determines the nature of the data being sent to the GUI</p><pre class="codeinput">RSVPKeyboardParams.GUI.NO_DATA = 1; <span class="comment">% No data being sent.</span>
+RSVPKeyboardParams.GUI.RAW_DATA = 2; <span class="comment">% Raw data being sent.</span>
+RSVPKeyboardParams.GUI.FILTERED_DATA = 3; <span class="comment">% Filtered data being sent.</span>
+RSVPKeyboardParams.GUI.AM_DATA = 4; <span class="comment">% Attention monitoring data being sent.</span>
+</pre><h2>Trigger Offset Constant<a name="16"></a></h2><p>Trigger offset added to the trigger of the target symbol. For example, if a symbol has a trigger value of 5 when it is shown as a trial, it has a trigger value of 128+5 when it is shown as a target. This shouldn't be changed. Default value is 128.</p><pre class="codeinput">RSVPKeyboardParams.TARGET_TRIGGER_OFFSET=128;
+</pre><h2>Window Duration for Classification<a name="17"></a></h2><p>The signals are windowed after the stimulus to use the response corresponding to the stimulus. The window duration is in seconds. The default value is 0.5.</p><pre class="codeinput">RSVPKeyboardParams.windowDuration=0.5;
+</pre><h2>Calibration Parameters<a name="18"></a></h2><p>Number of trials to show per sequence in calibration. This effects the duration of calibration session and the target symbol is guaranteed to show up in the sequence.</p><pre class="codeinput">RSVPKeyboardParams.Calibration.NumberofTrials=10;
+</pre><p>Number of sequences in the calibration. This effects the duration of the calibration session.</p><pre class="codeinput">RSVPKeyboardParams.Calibration.NumberofSequences=75;
+</pre><h2>Typing Parameters<a name="20"></a></h2><p>These parameters are valid for the typing sessions, i.e spell, copyphrase, masterytask.</p><p>The maximum number of sequences to show in each epoch. A decision is made after showing this many sequences, if a decision is not made earlier by reaching to enough confidence level.</p><pre class="codeinput">RSVPKeyboardParams.Typing.MaximumNumberofSequences=8;
+</pre><p>The minimum number of sequences to show in each epoch. A decision is not made without showing at least this many sequences.</p><div><ul><li>0 : A decision can be made without showing any trials, if enough confidence is reached using the evidence coming from the language model.</li><li>1 : At least one sequence will be shown before making any decisions.</li><li>MaximumNumberofSequences = MinimumNumberofSequences : The number of sequences per epoch is constant. No adaptive early decision based on the confidence.</li></ul></div><pre class="codeinput">RSVPKeyboardParams.Typing.MinimumNumberofSequences=1;
+</pre><p>Confidence function to calculate the confidence. Given function (default: @max) is applied on the posterior probabilities to obtain the confidence value.</p><pre class="codeinput">RSVPKeyboardParams.Typing.ConfidenceFunction=@max;
+</pre><p>Confidence threshold to stop the epoch and make a decision. Default value is 0.9. If max(posteriorProbabilities)&gt;0.9, a decision is made and epoch is finished.</p><pre class="codeinput">RSVPKeyboardParams.Typing.ConfidenceThreshold=0.9;
+</pre><p>Number of trials in a sequence of a typing session. When it is equal to the number of trial symbols according to the imageList.xls (28 by default), the whole alphabet is shown. If it is lower, which symbols to show is decided according to the nextSequenceDecisionRule.</p><pre class="codeinput">RSVPKeyboardParams.Typing.NumberofTrials=28;
+</pre><p>The method to use for deciding which symbols to show in the next sequence. The trial symbols to show in a sequence are selected from possible symbol set using one of the following options</p><div><ul><li>'Random' : Randomly without replacement.</li><li>'Posterior' : Using the top symbols according to the posterior probabilities calculated after the last sequence which was shown. The posterior probabilities change as more EEG evidence collected.</li></ul></div><pre class="codeinput">RSVPKeyboardParams.Typing.nextSequenceDecisionRule=<span class="string">'Posterior'</span>;
+</pre><h2>Phrase stopping criteria<a name="27"></a></h2><p>For copy phrase and mastery tasks, there exists stopping criteria to stop the typing of the current phrase and continue with the next phrase if there exists one.</p><p>Maximum allowed duration for a phrase excluding the wait times between sequences in seconds.</p><pre class="codeinput">RSVPKeyboardParams.copyphrase.StoppingCriteria.MaximumEstimatedPhraseTime=450;
+</pre><p>The scale for the upper limit on the number of sequences based for the copy tasks. The typing of the phrase stops when <img src="RSVPKeyboardParameters_eq15948.png" alt="$\textrm{number of sequences spent on the phrase} \geq \textrm{SequenceLimitScale} \times \textrm{number of characters in the target phrase} \times  \textrm{MaximumNumberofSequences}$">. Default value is 2.</p><pre class="codeinput">RSVPKeyboardParams.copyphrase.StoppingCriteria.SequenceLimitScale=2;
+</pre><p>Maximum allowed number of consecutive incorrect decisions for a phrase. Default value is 5.</p><pre class="codeinput">RSVPKeyboardParams.copyphrase.StoppingCriteria.MaximumLengthOfIncorrectSection=5;
+</pre><h2>Mastery task level completion criteria<a name="31"></a></h2><p>A level in the mastery task is completed if at least this ratio of the phrases in a set are completed successfully. If the <tt>LevelCompletionThreshold</tt> is exceeded in any set, the level is completed. Otherwise the level continues to show all the sets repeatedly.</p><pre class="codeinput">RSVPKeyboardParams.masteryTask.LevelCompletionThreshold=2/3;
+</pre><h2>Feature Extraction Methodology<a name="32"></a></h2><p>List of operators to use in the ProcessFlow of the feature extraction. The handles corresponding to the class names of the operators should be listed as a cell vector.</p><pre class="codeinput">RSVPKeyboardParams.FeatureExtraction.operatorHandles={@downsampleObject, @pca, @rda};
+</pre><p>List of the operation modes of each operator.</p><div><ul><li>0 : Concatenate all the data as a single feature vector before applying the operator.</li><li>1 : Apply the feature extraction along the first dimension for each of the other dimensions. Initially it is applied over spatial samples.</li><li>2 : Apply the feature extraction along the second dimension for each of the other dimensions. Initially it is applied over time samples.</li></ul></div><p>Example; [2 2 0] means first and second operator is applied for each channel separately, third operator is applied over the full feature vector.</p><pre class="codeinput">RSVPKeyboardParams.FeatureExtraction.operationModes=[2 2 0];
+</pre><p>List of parameters corresponding to each operator. It is a cell vector containing the parameters as a structure for each operator. RSVPKeyboardParams.FeatureExtraction.operationParameters{2}.minimumRelativeEigenvalue corresponds to the minimumRelativeEigenvalue parameter of the second operator.</p><pre class="codeinput">RSVPKeyboardParams.FeatureExtraction.operationParameters{2}.minimumRelativeEigenvalue=1e-5;
+RSVPKeyboardParams.FeatureExtraction.operationParameters{3}.lambda=0.9;
+RSVPKeyboardParams.FeatureExtraction.operationParameters{3}.gamma=0.1;
+</pre><h2>Cross Validation<a name="35"></a></h2><p>Cross validation fold count. Default value is 10, which applies a 10-fold cross validation.</p><pre class="codeinput">RSVPKeyboardParams.CrossValidation.K=10;
+</pre><p>The partitioning type of the cross validation. The possible values are</p><div><ul><li>Uniform : Folds consist of contiguous trial blocks.</li><li>Random : Trials are selected to folds randomly without replacement.</li></ul></div><pre class="codeinput">RSVPKeyboardParams.CrossValidation.partitioningType=<span class="string">'Uniform'</span>;
+</pre><h2>Simulation to estimate the typing performance<a name="37"></a></h2><p>Enables(true)/disables(false) the simulation</p><pre class="codeinput">RSVPKeyboardParams.Simulation.Enabled=true;
+</pre><p>Hyperparameters to search over during the simulations. HyperparameterNames cell vector of strings containing the names of the parameters. HyperparameterValues cell vector of real vectors containing the values of the parameters to search over. Any real value taking parameter can be entered and it should be written without RSVPKeyboardParams in the beginning of the parameter name. If there are multiple parameters to search over, they may be entered together.</p><p>Example; if RSVPKeyboardParams.Simulation.HyperparameterNames = {'Typing.MaximumNumberofSequences', 'Typing.NumberofTrials'} RSVPKeyboardParams.Simulation.HyperparameterValues = {[1 2 4 8],[14 28]}; Maximum number of sequences is varied in the set {1,2,4,8} and number of trials is varied in the set {14,28}. Correspondingly the simulations are performed for 8 different scenarios.</p><pre class="codeinput">RSVPKeyboardParams.Simulation.HyperparameterNames = {<span class="string">'Typing.MaximumNumberofSequences'</span>};
+RSVPKeyboardParams.Simulation.HyperparameterValues = {[4 8]};
+</pre><p>The number of monte carlo simulations. As this number increases, simulations return more stable results, however simulations take longer time.</p><pre class="codeinput">RSVPKeyboardParams.Simulation.MonteCarloRepetitionCount=10;
+</pre><h2>Offline Analysis Screen<a name="40"></a></h2><p>Enables (true)/ disables (false) the offline analysis screen.</p><pre class="codeinput">RSVPKeyboardParams.OfflineAnalysisScreen.Enabled=true;
+</pre><p>Enables (true)/ disables (false) average the target and nontarget ERP plots.</p><pre class="codeinput">RSVPKeyboardParams.OfflineAnalysisScreen.AverageERPPlotsEnabled=true;
+</pre><p>Enables(true)/disables(false) the artifactFiltering process For enabling we MUST have Fp1-Fp2-Fc1-Fc2 channels</p><pre class="codeinput">RSVPKeyboardParams.artifactFiltering.enabled=0;
+</pre><p>Enables (true)/ disables (false) the "Channel Drop Warning" message on the presentation screen</p><pre class="codeinput">RSVPKeyboardParams.artifactFiltering.channelDropWarning=0;
+</pre><p>If artifactFiltering is enabled there is two independent options: 1. useArtifactFilteredData or not</p><pre class="codeinput">RSVPKeyboardParams.artifactFiltering.useArtifactFilteredData=0;
+</pre><p>2. reject sequences recognized as contaminated or not</p><pre class="codeinput">RSVPKeyboardParams.artifactFiltering.rejectSequence=0;
+</pre><h2>Attention Monitoring - Asieh<a name="46"></a></h2><pre class="codeinput">RSVPKeyboardParams.attentionMonitoring.enabled=1;
+RSVPKeyboardParams.attentionMonitoring.useArtifactFilteringData=1;
+RSVPKeyboardParams.attentionMonitoring.processWindowLength=3;
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.14<br></p></div><!--
+##### SOURCE BEGIN #####
+%% RSVPKeyboardParameters
+% Parameter file for the general operation of RSVPKeyboard
+
+%% Mode of acquisition system.
+% Available options are 'gUSBAmp' and 'noAmp'.
+%
+% * 'gUSBAmp': Acquires data from gTec's g.USBAmp amplifier
+% * 'noAmp' : Uses no amplifiers to record. It generates artificial signals or can play a previously
+% recorded '.daq' file
+%
+
+RSVPKeyboardParams.DAQType='gUSBAmp';%'gUSBAmp';
+
+%% List of I/O ports to use in parallel port communication.
+% The program will send triggers to all of these ports. If there is a new device or new computer,
+% please check the port from the Resources of the device in Device Manager.
+RSVPKeyboardParams.parallelPortIOList={'4020','2020','2FD8','4FD8'};
+
+%% Language Model
+% Enables or disables the language model. Enabled = 1 (default), Disabled = 0.
+RSVPKeyboardParams.languageModelEnabled=1;
+
+%%
+% Language model file to use. The model files are stored in btlmserver/models/. Default value is
+% 'nyt.200.36char.m6.greg.fromfst.mod'.
+RSVPKeyboardParams.languageModel='nyt.200.36char.m6.greg.fromfst.mod';
+
+%%
+% Method to calculate the language model probabilities corresponding to special characters, e.g.
+% delete character. There are two options 'fixed', which assigns a fixed probability for the
+% special characters and 'adaptive', which changes the probability adaptively. In the current
+% implementation only Delete character is considered as the special character.
+RSVPKeyboardParams.languageModelWrapper.specialProbCalcType='fixed';
+
+%%
+% The fixed probability corresponding to the delete symbol. It should take a real value in [0,1].
+% The default value is 0.05.
+RSVPKeyboardParams.languageModelWrapper.fixedProbability.DeleteCharacter=0.05;
+
+%%
+% The maximum value that can be assigned to the delete symbol
+RSVPKeyboardParams.languageModelWrapper.adaptiveProbability.DeleteCharacter.upperLimit=0.2;
+
+%%
+% The minimum value that can be assigned to the delete symbol
+RSVPKeyboardParams.languageModelWrapper.adaptiveProbability.DeleteCharacter.lowerLimit=0.03;
+
+%%
+% Language model scaling factor in $[0,\infty)$.
+% It takes the power of the probabilities obtained from the language model by the given factor.
+% Lower the number closer to giving equal probability for each symbol.
+%
+% * 1 : No modification on the language model probabilities
+% * 0: The probabilities coming from the language model are made equal
+% * 0.5 : Takes the square root of the probabilities that makes the probabilities closer to each
+% other. (used in v1.3)
+%
+RSVPKeyboardParams.languageModelWrapper.LANGUAGEMODELSCALINGHACK=0.5;
+
+%% Modules
+RSVPKeyboardParams.modules = {'Presentation','GUI'};
+
+%% Presentation
+% Parameters that affect the remote presentation
+
+%%
+% TCP/IP Communication with the Presentation
+% IP and Port address of the main controller side. These shouldn't be changed unless trying to run
+% the presentation on a separate computer.
+RSVPKeyboardParams.IP_main='localhost';
+RSVPKeyboardParams.IP_presentation='localhost';
+RSVPKeyboardParams.IP_GUI='localhost';
+RSVPKeyboardParams.port_mainAndPresentation=52957;
+RSVPKeyboardParams.port_mainAndGUI=52958;
+
+%% GUI
+% Parameters pertaining to the remote GUI
+
+%%
+% GUI automatic launch flag
+% Determines if the GUI is automatically launched on the same computer as
+% the main module, or if it has to be manually launched, which allows it to
+% be launched on any computer.
+RSVPKeyboardParams.GUI.autoLaunch = true;
+
+%%
+% GUI stream flag
+% Determines the nature of the data being sent to the GUI
+RSVPKeyboardParams.GUI.NO_DATA = 1; % No data being sent.
+RSVPKeyboardParams.GUI.RAW_DATA = 2; % Raw data being sent.
+RSVPKeyboardParams.GUI.FILTERED_DATA = 3; % Filtered data being sent.
+RSVPKeyboardParams.GUI.AM_DATA = 4; % Attention monitoring data being sent.
+
+%% Trigger Offset Constant
+% Trigger offset added to the trigger of the target symbol. For example, if a symbol has a trigger value of 5 when it is shown as a trial,
+% it has a trigger value of 128+5 when it is shown as a target. This shouldn't be changed. Default
+% value is 128.
+RSVPKeyboardParams.TARGET_TRIGGER_OFFSET=128;
+
+%% Window Duration for Classification
+% The signals are windowed after the stimulus to use the response corresponding to the stimulus. The
+% window duration is in seconds. The default value is 0.5.
+RSVPKeyboardParams.windowDuration=0.5;
+
+%% Calibration Parameters
+% Number of trials to show per sequence in calibration. This effects the duration of calibration
+% session and the target symbol is guaranteed to show up in the sequence.
+RSVPKeyboardParams.Calibration.NumberofTrials=10;
+
+%%
+% Number of sequences in the calibration. This effects the duration of the calibration session.
+RSVPKeyboardParams.Calibration.NumberofSequences=75;
+
+%% Typing Parameters
+% These parameters are valid for the typing sessions, i.e spell, copyphrase, masterytask.
+
+%%
+% The maximum number of sequences to show in each epoch. A decision is made after showing this many
+% sequences, if a decision is not made earlier by reaching to enough confidence level.
+RSVPKeyboardParams.Typing.MaximumNumberofSequences=8;
+
+%%
+% The minimum number of sequences to show in each epoch. A decision is not made without showing at
+% least this many sequences.
+%
+% * 0 : A decision can be made without showing any trials, if enough confidence is reached using the
+% evidence coming from the language model.
+% * 1 : At least one sequence will be shown before making any decisions.
+% * MaximumNumberofSequences = MinimumNumberofSequences : The number of sequences per epoch is
+% constant. No adaptive early decision based on the confidence.
+RSVPKeyboardParams.Typing.MinimumNumberofSequences=1;
+
+%%
+% Confidence function to calculate the confidence. Given function (default: @max) is applied on the
+% posterior probabilities to obtain the confidence value.
+RSVPKeyboardParams.Typing.ConfidenceFunction=@max;
+
+%%
+% Confidence threshold to stop the epoch and make a decision. Default value is 0.9.
+% If max(posteriorProbabilities)>0.9, a decision is made and epoch is finished.
+RSVPKeyboardParams.Typing.ConfidenceThreshold=0.9;
+
+%%
+% Number of trials in a sequence of a typing session. When it is equal to the number of trial
+% symbols according to the imageList.xls (28 by default), the whole alphabet is shown. If it is
+% lower, which symbols to show is decided according to the nextSequenceDecisionRule.
+RSVPKeyboardParams.Typing.NumberofTrials=28;
+
+%%
+% The method to use for deciding which symbols to show in the next sequence. The trial symbols to
+% show in a sequence are selected from possible symbol set using one of the following options
+%
+% * 'Random' : Randomly without replacement.
+% * 'Posterior' : Using the top symbols according to the posterior probabilities calculated after
+% the last sequence which was shown. The posterior probabilities change as more EEG evidence
+% collected.
+%
+RSVPKeyboardParams.Typing.nextSequenceDecisionRule='Posterior';
+
+%% Phrase stopping criteria
+% For copy phrase and mastery tasks, there exists stopping criteria to stop the typing of the
+% current phrase and continue with the next phrase if there exists one.
+
+%%
+% Maximum allowed duration for a phrase excluding the wait times between sequences in seconds.
+RSVPKeyboardParams.copyphrase.StoppingCriteria.MaximumEstimatedPhraseTime=450;
+
+%%
+% The scale for the upper limit on the number of sequences based for the copy tasks.
+% The typing of the phrase stops when
+% $\textrm{number of sequences spent on the phrase} \geq \textrm{SequenceLimitScale} \times
+% \textrm{number of characters in the target phrase} \times  \textrm{MaximumNumberofSequences}$.
+% Default value is 2.
+RSVPKeyboardParams.copyphrase.StoppingCriteria.SequenceLimitScale=2;
+
+%%
+% Maximum allowed number of consecutive incorrect decisions for a phrase.
+% Default value is 5.
+RSVPKeyboardParams.copyphrase.StoppingCriteria.MaximumLengthOfIncorrectSection=5;
+
+%% Mastery task level completion criteria
+% A level in the mastery task is completed if at least this ratio of the phrases in a set are completed
+% successfully. If the |LevelCompletionThreshold| is exceeded in any set, the level is completed.
+% Otherwise the level continues to show all the sets repeatedly.
+RSVPKeyboardParams.masteryTask.LevelCompletionThreshold=2/3;
+
+%% Feature Extraction Methodology
+% List of operators to use in the ProcessFlow of the feature extraction. The handles corresponding
+% to the class names of the operators should be listed as a cell vector.
+RSVPKeyboardParams.FeatureExtraction.operatorHandles={@downsampleObject, @pca, @rda};
+
+%%
+% List of the operation modes of each operator.
+%
+% * 0 : Concatenate all the data as a single feature vector before applying the operator.
+% * 1 : Apply the feature extraction along the first dimension for each of the other dimensions.
+% Initially it is applied over spatial samples.
+% * 2 : Apply the feature extraction along the second dimension for each of the other dimensions.
+% Initially it is applied over time samples.
+%
+% Example; [2 2 0] means first and second operator is applied for each channel separately, third
+% operator is applied over the full feature vector.
+RSVPKeyboardParams.FeatureExtraction.operationModes=[2 2 0];
+
+%%
+% List of parameters corresponding to each operator. It is a cell vector containing the parameters
+% as a structure for each operator.
+% RSVPKeyboardParams.FeatureExtraction.operationParameters{2}.minimumRelativeEigenvalue corresponds
+% to the minimumRelativeEigenvalue parameter of the second operator.
+RSVPKeyboardParams.FeatureExtraction.operationParameters{2}.minimumRelativeEigenvalue=1e-5;
+RSVPKeyboardParams.FeatureExtraction.operationParameters{3}.lambda=0.9;
+RSVPKeyboardParams.FeatureExtraction.operationParameters{3}.gamma=0.1;
+
+%% Cross Validation
+% Cross validation fold count. Default value is 10, which applies a 10-fold cross validation.
+RSVPKeyboardParams.CrossValidation.K=10;
+
+%%
+% The partitioning type of the cross validation. The possible values are
+%
+% * Uniform : Folds consist of contiguous trial blocks.
+% * Random : Trials are selected to folds randomly without replacement.
+%
+RSVPKeyboardParams.CrossValidation.partitioningType='Uniform';
+
+%% Simulation to estimate the typing performance
+% Enables(true)/disables(false) the simulation_dir
+RSVPKeyboardParams.Simulation.Enabled=true;
+
+%%
+% Hyperparameters to search over during the simulations.
+% HyperparameterNames cell vector of strings containing the names of the parameters.
+% HyperparameterValues cell vector of real vectors containing the values of the parameters to search
+% over.
+% Any real value taking parameter can be entered and it should be written without RSVPKeyboardParams
+% in the beginning of the parameter name. If there are multiple parameters to search over, they may
+% be entered together.
+%
+% Example; if
+% RSVPKeyboardParams.Simulation.HyperparameterNames = {'Typing.MaximumNumberofSequences', 'Typing.NumberofTrials'}
+% RSVPKeyboardParams.Simulation.HyperparameterValues = {[1 2 4 8],[14 28]};
+% Maximum number of sequences is varied in the set {1,2,4,8} and number of trials is varied in the
+% set {14,28}. Correspondingly the simulations are performed for 8 different scenarios.
+RSVPKeyboardParams.Simulation.HyperparameterNames = {'Typing.MaximumNumberofSequences'};
+RSVPKeyboardParams.Simulation.HyperparameterValues = {[4 8]};
+
+%%
+% The number of monte carlo simulations. As this number increases, simulations return more stable
+% results, however simulations take longer time.
+RSVPKeyboardParams.Simulation.MonteCarloRepetitionCount=10;
+
+%% Offline Analysis Screen
+% Enables (true)/ disables (false) the offline analysis screen.
+RSVPKeyboardParams.OfflineAnalysisScreen.Enabled=true;
+
+%%
+% Enables (true)/ disables (false) average the target and nontarget ERP plots.
+RSVPKeyboardParams.OfflineAnalysisScreen.AverageERPPlotsEnabled=true;
+
+%%
+% Enables(true)/disables(false) the artifactFiltering process
+% For enabling we MUST have Fp1-Fp2-Fc1-Fc2 channels
+RSVPKeyboardParams.artifactFiltering.enabled=0; 
+
+%%
+% Enables (true)/ disables (false) the "Channel Drop Warning" message on the presentation
+% screen
+RSVPKeyboardParams.artifactFiltering.channelDropWarning=0;
+%%
+% If artifactFiltering is enabled there is two independent options: 
+% 1. useArtifactFilteredData or not 
+RSVPKeyboardParams.artifactFiltering.useArtifactFilteredData=0;
+
+%%
+% 2. reject sequences recognized as contaminated or not
+RSVPKeyboardParams.artifactFiltering.rejectSequence=0;
+
+%% Attention Monitoring - Asieh
+RSVPKeyboardParams.attentionMonitoring.enabled=1;
+RSVPKeyboardParams.attentionMonitoring.useArtifactFilteringData=1;
+RSVPKeyboardParams.attentionMonitoring.processWindowLength=3;
+##### SOURCE END #####
+--></body></html>

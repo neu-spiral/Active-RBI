@@ -1,0 +1,169 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>DAQParameters</title><meta name="generator" content="MATLAB 7.14"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2013-06-13"><meta name="DC.source" content="DAQParameters.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+
+  </style></head><body><div class="content"><h1>DAQParameters</h1><!--introduction--><p>Contains user adjustable parameter file corresponding to data acquisition.    It creates a structure (daqStruct) with the following fields,</p><div><ul><li>daqStruct.fs - sampling frequency</li><li>daqStruct.ampFilterNdx - Filter index for using built-in bandpass amplifier filter</li><li>daqStruct.notchFiltexNdx - Filter index for using built-in notch amplifier filter</li><li>daqStruct.ampBufferLengthSec - Amplifier buffer length in seconds.</li><li>daqStruct.calibrationOn - Amplifier calibration enable flag</li></ul></div><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Sampling Frequency (default 256)</a></li><li><a href="#2">Bandpass filter and notch filter</a></li><li><a href="#3">Amplifier buffer length</a></li><li><a href="#4">Calibration flag</a></li></ul></div><h2>Sampling Frequency (default 256)<a name="1"></a></h2><pre class="codeinput">daqStruct.fs = 256;
+</pre><h2>Bandpass filter and notch filter<a name="2"></a></h2><p>Filter indices for using built-in amplifier filters</p><p>For daqStruct.ampFilterNdx, 41 corresponds to 0.01-100 Hz bandpass filter, -1 corresponds to no bandpass filter.</p><p>For daqStruct.notchFiltexNdx, 3 corresponds to 60 Hz notch filter and -1 corresponds to no notch filter.</p><p>An example of valid filters for 256 Hz sampling frequency     To find filter indices for given sample rate - type     gUSBampShowFilter(fs) on command window</p><pre>   Valid Bandpass Filters for 256 Hz:
+   Filter:	HP:		LP:		Order:	Type:
+   __________________________________________
+   32		0.10	0.00	8		butter
+   33		1.00	0.00	8		butter
+   34		2.00	0.00	8		butter
+   35		5.00	0.00	8		butter
+   36		0.00	30.00	8		butter
+   37		0.00	60.00	8		butter
+   38		0.00	100.00	8		butter
+   39		0.01	30.00	6		butter
+   40		0.01	60.00	8		butter
+   41		0.01	100.00	8		butter
+   42		0.10	30.00	8		butter
+   43		0.10	60.00	8		butter
+   44		0.10	100.00	8		butter
+   45		0.50	30.00	8		butter
+   46		0.50	60.00	8		butter
+   47		0.50	100.00	8		butter
+   48		2.00	30.00	8		butter
+   49		2.00	60.00	8		butter
+   50		2.00	100.00	8		butter
+   51		5.00	30.00	8		butter
+   52		5.00	60.00	8		butter
+   53		5.00	100.00	8		butter</pre><pre>   Valid Notch Filters for 256 Hz:
+   Filter:	HP:		LP:		Order:	Type:
+   __________________________________________
+   2		48.00	52.00	4		butter
+   3		58.00	62.00	4		butter</pre><pre class="codeinput">daqStruct.ampFilterNdx = 49;
+daqStruct.notchFiltexNdx = 3;
+</pre><h2>Amplifier buffer length<a name="3"></a></h2><p>It sets the buffer of the data acquisition toolbox. If set to infinity the data acquisition toolbox continually acquires data.</p><pre class="codeinput">daqStruct.ampBufferLengthSec = Inf;   <span class="comment">%in seconds</span>
+</pre><h2>Calibration flag<a name="4"></a></h2><p>Enables (1)/disables (0) the calibration of the amplifiers. If it is disabled, amplifiers will initialize quicker but might contain unusal offsets or scales. It is recommended not to disable it during the experiments.</p><pre class="codeinput">daqStruct.calibrationOn=1;
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.14<br></p></div><!--
+##### SOURCE BEGIN #####
+%% DAQParameters
+% Contains user adjustable parameter file corresponding to data acquisition.
+%    It creates a structure (daqStruct) with the following fields,
+%
+% * daqStruct.fs - sampling frequency
+% * daqStruct.ampFilterNdx - Filter index for using built-in bandpass amplifier filter
+% * daqStruct.notchFiltexNdx - Filter index for using built-in notch amplifier filter
+% * daqStruct.ampBufferLengthSec - Amplifier buffer length in seconds.
+% * daqStruct.calibrationOn - Amplifier calibration enable flag
+%
+%%
+
+
+%% Sampling Frequency (default 256)
+daqStruct.fs = 256;           
+
+%% Bandpass filter and notch filter 
+% Filter indices for using built-in amplifier filters
+%
+% For daqStruct.ampFilterNdx, 41 corresponds to 0.01-100 Hz bandpass filter,
+% -1 corresponds to no bandpass filter.
+%
+% For daqStruct.notchFiltexNdx, 3 corresponds to 60 Hz notch filter and -1 corresponds to no notch
+% filter.
+%
+% An example of valid filters for 256 Hz sampling frequency
+%     To find filter indices for given sample rate - type
+%     gUSBampShowFilter(fs) on command window
+%
+%     Valid Bandpass Filters for 256 Hz:
+%     Filter:	HP:		LP:		Order:	Type:
+%     __________________________________________
+%     32		0.10	0.00	8		butter
+%     33		1.00	0.00	8		butter
+%     34		2.00	0.00	8		butter
+%     35		5.00	0.00	8		butter
+%     36		0.00	30.00	8		butter
+%     37		0.00	60.00	8		butter
+%     38		0.00	100.00	8		butter
+%     39		0.01	30.00	6		butter
+%     40		0.01	60.00	8		butter
+%     41		0.01	100.00	8		butter
+%     42		0.10	30.00	8		butter
+%     43		0.10	60.00	8		butter
+%     44		0.10	100.00	8		butter
+%     45		0.50	30.00	8		butter
+%     46		0.50	60.00	8		butter
+%     47		0.50	100.00	8		butter
+%     48		2.00	30.00	8		butter
+%     49		2.00	60.00	8		butter
+%     50		2.00	100.00	8		butter
+%     51		5.00	30.00	8		butter
+%     52		5.00	60.00	8		butter
+%     53		5.00	100.00	8		butter
+% 
+%     Valid Notch Filters for 256 Hz:
+%     Filter:	HP:		LP:		Order:	Type:
+%     __________________________________________
+%     2		48.00	52.00	4		butter
+%     3		58.00	62.00	4		butter
+daqStruct.ampFilterNdx = 49; 
+daqStruct.notchFiltexNdx = 3; 
+
+%% Amplifier buffer length 
+% It sets the buffer of the data acquisition toolbox. If set to infinity the
+% data acquisition toolbox continually acquires data.
+daqStruct.ampBufferLengthSec = Inf;   %in seconds
+
+%% Calibration flag
+% Enables (1)/disables (0) the calibration of the amplifiers. If it is
+% disabled, amplifiers will initialize quicker but might contain unusal
+% offsets or scales. It is recommended not to disable it during the experiments.
+daqStruct.calibrationOn=1;
+
+##### SOURCE END #####
+--></body></html>

@@ -1,0 +1,259 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>listNode</title><meta name="generator" content="MATLAB 7.14"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2013-06-13"><meta name="DC.source" content="listNode.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+
+  </style></head><body><div class="content"><pre class="codeinput"><span class="keyword">classdef</span> listNode &lt; handle
+    <span class="comment">% LISTNODE  A class to represent a doubly-linked list node.</span>
+    <span class="comment">% Multiple listNode objects may be linked together to create linked lists.</span>
+    <span class="comment">% Each node contains a piece of data and provides access to the next</span>
+    <span class="comment">% and previous nodes.</span>
+    <span class="keyword">properties</span>
+        Data
+        Next
+        Prev
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span>
+        <span class="keyword">function</span> node = listNode(Data)
+            <span class="comment">% LISTNODE  Constructs a dlnode object.</span>
+            <span class="keyword">if</span> nargin &gt; 0
+                node.Data = Data;
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+<span class="comment">%         function insertAfter(newNode, nodeBefore)</span>
+<span class="comment">%             % insertAfter  Inserts newNode after nodeBefore.</span>
+<span class="comment">%             disconnect(newNode);</span>
+<span class="comment">%             newNode.Next = nodeBefore.Next;</span>
+<span class="comment">%             newNode.Prev = nodeBefore;</span>
+<span class="comment">%             if ~isempty(nodeBefore.Next)</span>
+<span class="comment">%                 nodeBefore.Next.Prev = newNode;</span>
+<span class="comment">%             end</span>
+<span class="comment">%             nodeBefore.Next = newNode;</span>
+<span class="comment">%         end</span>
+<span class="comment">%</span>
+<span class="comment">%         function insertBefore(newNode, nodeAfter)</span>
+<span class="comment">%             % insertBefore  Inserts newNode before nodeAfter.</span>
+<span class="comment">%             disconnect(newNode);</span>
+<span class="comment">%             newNode.Next = nodeAfter;</span>
+<span class="comment">%             newNode.Prev = nodeAfter.Prev;</span>
+<span class="comment">%             if ~isempty(nodeAfter.Prev)</span>
+<span class="comment">%                 nodeAfter.Prev.Next = newNode;</span>
+<span class="comment">%             end</span>
+<span class="comment">%             nodeAfter.Prev = newNode;</span>
+<span class="comment">%         end</span>
+<span class="comment">%</span>
+<span class="comment">%         function disconnect(node)</span>
+<span class="comment">%             % DISCONNECT  Removes a node from a linked list.</span>
+<span class="comment">%             % The node can be reconnected or moved to a different list.</span>
+<span class="comment">%             if ~isscalar(node)</span>
+<span class="comment">%                 error('Nodes must be scalar')</span>
+<span class="comment">%             end</span>
+<span class="comment">%             prevNode = node.Prev;</span>
+<span class="comment">%             nextNode = node.Next;</span>
+<span class="comment">%             if ~isempty(prevNode)</span>
+<span class="comment">%                 prevNode.Next = nextNode;</span>
+<span class="comment">%             end</span>
+<span class="comment">%             if ~isempty(nextNode)</span>
+<span class="comment">%                 nextNode.Prev = prevNode;</span>
+<span class="comment">%             end</span>
+<span class="comment">%             node.Next = [];</span>
+<span class="comment">%             node.Prev = [];</span>
+<span class="comment">%         end</span>
+<span class="comment">%</span>
+<span class="comment">%         function delete(node)</span>
+<span class="comment">%             % DELETE  Deletes a dlnode from a linked list.</span>
+<span class="comment">%             disconnect(node);</span>
+<span class="comment">%             delete(node);</span>
+<span class="comment">%         end</span>
+<span class="comment">%</span>
+<span class="comment">%         function disp(node)</span>
+<span class="comment">%             % DISP  Display a link node.</span>
+<span class="comment">%             if (isscalar(node))</span>
+<span class="comment">%                 disp('Doubly-linked list node with data:')</span>
+<span class="comment">%                 disp(node.Data)</span>
+<span class="comment">%             else % If node is an object array, display dims only</span>
+<span class="comment">%                 dims = size(node);</span>
+<span class="comment">%                 ndims = length(dims);</span>
+<span class="comment">%                 for k = ndims-1:-1:1</span>
+<span class="comment">%                     dimcell{k} = [num2str(dims(k)) 'x'];</span>
+<span class="comment">%                 end</span>
+<span class="comment">%                 dimstr = [dimcell{:} num2str(dims(ndims))];</span>
+<span class="comment">%                 disp([dimstr ' array of doubly-linked list nodes']);</span>
+<span class="comment">%             end</span>
+<span class="comment">%         end</span>
+<span class="comment">%</span>
+<span class="comment">%         function node=getNodeAfter(beginNode,n)</span>
+<span class="comment">%             % GETNODEAFTER  Returns nth node after beginNode</span>
+<span class="comment">%             node=beginNode;</span>
+<span class="comment">%             for(k=1:n)</span>
+<span class="comment">%                 if(isempty(node))</span>
+<span class="comment">%                     node=[];</span>
+<span class="comment">%                 else</span>
+<span class="comment">%                     node=node.Next;</span>
+<span class="comment">%                 end</span>
+<span class="comment">%</span>
+<span class="comment">%             end</span>
+<span class="comment">%         end</span>
+
+
+    <span class="keyword">end</span> <span class="comment">% methods</span>
+<span class="keyword">end</span> <span class="comment">% classdef</span>
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.14<br></p></div><!--
+##### SOURCE BEGIN #####
+classdef listNode < handle
+    % LISTNODE  A class to represent a doubly-linked list node.
+    % Multiple listNode objects may be linked together to create linked lists.
+    % Each node contains a piece of data and provides access to the next
+    % and previous nodes.
+    properties
+        Data
+        Next
+        Prev
+    end
+    
+    methods
+        function node = listNode(Data)
+            % LISTNODE  Constructs a dlnode object.
+            if nargin > 0
+                node.Data = Data;
+            end
+        end
+        
+%         function insertAfter(newNode, nodeBefore)
+%             % insertAfter  Inserts newNode after nodeBefore.
+%             disconnect(newNode);
+%             newNode.Next = nodeBefore.Next;
+%             newNode.Prev = nodeBefore;
+%             if ~isempty(nodeBefore.Next)
+%                 nodeBefore.Next.Prev = newNode;
+%             end
+%             nodeBefore.Next = newNode;
+%         end
+%         
+%         function insertBefore(newNode, nodeAfter)
+%             % insertBefore  Inserts newNode before nodeAfter.
+%             disconnect(newNode);
+%             newNode.Next = nodeAfter;
+%             newNode.Prev = nodeAfter.Prev;
+%             if ~isempty(nodeAfter.Prev)
+%                 nodeAfter.Prev.Next = newNode;
+%             end
+%             nodeAfter.Prev = newNode;
+%         end
+%         
+%         function disconnect(node)
+%             % DISCONNECT  Removes a node from a linked list.
+%             % The node can be reconnected or moved to a different list.
+%             if ~isscalar(node)
+%                 error('Nodes must be scalar')
+%             end
+%             prevNode = node.Prev;
+%             nextNode = node.Next;
+%             if ~isempty(prevNode)
+%                 prevNode.Next = nextNode;
+%             end
+%             if ~isempty(nextNode)
+%                 nextNode.Prev = prevNode;
+%             end
+%             node.Next = [];
+%             node.Prev = [];
+%         end
+%         
+%         function delete(node)
+%             % DELETE  Deletes a dlnode from a linked list.
+%             disconnect(node);
+%             delete(node);
+%         end
+%         
+%         function disp(node)
+%             % DISP  Display a link node.
+%             if (isscalar(node))
+%                 disp('Doubly-linked list node with data:')
+%                 disp(node.Data)
+%             else % If node is an object array, display dims only
+%                 dims = size(node);
+%                 ndims = length(dims);
+%                 for k = ndims-1:-1:1
+%                     dimcell{k} = [num2str(dims(k)) 'x'];
+%                 end
+%                 dimstr = [dimcell{:} num2str(dims(ndims))];
+%                 disp([dimstr ' array of doubly-linked list nodes']);
+%             end
+%         end
+%         
+%         function node=getNodeAfter(beginNode,n)
+%             % GETNODEAFTER  Returns nth node after beginNode
+%             node=beginNode;
+%             for(k=1:n)
+%                 if(isempty(node))
+%                     node=[];
+%                 else
+%                     node=node.Next;
+%                 end
+%                 
+%             end
+%         end
+        
+        
+    end % methods
+end % classdef
+
+
+
+##### SOURCE END #####
+--></body></html>

@@ -1,0 +1,372 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>listGraphicElement</title><meta name="generator" content="MATLAB 7.14"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2013-06-13"><meta name="DC.source" content="listGraphicElement.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+
+  </style></head><body><div class="content"><pre class="codeinput"><span class="keyword">classdef</span> listGraphicElement &lt; handle
+
+    <span class="keyword">properties</span>
+
+        Children
+        Parent
+        data
+        numRows
+        colorData
+        x_pos
+        y_pos
+        textSize
+        rowHeight
+        windowHandle
+        windowDimensions
+
+    <span class="keyword">end</span>
+
+    <span class="keyword">methods</span>
+
+        <span class="keyword">function</span> self = listGraphicElement(list,colorMatrix,x,y,fontSize,presentationInfo)
+
+            self.Children = linkedList;
+
+            <span class="keyword">if</span> ~iscell(list)
+
+                error(<span class="string">'listGraphicElement given invalid table - list is not a cell array.'</span>);
+
+            <span class="keyword">end</span>
+
+            sizeMatrix = size(list);
+            <span class="keyword">if</span> (length(sizeMatrix) ~= 2) || (sizeMatrix(2) ~= 1)
+
+                error(<span class="string">'listGraphicElement given invalid data - list is not a column array.'</span>);
+
+            <span class="keyword">end</span>
+
+            self.data = list;
+
+            self.numRows = sizeMatrix(1);
+
+            sizeMatrix = size(colorMatrix);
+            <span class="keyword">if</span> sizeMatrix(1) ~= self.numRows
+
+                error([<span class="string">'listGraphicElement given invalid data - colorMatrix has '</span>,num2str(sizeMatrix(1)),<span class="string">' rows when it should have '</span>,num2str(self.numRows),<span class="string">' rows.'</span>]);
+
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> sizeMatrix(2) ~= 3
+
+                error([<span class="string">'listGraphicElement given invalid data - colorMatrix has '</span>,num2str(sizeMatrix(2)),<span class="string">' columns when it should have 3 columns.'</span>]);
+
+            <span class="keyword">end</span>
+
+            self.colorData = colorMatrix;
+
+            <span class="keyword">if</span> ~isnumeric(x)
+
+                error(<span class="string">'listGraphicElement given invalid data - x is not numeric.'</span>);
+
+            <span class="keyword">end</span>
+
+            self.x_pos = x;
+
+            <span class="keyword">if</span> ~isnumeric(y)
+
+                error(<span class="string">'listGraphicElement given invalid data - y is not numeric.'</span>);
+
+            <span class="keyword">end</span>
+
+
+            self.y_pos = y;
+
+            <span class="keyword">if</span> ~isnumeric(fontSize)
+
+                error(<span class="string">'listGraphicElement given invalid data - fontSize is not numeric.'</span>);
+
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> fontSize &lt;= 0
+
+                error(<span class="string">'listGraphicElement given invalid data - fontSize is less than or equal to 0.'</span>);
+
+            <span class="keyword">end</span>
+
+            self.textSize = fontSize;
+            self.rowHeight = fontSize * 1.25;
+
+            self.windowHandle = presentationInfo.window;
+
+            self.windowDimensions = presentationInfo.windowRect;
+
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> addGraphicElement(self,element)
+
+            self.Children.insertEnd(listNode(element));
+            element.Parent = self;
+
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> Draw(self)
+
+            <span class="comment">% Draw strings</span>
+            oldTextSize = Screen(self.windowHandle,<span class="string">'TextSize'</span>,self.textSize);
+            <span class="keyword">for</span> i = 1:self.numRows
+
+                Screen(self.windowHandle,<span class="string">'DrawText'</span>,self.data{i},self.windowDimensions(1) + self.x_pos,self.windowDimensions(2) + self.y_pos + ((i - 1) * self.rowHeight),self.colorData(i,:));
+
+            <span class="keyword">end</span>
+            Screen(self.windowHandle,<span class="string">'TextSize'</span>,oldTextSize);
+
+            <span class="comment">% Draw children.</span>
+            currentNode = self.Children.Head;
+            <span class="keyword">for</span> elementIndex = 1:self.Children.elementCount
+
+                currentNode.Data.Draw;
+                currentNode = currentNode.Next;
+
+            <span class="keyword">end</span>
+
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> copyObject = copy(self)
+
+            copyObject = listGraphicElement;
+            S = properties(self);
+
+            <span class="keyword">for</span> propertyIndex = 1:length(S)
+
+                copyObject.(S{propertyIndex}) = self.(S{propertyIndex});
+
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> ~isempty(self.Children)
+
+                copyObject.Children = linkedList;
+                currentNode = self.Children.Head;
+
+                <span class="keyword">while</span> ~isempty(currentNode)
+
+                    copyObject.Children.insertEnd(listNode(copy(currentNode.Data)));
+                    copyObject.Children.Tail.Data.Parent = copyObject;
+                    currentNode = currentNode.Next;
+
+                <span class="keyword">end</span>
+
+            <span class="keyword">end</span>
+
+        <span class="keyword">end</span>
+
+    <span class="keyword">end</span>
+
+<span class="keyword">end</span>
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.14<br></p></div><!--
+##### SOURCE BEGIN #####
+classdef listGraphicElement < handle
+    
+    properties
+        
+        Children
+        Parent
+        data
+        numRows
+        colorData
+        x_pos
+        y_pos
+        textSize
+        rowHeight
+        windowHandle
+        windowDimensions
+        
+    end
+    
+    methods
+        
+        function self = listGraphicElement(list,colorMatrix,x,y,fontSize,presentationInfo)
+            
+            self.Children = linkedList;
+            
+            if ~iscell(list)
+                
+                error('listGraphicElement given invalid table - list is not a cell array.');
+                
+            end
+            
+            sizeMatrix = size(list);
+            if (length(sizeMatrix) ~= 2) || (sizeMatrix(2) ~= 1)
+                
+                error('listGraphicElement given invalid data - list is not a column array.');
+                
+            end
+            
+            self.data = list;
+            
+            self.numRows = sizeMatrix(1);
+            
+            sizeMatrix = size(colorMatrix);
+            if sizeMatrix(1) ~= self.numRows
+                
+                error(['listGraphicElement given invalid data - colorMatrix has ',num2str(sizeMatrix(1)),' rows when it should have ',num2str(self.numRows),' rows.']);
+                
+            end
+            
+            if sizeMatrix(2) ~= 3
+                
+                error(['listGraphicElement given invalid data - colorMatrix has ',num2str(sizeMatrix(2)),' columns when it should have 3 columns.']);
+                
+            end
+            
+            self.colorData = colorMatrix;
+            
+            if ~isnumeric(x)
+                
+                error('listGraphicElement given invalid data - x is not numeric.');
+                
+            end
+            
+            self.x_pos = x;
+            
+            if ~isnumeric(y)
+                
+                error('listGraphicElement given invalid data - y is not numeric.');
+                
+            end
+            
+            
+            self.y_pos = y;
+            
+            if ~isnumeric(fontSize)
+                
+                error('listGraphicElement given invalid data - fontSize is not numeric.');
+                
+            end
+            
+            if fontSize <= 0
+                
+                error('listGraphicElement given invalid data - fontSize is less than or equal to 0.');
+                
+            end
+            
+            self.textSize = fontSize;
+            self.rowHeight = fontSize * 1.25;
+            
+            self.windowHandle = presentationInfo.window;
+            
+            self.windowDimensions = presentationInfo.windowRect;
+            
+        end
+        
+        function addGraphicElement(self,element)
+            
+            self.Children.insertEnd(listNode(element));
+            element.Parent = self;
+            
+        end
+        
+        function Draw(self)
+            
+            % Draw strings
+            oldTextSize = Screen(self.windowHandle,'TextSize',self.textSize);
+            for i = 1:self.numRows
+                
+                Screen(self.windowHandle,'DrawText',self.data{i},self.windowDimensions(1) + self.x_pos,self.windowDimensions(2) + self.y_pos + ((i - 1) * self.rowHeight),self.colorData(i,:));
+                
+            end
+            Screen(self.windowHandle,'TextSize',oldTextSize);
+            
+            % Draw children.
+            currentNode = self.Children.Head;
+            for elementIndex = 1:self.Children.elementCount
+                
+                currentNode.Data.Draw;
+                currentNode = currentNode.Next;
+                
+            end
+            
+        end
+        
+        function copyObject = copy(self)
+            
+            copyObject = listGraphicElement;
+            S = properties(self);
+            
+            for propertyIndex = 1:length(S)
+                
+                copyObject.(S{propertyIndex}) = self.(S{propertyIndex});
+                
+            end
+            
+            if ~isempty(self.Children)
+                
+                copyObject.Children = linkedList;
+                currentNode = self.Children.Head;
+                
+                while ~isempty(currentNode)
+                    
+                    copyObject.Children.insertEnd(listNode(copy(currentNode.Data)));
+                    copyObject.Children.Tail.Data.Parent = copyObject;
+                    currentNode = currentNode.Next;
+                    
+                end
+                
+            end
+            
+        end
+        
+    end
+    
+end
+
+
+##### SOURCE END #####
+--></body></html>

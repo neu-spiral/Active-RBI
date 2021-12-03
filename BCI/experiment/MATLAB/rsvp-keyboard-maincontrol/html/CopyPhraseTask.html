@@ -1,0 +1,305 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>CopyPhraseTask</title><meta name="generator" content="MATLAB 7.14"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2013-06-13"><meta name="DC.source" content="CopyPhraseTask.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+
+  </style></head><body><div class="content"><h1>CopyPhraseTask</h1><!--introduction--><p>CopyPhraseTask is the controller class for copy-phrase task and it inherits CopyTask. It decides on the next trials to show, decides if the session is complete, decides if copying status of a phrase, makes decision, prepares the feedback screen to send to the presentation and saves information to be saved.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#2">Constant properties of the CopyPhraseTask class</a></li><li><a href="#3">Properties of the CopyPhraseTask class</a></li><li><a href="#4">Methods of the CopyPhraseTask class</a></li><li><a href="#5">self=CopyPhraseTask(symbolStructArray,RSVPKeyboardParams,scoreStruct,operationMode)</a></li><li><a href="#6">checkTaskUpdateCriteria(self)</a></li><li><a href="#8">pInitializeTaskUpdateCriteria(self,copyphraseStoppingCriteria)</a></li><li><a href="#9">pInitializeCurrentPhraseInfo(self)</a></li><li><a href="#10">pReadSentenceList(self)</a></li><li><a href="#11">pUpdateCurrentPhraseInfo(self,results)</a></li></ul></div><pre class="codeinput"><span class="keyword">classdef</span> CopyPhraseTask &lt; CopyTask
+</pre><h2>Constant properties of the CopyPhraseTask class<a name="2"></a></h2><pre class="codeinput">    properties (Constant)
+        <span class="comment">% copyPhraseSentencesFile is the name of the txt file containing the list of the sentences to be</span>
+        <span class="comment">% used in the copyphrase experiment. (string)</span>
+        copyPhraseSentencesFile=<span class="string">'copyphraseSentences.txt'</span>;
+
+        <span class="comment">% copyPhraseSentencesFile4Simulation is the name of the txt file containing the list of the</span>
+        <span class="comment">% sentences to be used in the simulation mode for copyphrase task. (string)</span>
+        copyPhraseSentencesFile4Simulation=<span class="string">'copyphraseSentences4Simulation.txt'</span>;
+    <span class="keyword">end</span>
+</pre><h2>Properties of the CopyPhraseTask class<a name="3"></a></h2><pre class="codeinput">    properties
+        <span class="comment">% fullPhraseList is a cell vector of structs containing preTarget, target and postTarget</span>
+        <span class="comment">% fields corresponding to the phrase list to be used.</span>
+        fullPhraseList
+    <span class="keyword">end</span>
+</pre><h2>Methods of the CopyPhraseTask class<a name="4"></a></h2><pre class="codeinput">    methods
+</pre><h2>self=CopyPhraseTask(symbolStructArray,RSVPKeyboardParams,scoreStruct,operationMode)<a name="5"></a></h2><p>Constructor for the CopyPhraseTask. The inputs of the constructor   symbolStructArray - a struct vector containing list of symbols   or images used in presentations. Loaded using xls2Structs   function called on imageList.xls.</p><pre class="language-matlab">RSVPKeyboardParams - RSVPKeyboard parameters <span class="string">from</span> <span class="string">the</span>
+parameter <span class="string">file</span> <span class="string">RSVPKeyboardParameters.m.</span>
+</pre><pre class="language-matlab">scoreStruct - A calibration <span class="string">file</span> <span class="string">containing</span> <span class="string">the</span> <span class="string">kernel</span> <span class="string">density</span>
+estimators.
+</pre><pre class="language-matlab">operationMode - Mode of <span class="string">operation.</span>
+                0 : session
+                1 : simulation
+</pre><pre class="codeinput">        <span class="keyword">function</span> self=CopyPhraseTask(symbolStructArray,RSVPKeyboardParams,scoreStruct,operationMode)
+            <span class="keyword">if</span>(~exist(<span class="string">'scoreStruct'</span>,<span class="string">'var'</span>))
+                scoreStruct=[];
+            <span class="keyword">end</span>
+            <span class="keyword">if</span>(~exist(<span class="string">'operationMode'</span>,<span class="string">'var'</span>))
+                operationMode=0;
+            <span class="keyword">end</span>
+
+            self=self@CopyTask(symbolStructArray,RSVPKeyboardParams,scoreStruct,operationMode);
+
+            self.pInitializeTaskUpdateCriteria(RSVPKeyboardParams.copyphrase.StoppingCriteria);
+
+            self.currentInfo.phraseIndex=1;
+            self.pInitializeCurrentPhraseInfo();
+            self.reformatPresentationData();
+            self.nextSequenceInfoStruct.Rule = RSVPKeyboardParams.Typing.nextSequenceDecisionRule;
+            self.nextSequenceInfoStruct.NumberofTrials=RSVPKeyboardParams.Typing.NumberofTrials;
+        <span class="keyword">end</span>
+</pre><h2>checkTaskUpdateCriteria(self)<a name="6"></a></h2><p>checkTaskUpdateCriteria checks if the session is ended by reaching the end of the sentence list. It also inherits the corresponding function from the parent class, CopyTask.</p><pre class="codeinput">        <span class="keyword">function</span> checkTaskUpdateCriteria(self)
+            self.checkTaskUpdateCriteria@CopyTask();
+
+            <span class="keyword">if</span>(self.currentInfo.phrase.endedFlag)
+                <span class="keyword">if</span>(self.currentInfo.phraseIndex==length(self.fullPhraseList))
+                    self.currentInfo.taskEndedFlag=true;
+                <span class="keyword">else</span>
+                    self.currentInfo.phraseIndex = self.currentInfo.phraseIndex+1;
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+</pre><pre class="codeinput">    <span class="keyword">end</span>
+
+    methods (Access = protected)
+</pre><h2>pInitializeTaskUpdateCriteria(self,copyphraseStoppingCriteria)<a name="8"></a></h2><p>Inherits the task update criteria from the copyTask class.</p><p>Input:       copyphraseStoppingCriteria - the structure containing the stopping criteria as its       fields. (RSVPKeyboardParams.copyphrase.StoppingCriteria)</p><pre class="codeinput">        <span class="keyword">function</span> pInitializeTaskUpdateCriteria(self,copyphraseStoppingCriteria)
+            self.pInitializeTaskUpdateCriteria@CopyTask(copyphraseStoppingCriteria);
+        <span class="keyword">end</span>
+</pre><h2>pInitializeCurrentPhraseInfo(self)<a name="9"></a></h2><p>Initializes the next phrase to be copied by loading the phrase from the fullPhraseList.</p><pre class="codeinput">        <span class="keyword">function</span> pInitializeCurrentPhraseInfo(self)
+            <span class="keyword">if</span>(~self.currentInfo.taskEndedFlag)
+                self.currentInfo.phrase.preTarget=self.fullPhraseList{self.currentInfo.phraseIndex}.preTarget;
+                self.currentInfo.phrase.target=self.fullPhraseList{self.currentInfo.phraseIndex}.target;
+                self.currentInfo.phrase.postTarget=self.fullPhraseList{self.currentInfo.phraseIndex}.postTarget;
+                self.pInitializeCurrentPhraseInfo@CopyTask();
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+</pre><h2>pReadSentenceList(self)<a name="10"></a></h2><p>Reads the phrase list from the respective sentence list file and initializes the fullPhraseList property.</p><pre class="codeinput">        <span class="keyword">function</span> pReadSentenceList(self)
+            tempSentenceList=linkedList;
+            <span class="keyword">if</span>(self.operationMode)
+                fid=fopen(self.copyPhraseSentencesFile4Simulation);
+            <span class="keyword">else</span>
+                fid=fopen(self.copyPhraseSentencesFile);
+            <span class="keyword">end</span>
+            sentence=fscanf(fid,<span class="string">'%s,'</span>);
+            <span class="keyword">while</span>(~isempty(sentence))
+                temp=find(sentence==<span class="string">'"'</span>);
+                phrase2copyBeginIndex=temp(1);
+                phrase2copyEndIndex=temp(2);
+                phrase.preTarget=sentence(1:phrase2copyBeginIndex-1);
+                phrase.target=sentence((phrase2copyBeginIndex+1):(phrase2copyEndIndex-1));
+                phrase.postTarget=sentence((phrase2copyEndIndex+1):end-1);
+                tempSentenceList.insertEnd(phrase);
+                sentence=fscanf(fid,<span class="string">'%s,'</span>);
+            <span class="keyword">end</span>
+            fclose(fid);
+            self.fullPhraseList=tempSentenceList.toCell();
+        <span class="keyword">end</span>
+</pre><h2>pUpdateCurrentPhraseInfo(self,results)<a name="11"></a></h2><p>Updates the status and information of the phrase, i.e updates phrase field of the currentInfo property, and checks the task update criteria.</p><pre class="codeinput">        <span class="keyword">function</span> pUpdateCurrentPhraseInfo(self,results)
+            self.currentInfo.phrase.typingDuration=self.currentInfo.phrase.typingDuration+results.duration;
+            self.currentInfo.phrase.sequenceCounter=self.currentInfo.phrase.sequenceCounter+results.completedSequenceCount;
+
+            self.currentInfo.phrase.typedText=self.languageModelWrapperObject.getText();
+            [self.currentInfo.phrase.successfullyCompletedFlag,self.currentInfo.phrase.correctSection,self.currentInfo.phrase.incorrectSection]=checkTypingCorrectness(self.currentInfo.phrase.target,self.currentInfo.phrase.typedText);
+
+            self.checkTaskUpdateCriteria();
+
+        <span class="keyword">end</span>
+</pre><pre class="codeinput">    <span class="keyword">end</span>
+</pre><pre class="codeinput"><span class="keyword">end</span>
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.14<br></p></div><!--
+##### SOURCE BEGIN #####
+%% CopyPhraseTask
+% CopyPhraseTask is the controller class for copy-phrase task and it inherits CopyTask. It decides on the next trials to show, decides if the session is
+% complete, decides if copying status of a phrase, makes decision, prepares the feedback screen to
+% send to the presentation and saves information to be saved.
+%
+%%
+classdef CopyPhraseTask < CopyTask
+    %% Constant properties of the CopyPhraseTask class
+    properties (Constant)
+        % copyPhraseSentencesFile is the name of the txt file containing the list of the sentences to be
+        % used in the copyphrase experiment. (string)
+        copyPhraseSentencesFile='copyphraseSentences.txt';
+        
+        % copyPhraseSentencesFile4Simulation is the name of the txt file containing the list of the
+        % sentences to be used in the simulation_dir mode for copyphrase task. (string)
+        copyPhraseSentencesFile4Simulation='copyphraseSentences4Simulation.txt';
+    end
+    
+    %% Properties of the CopyPhraseTask class
+    properties
+        % fullPhraseList is a cell vector of structs containing preTarget, target and postTarget
+        % fields corresponding to the phrase list to be used.
+        fullPhraseList
+    end
+    
+    %% Methods of the CopyPhraseTask class
+    methods
+        %% self=CopyPhraseTask(symbolStructArray,RSVPKeyboardParams,scoreStruct,operationMode)
+        % Constructor for the CopyPhraseTask.
+        % The inputs of the constructor
+        %   symbolStructArray - a struct vector containing list of symbols
+        %   or images used in presentations. Loaded using xls2Structs
+        %   function called on imageList.xls.
+        %
+        %   RSVPKeyboardParams - RSVPKeyboard parameters from the
+        %   parameter file RSVPKeyboardParameters.m.
+        %
+        %   scoreStruct - A calibration file containing the kernel density
+        %   estimators.
+        %
+        %   operationMode - Mode of operation.
+        %                   0 : session
+        %                   1 : simulation_dir
+        %
+        function self=CopyPhraseTask(symbolStructArray,RSVPKeyboardParams,scoreStruct,operationMode)
+            if(~exist('scoreStruct','var'))
+                scoreStruct=[];
+            end
+            if(~exist('operationMode','var'))
+                operationMode=0;
+            end
+            
+            self=self@CopyTask(symbolStructArray,RSVPKeyboardParams,scoreStruct,operationMode);
+            
+            self.pInitializeTaskUpdateCriteria(RSVPKeyboardParams.copyphrase.StoppingCriteria);
+            
+            self.currentInfo.phraseIndex=1;
+            self.pInitializeCurrentPhraseInfo();
+            self.reformatPresentationData();
+            self.nextSequenceInfoStruct.Rule = RSVPKeyboardParams.Typing.nextSequenceDecisionRule;
+            self.nextSequenceInfoStruct.NumberofTrials=RSVPKeyboardParams.Typing.NumberofTrials;
+        end
+        
+        %% checkTaskUpdateCriteria(self)
+        % checkTaskUpdateCriteria checks if the session is ended by reaching the end of the sentence
+        % list. It also inherits the corresponding function from the parent class, CopyTask.
+        function checkTaskUpdateCriteria(self)
+            self.checkTaskUpdateCriteria@CopyTask();
+            
+            if(self.currentInfo.phrase.endedFlag)
+                if(self.currentInfo.phraseIndex==length(self.fullPhraseList))
+                    self.currentInfo.taskEndedFlag=true;
+                else
+                    self.currentInfo.phraseIndex = self.currentInfo.phraseIndex+1;
+                end
+            end
+        end
+    end
+    
+    methods (Access = protected)
+        %% pInitializeTaskUpdateCriteria(self,copyphraseStoppingCriteria)
+        % Inherits the task update criteria from the copyTask class.
+        %
+        % Input:
+        %       copyphraseStoppingCriteria - the structure containing the stopping criteria as its
+        %       fields. (RSVPKeyboardParams.copyphrase.StoppingCriteria)
+        function pInitializeTaskUpdateCriteria(self,copyphraseStoppingCriteria)
+            self.pInitializeTaskUpdateCriteria@CopyTask(copyphraseStoppingCriteria);
+        end
+        
+        %% pInitializeCurrentPhraseInfo(self)
+        % Initializes the next phrase to be copied by loading the phrase from the fullPhraseList.
+        function pInitializeCurrentPhraseInfo(self)
+            if(~self.currentInfo.taskEndedFlag)
+                self.currentInfo.phrase.preTarget=self.fullPhraseList{self.currentInfo.phraseIndex}.preTarget;
+                self.currentInfo.phrase.target=self.fullPhraseList{self.currentInfo.phraseIndex}.target;
+                self.currentInfo.phrase.postTarget=self.fullPhraseList{self.currentInfo.phraseIndex}.postTarget;
+                self.pInitializeCurrentPhraseInfo@CopyTask();
+            end
+        end
+        
+        %% pReadSentenceList(self)
+        % Reads the phrase list from the respective sentence list file and initializes the
+        % fullPhraseList property.
+        function pReadSentenceList(self)
+            tempSentenceList=linkedList;
+            if(self.operationMode)
+                fid=fopen(self.copyPhraseSentencesFile4Simulation);
+            else
+                fid=fopen(self.copyPhraseSentencesFile);
+            end
+            sentence=fscanf(fid,'%s,');
+            while(~isempty(sentence))
+                temp=find(sentence=='"');
+                phrase2copyBeginIndex=temp(1);
+                phrase2copyEndIndex=temp(2);
+                phrase.preTarget=sentence(1:phrase2copyBeginIndex-1);
+                phrase.target=sentence((phrase2copyBeginIndex+1):(phrase2copyEndIndex-1));
+                phrase.postTarget=sentence((phrase2copyEndIndex+1):end-1);
+                tempSentenceList.insertEnd(phrase);
+                sentence=fscanf(fid,'%s,');
+            end
+            fclose(fid);
+            self.fullPhraseList=tempSentenceList.toCell();
+        end
+        
+        %% pUpdateCurrentPhraseInfo(self,results)
+        % Updates the status and information of the phrase, i.e updates phrase field of the
+        % currentInfo property, and checks the task update criteria.
+        function pUpdateCurrentPhraseInfo(self,results)
+            self.currentInfo.phrase.typingDuration=self.currentInfo.phrase.typingDuration+results.duration;
+            self.currentInfo.phrase.sequenceCounter=self.currentInfo.phrase.sequenceCounter+results.completedSequenceCount;
+            
+            self.currentInfo.phrase.typedText=self.languageModelWrapperObject.getText();
+            [self.currentInfo.phrase.successfullyCompletedFlag,self.currentInfo.phrase.correctSection,self.currentInfo.phrase.incorrectSection]=checkTypingCorrectness(self.currentInfo.phrase.target,self.currentInfo.phrase.typedText);
+            
+            self.checkTaskUpdateCriteria();
+            
+        end
+        
+    end
+    
+    
+end
+##### SOURCE END #####
+--></body></html>

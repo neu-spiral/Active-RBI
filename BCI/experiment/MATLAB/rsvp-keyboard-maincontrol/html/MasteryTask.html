@@ -1,0 +1,402 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>MasteryTask</title><meta name="generator" content="MATLAB 7.14"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2013-06-13"><meta name="DC.source" content="MasteryTask.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+
+  </style></head><body><div class="content"><h1>MasteryTask</h1><!--introduction--><p>MasteryTask is the controller class for mastery task and it inherits CopyTask. It decides on the next trials to show, decides if the session is complete, decides if copying status of a phrase, makes decision, prepares the feedback screen to send to the presentation and saves information to be saved.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#2">Constant properties of the MasteryTask class</a></li><li><a href="#3">Properties of the MasteryTask class</a></li><li><a href="#4">Methods of the MasteryTask class</a></li><li><a href="#5">self=MasteryTask(symbolStructArray,RSVPKeyboardParams,scoreStruct,operationMode,initialLevelIndex,initialSetIndex)</a></li><li><a href="#6">checkTaskUpdateCriteria(self)</a></li><li><a href="#8">pInitializeTaskUpdateCriteria(self,copyphraseStoppingCriteria,masteryTaskUpdateCriteria)</a></li><li><a href="#9">pInitializeCurrentPhraseInfo(self)</a></li><li><a href="#10">pReadSentenceList(self)</a></li><li><a href="#11">pUpdateCurrentPhraseInfo(self,results)</a></li></ul></div><pre class="codeinput"><span class="keyword">classdef</span> MasteryTask &lt; CopyTask
+</pre><h2>Constant properties of the MasteryTask class<a name="2"></a></h2><pre class="codeinput">    properties (Constant)
+        <span class="comment">% masterySentencesFile is the name of the xlsx file containing the list of the sentences to be</span>
+        <span class="comment">% used in the mastery task experiment with their level and set information. (string)</span>
+        masterySentencesFile=<span class="string">'masteryTaskSentences.xlsx'</span>;
+    <span class="keyword">end</span>
+</pre><h2>Properties of the MasteryTask class<a name="3"></a></h2><pre class="codeinput">    properties
+        <span class="comment">% fullPhraseList is a cell vector of cell vector of cell vector of structs containing preTarget, target and postTarget</span>
+        <span class="comment">% fields corresponding to the phrase list to be used.</span>
+        <span class="comment">% Example; fullPhraseLevelList{3}{2}{1}.preTarget corresponds to the third level, second</span>
+        <span class="comment">% set, first sentence, part of the sentence before target.</span>
+        fullPhraseLevelList
+    <span class="keyword">end</span>
+</pre><h2>Methods of the MasteryTask class<a name="4"></a></h2><pre class="codeinput">    methods
+</pre><h2>self=MasteryTask(symbolStructArray,RSVPKeyboardParams,scoreStruct,operationMode,initialLevelIndex,initialSetIndex)<a name="5"></a></h2><p>Constructor for the MasteryTask. Queries for starting level and set if not entered. The inputs of the constructor   symbolStructArray - a struct vector containing list of symbols   or images used in presentations. Loaded using xls2Structs   function called on imageList.xls.</p><pre class="language-matlab">RSVPKeyboardParams - RSVPKeyboard parameters <span class="string">from</span> <span class="string">the</span>
+parameter <span class="string">file</span> <span class="string">RSVPKeyboardParameters.m.</span>
+</pre><pre class="language-matlab">scoreStruct - A calibration <span class="string">file</span> <span class="string">containing</span> <span class="string">the</span> <span class="string">kernel</span> <span class="string">density</span>
+estimators.
+</pre><pre class="language-matlab">operationMode - Mode of <span class="string">operation.</span>
+                0 : session
+                1 : simulation
+</pre><pre class="language-matlab">initialLevelIndex - index of <span class="string">the</span> <span class="string">starting</span> <span class="string">level</span>
+</pre><pre class="language-matlab">initialSetIndex - index of <span class="string">the</span> <span class="string">starting</span> <span class="string">set</span>
+</pre><pre class="codeinput">        <span class="keyword">function</span> self=MasteryTask(symbolStructArray,RSVPKeyboardParams,scoreStruct,operationMode,initialLevelIndex,initialSetIndex)
+            <span class="keyword">if</span>(~exist(<span class="string">'scoreStruct'</span>,<span class="string">'var'</span>))
+                scoreStruct=[];
+            <span class="keyword">end</span>
+            <span class="keyword">if</span>(~exist(<span class="string">'operationMode'</span>,<span class="string">'var'</span>))
+                operationMode=0;
+            <span class="keyword">end</span>
+
+            self=self@CopyTask(symbolStructArray,RSVPKeyboardParams,scoreStruct,operationMode);
+            self.pInitializeTaskUpdateCriteria(RSVPKeyboardParams.copyphrase.StoppingCriteria,RSVPKeyboardParams.masteryTask);
+
+            <span class="keyword">if</span>(exist(<span class="string">'initialLevelIndex'</span>,<span class="string">'var'</span>))
+                self.currentInfo.levelIndex=initialLevelIndex;
+            <span class="keyword">else</span>
+                self.currentInfo.levelIndex=str2double(input([<span class="string">'Please select the starting level [1:'</span> num2str(length(self.fullPhraseLevelList)) <span class="string">']:'</span>],<span class="string">'s'</span>));
+
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span>(exist(<span class="string">'initialSetIndex'</span>,<span class="string">'var'</span>))
+                self.currentInfo.setIndex=initialSetIndex;
+            <span class="keyword">else</span>
+                self.currentInfo.setIndex=str2double(input([<span class="string">'Please select the starting set [1:'</span> num2str(length(self.fullPhraseLevelList{self.currentInfo.levelIndex})) <span class="string">']:'</span>],<span class="string">'s'</span>));
+            <span class="keyword">end</span>
+
+            self.currentInfo.sentenceIndex=1;
+
+            self.currentInfo.successfulPhraseCountinSet=0;
+            self.currentInfo.levelSuccessfulFlag=false;
+
+            self.pInitializeCurrentPhraseInfo();
+            self.reformatPresentationData();
+
+            self.nextSequenceInfoStruct.Rule = RSVPKeyboardParams.Typing.nextSequenceDecisionRule;
+            self.nextSequenceInfoStruct.NumberofTrials=RSVPKeyboardParams.Typing.NumberofTrials;
+        <span class="keyword">end</span>
+</pre><h2>checkTaskUpdateCriteria(self)<a name="6"></a></h2><p>checkTaskUpdateCriteria checks if a level is successfully completed or a set is unsuccessfully completed, and if the session is finished by completing all the levels. It also inherits the corresponding function from the parent class, CopyTask.</p><pre class="codeinput">        <span class="keyword">function</span> checkTaskUpdateCriteria(self)
+            self.checkTaskUpdateCriteria@CopyTask();
+
+            self.currentInfo.levelSuccessfulFlag=false;
+            <span class="keyword">if</span>(self.currentInfo.phrase.endedFlag)
+                self.currentInfo.successfulPhraseCountinSet = self.currentInfo.successfulPhraseCountinSet + self.currentInfo.phrase.successfullyCompletedFlag;
+                self.currentInfo.levelSuccessfulFlag=((self.currentInfo.successfulPhraseCountinSet / length(self.fullPhraseLevelList{self.currentInfo.levelIndex}{self.currentInfo.setIndex})) &gt;= self.taskUpdateCriteria.LevelCompletionThreshold);
+                <span class="keyword">if</span>(self.currentInfo.levelSuccessfulFlag)
+                    <span class="keyword">if</span>(length(self.fullPhraseLevelList)==self.currentInfo.levelIndex)
+                        self.currentInfo.taskEndedFlag=true;
+                    <span class="keyword">else</span>
+                        self.currentInfo.levelIndex=self.currentInfo.levelIndex+1;
+                        self.currentInfo.setIndex=1;
+                        self.currentInfo.sentenceIndex=1;
+                        self.currentInfo.successfulPhraseCountinSet=0;
+                    <span class="keyword">end</span>
+                <span class="keyword">else</span>
+                    <span class="keyword">if</span>(self.currentInfo.sentenceIndex==length(self.fullPhraseLevelList{self.currentInfo.levelIndex}{self.currentInfo.setIndex}))
+                        <span class="keyword">if</span>(self.currentInfo.setIndex==length(self.fullPhraseLevelList{self.currentInfo.levelIndex}))
+                            self.currentInfo.setIndex=1;
+                        <span class="keyword">else</span>
+                            self.currentInfo.setIndex=self.currentInfo.setIndex+1;
+                        <span class="keyword">end</span>
+                        self.currentInfo.sentenceIndex=1;
+                        self.currentInfo.successfulPhraseCountinSet=0;
+                    <span class="keyword">else</span>
+                        self.currentInfo.sentenceIndex=self.currentInfo.sentenceIndex+1;
+                    <span class="keyword">end</span>
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+</pre><pre class="codeinput">    <span class="keyword">end</span>
+
+    methods (Access = protected)
+</pre><h2>pInitializeTaskUpdateCriteria(self,copyphraseStoppingCriteria,masteryTaskUpdateCriteria)<a name="8"></a></h2><p>Initializes mastery task level change criteria and inherits the task update criteria from the copyTask class.</p><p>Inputs:       copyphraseStoppingCriteria - the structure containing the copytask stopping criteria as its       fields. (RSVPKeyboardParams.copyphrase.StoppingCriteria)</p><pre>     masteryTaskUpdateCriteria - the structure containing the mastery task stopping criteria as its
+     fields. (RSVPKeyboardParams.masteryTask.StoppingCriteria)</pre><pre class="codeinput">        <span class="keyword">function</span> pInitializeTaskUpdateCriteria(self,copyphraseStoppingCriteria,masteryTaskUpdateCriteria)
+            self.pInitializeTaskUpdateCriteria@CopyTask(copyphraseStoppingCriteria);
+            self.taskUpdateCriteria.LevelCompletionThreshold=masteryTaskUpdateCriteria.LevelCompletionThreshold;
+        <span class="keyword">end</span>
+</pre><h2>pInitializeCurrentPhraseInfo(self)<a name="9"></a></h2><p>Initializes the next phrase to be copied by loading the phrase from the fullPhraseList.</p><pre class="codeinput">        <span class="keyword">function</span> pInitializeCurrentPhraseInfo(self)
+            <span class="keyword">if</span>(~self.currentInfo.taskEndedFlag)
+                self.currentInfo.phrase.preTarget=self.fullPhraseLevelList{self.currentInfo.levelIndex}{self.currentInfo.setIndex}{self.currentInfo.sentenceIndex}.preTarget;
+                self.currentInfo.phrase.target=self.fullPhraseLevelList{self.currentInfo.levelIndex}{self.currentInfo.setIndex}{self.currentInfo.sentenceIndex}.target;
+                self.currentInfo.phrase.postTarget=self.fullPhraseLevelList{self.currentInfo.levelIndex}{self.currentInfo.setIndex}{self.currentInfo.sentenceIndex}.postTarget;
+
+                self.pInitializeCurrentPhraseInfo@CopyTask();
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+</pre><h2>pReadSentenceList(self)<a name="10"></a></h2><p>Reads the phrase list from the respective sentence list file and initializes the fullPhraseList property.</p><pre class="codeinput">        <span class="keyword">function</span> pReadSentenceList(self)
+            [rawLevelInfo,rawSentenceInfo]=xlsread(<span class="string">'masteryTaskSentences.xlsx'</span>);
+            rawSentenceInfo=rawSentenceInfo(2:end,3);
+            self.fullPhraseLevelList=cell(max(rawLevelInfo(:,1)),1);
+
+            <span class="keyword">for</span>(levelIndex=1:length(self.fullPhraseLevelList))
+
+                levelIndexLogicals=find(rawLevelInfo(:,1)==levelIndex);
+                levelSentences=rawSentenceInfo(levelIndexLogicals);
+                self.fullPhraseLevelList{levelIndex}=cell(max(rawLevelInfo(levelIndexLogicals,2)),1);
+
+
+                <span class="keyword">for</span>(setIndex=1:length(self.fullPhraseLevelList{levelIndex}))
+                    setSentences=levelSentences(rawLevelInfo(levelIndexLogicals,2)==setIndex);
+                    self.fullPhraseLevelList{levelIndex}{setIndex}=cell(length(setSentences),1);
+
+                    <span class="keyword">for</span>(sentenceIndex=1:length(setSentences))
+                        sentence=setSentences{sentenceIndex};
+                        temp=find(sentence==<span class="string">'"'</span>);
+                        phrase2copyBeginIndex=temp(1);
+                        phrase2copyEndIndex=temp(2);
+                        phrase.preTarget=sentence(1:phrase2copyBeginIndex-1);
+                        phrase.target=sentence((phrase2copyBeginIndex+1):(phrase2copyEndIndex-1));
+                        phrase.postTarget=sentence((phrase2copyEndIndex+1):end);
+                        self.fullPhraseLevelList{levelIndex}{setIndex}{sentenceIndex}=phrase;
+                    <span class="keyword">end</span>
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+</pre><h2>pUpdateCurrentPhraseInfo(self,results)<a name="11"></a></h2><p>Updates the status and information of the phrase, i.e updates phrase field of the currentInfo property, and checks the task update criteria.</p><pre class="codeinput">        <span class="keyword">function</span> pUpdateCurrentPhraseInfo(self,results)
+            self.currentInfo.phrase.typingDuration=self.currentInfo.phrase.typingDuration+results.duration;
+            self.currentInfo.phrase.sequenceCounter=self.currentInfo.phrase.sequenceCounter+results.completedSequenceCount;
+            self.currentInfo.phrase.typedText=self.languageModelWrapperObject.getText();
+            [self.currentInfo.phrase.successfullyCompletedFlag,self.currentInfo.phrase.correctSection,self.currentInfo.phrase.incorrectSection]=checkTypingCorrectness(self.currentInfo.phrase.target,self.currentInfo.phrase.typedText);
+            self.checkTaskUpdateCriteria();
+        <span class="keyword">end</span>
+</pre><pre class="codeinput">    <span class="keyword">end</span>
+</pre><pre class="codeinput"><span class="keyword">end</span>
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.14<br></p></div><!--
+##### SOURCE BEGIN #####
+%% MasteryTask
+% MasteryTask is the controller class for mastery task and it inherits CopyTask. It decides on the next trials to show, decides if the session is
+% complete, decides if copying status of a phrase, makes decision, prepares the feedback screen to
+% send to the presentation and saves information to be saved.
+%
+%%
+classdef MasteryTask < CopyTask
+    %% Constant properties of the MasteryTask class
+    properties (Constant)
+        % masterySentencesFile is the name of the xlsx file containing the list of the sentences to be
+        % used in the mastery task experiment with their level and set information. (string)
+        masterySentencesFile='masteryTaskSentences.xlsx';
+    end
+    
+    %% Properties of the MasteryTask class
+    properties
+        % fullPhraseList is a cell vector of cell vector of cell vector of structs containing preTarget, target and postTarget
+        % fields corresponding to the phrase list to be used.
+        % Example; fullPhraseLevelList{3}{2}{1}.preTarget corresponds to the third level, second
+        % set, first sentence, part of the sentence before target.
+        fullPhraseLevelList
+    end
+    
+    %% Methods of the MasteryTask class
+    methods
+        %% self=MasteryTask(symbolStructArray,RSVPKeyboardParams,scoreStruct,operationMode,initialLevelIndex,initialSetIndex)
+        % Constructor for the MasteryTask. Queries for starting level and set if not entered.
+        % The inputs of the constructor
+        %   symbolStructArray - a struct vector containing list of symbols
+        %   or images used in presentations. Loaded using xls2Structs
+        %   function called on imageList.xls.
+        %
+        %   RSVPKeyboardParams - RSVPKeyboard parameters from the
+        %   parameter file RSVPKeyboardParameters.m.
+        %
+        %   scoreStruct - A calibration file containing the kernel density
+        %   estimators.
+        %
+        %   operationMode - Mode of operation.
+        %                   0 : session
+        %                   1 : simulation_dir
+        %
+        %   initialLevelIndex - index of the starting level
+        %
+        %   initialSetIndex - index of the starting set
+        %
+        function self=MasteryTask(symbolStructArray,RSVPKeyboardParams,scoreStruct,operationMode,initialLevelIndex,initialSetIndex)
+            if(~exist('scoreStruct','var'))
+                scoreStruct=[];
+            end
+            if(~exist('operationMode','var'))
+                operationMode=0;
+            end
+            
+            self=self@CopyTask(symbolStructArray,RSVPKeyboardParams,scoreStruct,operationMode);
+            self.pInitializeTaskUpdateCriteria(RSVPKeyboardParams.copyphrase.StoppingCriteria,RSVPKeyboardParams.masteryTask);
+            
+            if(exist('initialLevelIndex','var'))
+                self.currentInfo.levelIndex=initialLevelIndex;
+            else
+                self.currentInfo.levelIndex=str2double(input(['Please select the starting level [1:' num2str(length(self.fullPhraseLevelList)) ']:'],'s'));
+                
+            end
+            
+            if(exist('initialSetIndex','var'))
+                self.currentInfo.setIndex=initialSetIndex;
+            else
+                self.currentInfo.setIndex=str2double(input(['Please select the starting set [1:' num2str(length(self.fullPhraseLevelList{self.currentInfo.levelIndex})) ']:'],'s'));
+            end
+            
+            self.currentInfo.sentenceIndex=1;
+            
+            self.currentInfo.successfulPhraseCountinSet=0;
+            self.currentInfo.levelSuccessfulFlag=false;
+            
+            self.pInitializeCurrentPhraseInfo();
+            self.reformatPresentationData();
+            
+            self.nextSequenceInfoStruct.Rule = RSVPKeyboardParams.Typing.nextSequenceDecisionRule;
+            self.nextSequenceInfoStruct.NumberofTrials=RSVPKeyboardParams.Typing.NumberofTrials;
+        end
+        
+        %% checkTaskUpdateCriteria(self)
+        % checkTaskUpdateCriteria checks if a level is successfully completed or a set is
+        % unsuccessfully completed, and if the session is finished by completing all the levels.
+        % It also inherits the corresponding function from the parent class, CopyTask.
+        function checkTaskUpdateCriteria(self)
+            self.checkTaskUpdateCriteria@CopyTask();
+            
+            self.currentInfo.levelSuccessfulFlag=false;
+            if(self.currentInfo.phrase.endedFlag)
+                self.currentInfo.successfulPhraseCountinSet = self.currentInfo.successfulPhraseCountinSet + self.currentInfo.phrase.successfullyCompletedFlag;
+                self.currentInfo.levelSuccessfulFlag=((self.currentInfo.successfulPhraseCountinSet / length(self.fullPhraseLevelList{self.currentInfo.levelIndex}{self.currentInfo.setIndex})) >= self.taskUpdateCriteria.LevelCompletionThreshold);
+                if(self.currentInfo.levelSuccessfulFlag)
+                    if(length(self.fullPhraseLevelList)==self.currentInfo.levelIndex)
+                        self.currentInfo.taskEndedFlag=true;
+                    else
+                        self.currentInfo.levelIndex=self.currentInfo.levelIndex+1;
+                        self.currentInfo.setIndex=1;
+                        self.currentInfo.sentenceIndex=1;
+                        self.currentInfo.successfulPhraseCountinSet=0;
+                    end
+                else
+                    if(self.currentInfo.sentenceIndex==length(self.fullPhraseLevelList{self.currentInfo.levelIndex}{self.currentInfo.setIndex}))
+                        if(self.currentInfo.setIndex==length(self.fullPhraseLevelList{self.currentInfo.levelIndex}))
+                            self.currentInfo.setIndex=1;
+                        else
+                            self.currentInfo.setIndex=self.currentInfo.setIndex+1;
+                        end
+                        self.currentInfo.sentenceIndex=1;
+                        self.currentInfo.successfulPhraseCountinSet=0;
+                    else
+                        self.currentInfo.sentenceIndex=self.currentInfo.sentenceIndex+1;
+                    end
+                end
+            end
+        end
+    end
+    
+    methods (Access = protected)
+        %% pInitializeTaskUpdateCriteria(self,copyphraseStoppingCriteria,masteryTaskUpdateCriteria)
+        % Initializes mastery task level change criteria and inherits the task update criteria from the copyTask class.
+        %
+        % Inputs:
+        %       copyphraseStoppingCriteria - the structure containing the copytask stopping criteria as its
+        %       fields. (RSVPKeyboardParams.copyphrase.StoppingCriteria)
+        %
+        %       masteryTaskUpdateCriteria - the structure containing the mastery task stopping criteria as its
+        %       fields. (RSVPKeyboardParams.masteryTask.StoppingCriteria)
+        %
+        function pInitializeTaskUpdateCriteria(self,copyphraseStoppingCriteria,masteryTaskUpdateCriteria)
+            self.pInitializeTaskUpdateCriteria@CopyTask(copyphraseStoppingCriteria);
+            self.taskUpdateCriteria.LevelCompletionThreshold=masteryTaskUpdateCriteria.LevelCompletionThreshold;
+        end
+        
+        %% pInitializeCurrentPhraseInfo(self)
+        % Initializes the next phrase to be copied by loading the phrase from the fullPhraseList.
+        function pInitializeCurrentPhraseInfo(self)
+            if(~self.currentInfo.taskEndedFlag)
+                self.currentInfo.phrase.preTarget=self.fullPhraseLevelList{self.currentInfo.levelIndex}{self.currentInfo.setIndex}{self.currentInfo.sentenceIndex}.preTarget;
+                self.currentInfo.phrase.target=self.fullPhraseLevelList{self.currentInfo.levelIndex}{self.currentInfo.setIndex}{self.currentInfo.sentenceIndex}.target;
+                self.currentInfo.phrase.postTarget=self.fullPhraseLevelList{self.currentInfo.levelIndex}{self.currentInfo.setIndex}{self.currentInfo.sentenceIndex}.postTarget;
+                
+                self.pInitializeCurrentPhraseInfo@CopyTask();
+            end
+        end
+        
+        %% pReadSentenceList(self)
+        % Reads the phrase list from the respective sentence list file and initializes the
+        % fullPhraseList property.
+        function pReadSentenceList(self)
+            [rawLevelInfo,rawSentenceInfo]=xlsread('masteryTaskSentences.xlsx');
+            rawSentenceInfo=rawSentenceInfo(2:end,3);
+            self.fullPhraseLevelList=cell(max(rawLevelInfo(:,1)),1);
+            
+            for(levelIndex=1:length(self.fullPhraseLevelList))
+                
+                levelIndexLogicals=find(rawLevelInfo(:,1)==levelIndex);
+                levelSentences=rawSentenceInfo(levelIndexLogicals);
+                self.fullPhraseLevelList{levelIndex}=cell(max(rawLevelInfo(levelIndexLogicals,2)),1);
+                
+                
+                for(setIndex=1:length(self.fullPhraseLevelList{levelIndex}))
+                    setSentences=levelSentences(rawLevelInfo(levelIndexLogicals,2)==setIndex);
+                    self.fullPhraseLevelList{levelIndex}{setIndex}=cell(length(setSentences),1);
+                    
+                    for(sentenceIndex=1:length(setSentences))
+                        sentence=setSentences{sentenceIndex};
+                        temp=find(sentence=='"');
+                        phrase2copyBeginIndex=temp(1);
+                        phrase2copyEndIndex=temp(2);
+                        phrase.preTarget=sentence(1:phrase2copyBeginIndex-1);
+                        phrase.target=sentence((phrase2copyBeginIndex+1):(phrase2copyEndIndex-1));
+                        phrase.postTarget=sentence((phrase2copyEndIndex+1):end);
+                        self.fullPhraseLevelList{levelIndex}{setIndex}{sentenceIndex}=phrase;
+                    end
+                end
+            end
+        end
+        
+        %% pUpdateCurrentPhraseInfo(self,results)
+        % Updates the status and information of the phrase, i.e updates phrase field of the
+        % currentInfo property, and checks the task update criteria.
+        function pUpdateCurrentPhraseInfo(self,results)
+            self.currentInfo.phrase.typingDuration=self.currentInfo.phrase.typingDuration+results.duration;
+            self.currentInfo.phrase.sequenceCounter=self.currentInfo.phrase.sequenceCounter+results.completedSequenceCount;
+            self.currentInfo.phrase.typedText=self.languageModelWrapperObject.getText();
+            [self.currentInfo.phrase.successfullyCompletedFlag,self.currentInfo.phrase.correctSection,self.currentInfo.phrase.incorrectSection]=checkTypingCorrectness(self.currentInfo.phrase.target,self.currentInfo.phrase.typedText);
+            self.checkTaskUpdateCriteria();
+        end
+        
+        
+    end
+    
+    
+end
+##### SOURCE END #####
+--></body></html>

@@ -1,0 +1,458 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>textElement</title><meta name="generator" content="MATLAB 7.14"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2013-06-13"><meta name="DC.source" content="textElement.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+
+  </style></head><body><div class="content"><pre class="codeinput"><span class="keyword">classdef</span> textElement &lt; handle
+    <span class="keyword">properties</span>
+        textSize
+        textColor
+        XPosition=<span class="string">'center'</span>
+        YPosition=<span class="string">'center'</span>
+        text
+        XCursor
+        YCursor
+        textBounds
+        vSpacing=1;
+        windowHandle
+        Parent
+        Children
+    <span class="keyword">end</span>
+    <span class="keyword">methods</span>
+        <span class="keyword">function</span> self=textElement(type,text,presentationInfo)
+            self.Children=linkedList;
+            <span class="keyword">if</span>(nargin&gt;0)
+                self.windowHandle=presentationInfo.window;
+                <span class="keyword">switch</span> type
+                    <span class="keyword">case</span> {<span class="string">'Stimulus'</span>,<span class="string">'Target'</span>,<span class="string">'Trial'</span>,<span class="string">'Fixation'</span>,<span class="string">'Decision'</span>,<span class="string">'copyTaskTarget'</span>}
+                        <span class="keyword">if</span> strcmp(type,<span class="string">'copyTaskTarget'</span>)
+                            self.textSize=presentationInfo.copyTaskTarget.TextSize;
+                        <span class="keyword">else</span>
+                            self.textSize=presentationInfo.StimulusTextSize;
+                        <span class="keyword">end</span>
+                        <span class="keyword">if</span>(ischar(text))
+                            self.text=text;
+                            <span class="keyword">if</span>(isfield(presentationInfo.Color,type))
+                                self.textColor=presentationInfo.Color.(type);
+                            <span class="keyword">else</span>
+                                self.textColor=presentationInfo.Color.Stimulus;
+                            <span class="keyword">end</span>
+                        <span class="keyword">else</span>
+                            self.text=text.Stimulus;
+                            <span class="keyword">if</span>(strcmpi(text.Color,<span class="string">'default'</span>))
+                                <span class="keyword">if</span>(isfield(presentationInfo.Color,type))
+                                    self.textColor=presentationInfo.Color.(type);
+                                <span class="keyword">else</span>
+                                    self.textColor=presentationInfo.Color.Stimulus;
+                                <span class="keyword">end</span>
+                            <span class="keyword">else</span>
+                                self.textColor=str2num(text.Color);
+                            <span class="keyword">end</span>
+                        <span class="keyword">end</span>
+
+                    <span class="keyword">case</span> <span class="string">'activePauseBar'</span>
+                        self.textSize=presentationInfo.pauseBar.activeTextSize;
+                        self.text=presentationInfo.pauseBar.activeText;
+                        self.textColor=presentationInfo.pauseBar.activeColor;
+                        self.vSpacing=presentationInfo.pauseBar.vSpacing;
+                        <span class="keyword">if</span>(ischar(presentationInfo.pauseBar.activeRelativeYLocation))
+                            self.YPosition=presentationInfo.pauseBar.activeRelativeYLocation;
+                        <span class="keyword">else</span>
+                            self.YPosition=presentationInfo.pauseBar.activeRelativeYLocation*presentationInfo.windowRect(4);
+                        <span class="keyword">end</span>
+                        <span class="keyword">if</span>(ischar(presentationInfo.pauseBar.activeRelativeXLocation))
+                            self.XPosition=presentationInfo.pauseBar.activeRelativeXLocation;
+                        <span class="keyword">else</span>
+                            self.XPosition=presentationInfo.pauseBar.activeRelativeXLocation*presentationInfo.windowRect(3);
+                        <span class="keyword">end</span>
+                    <span class="keyword">case</span> <span class="string">'activePauseBarChannelDrop'</span>
+                        self.textSize=presentationInfo.pauseBar.activeTextSize;
+                        self.text=presentationInfo.pauseBar.activeTextChannelDrop;
+                        self.textColor=presentationInfo.pauseBar.activeColor;
+                        self.vSpacing=presentationInfo.pauseBar.vSpacing;
+                        <span class="keyword">if</span>(ischar(presentationInfo.pauseBar.activeRelativeYLocation))
+                            self.YPosition=presentationInfo.pauseBar.activeRelativeYLocation;
+                        <span class="keyword">else</span>
+                            self.YPosition=presentationInfo.pauseBar.activeRelativeYLocation*presentationInfo.windowRect(4);
+                        <span class="keyword">end</span>
+                        <span class="keyword">if</span>(ischar(presentationInfo.pauseBar.activeRelativeXLocation))
+                            self.XPosition=presentationInfo.pauseBar.activeRelativeXLocation;
+                        <span class="keyword">else</span>
+                            self.XPosition=presentationInfo.pauseBar.activeRelativeXLocation*presentationInfo.windowRect(3);
+                        <span class="keyword">end</span>
+                    <span class="keyword">case</span> <span class="string">'inactivePauseBar'</span>
+                        self.vSpacing=presentationInfo.pauseBar.vSpacing;
+                        self.textSize=presentationInfo.pauseBar.inactiveTextSize;
+                        self.text=presentationInfo.pauseBar.inactiveText;
+                        self.textColor=presentationInfo.pauseBar.inactiveColor;
+                        <span class="keyword">if</span>(ischar(presentationInfo.pauseBar.inactiveRelativeYLocation))
+                            self.YPosition=presentationInfo.pauseBar.inactiveRelativeYLocation;
+                        <span class="keyword">else</span>
+                            self.YPosition=presentationInfo.pauseBar.inactiveRelativeYLocation*presentationInfo.windowRect(4);
+                        <span class="keyword">end</span>
+                        <span class="keyword">if</span>(ischar(presentationInfo.pauseBar.inactiveRelativeXLocation))
+                            self.XPosition=presentationInfo.pauseBar.inactiveRelativeXLocation;
+                        <span class="keyword">else</span>
+                            self.XPosition=presentationInfo.pauseBar.inactiveRelativeXLocation*presentationInfo.windowRect(3);
+                        <span class="keyword">end</span>
+                    <span class="keyword">case</span> {<span class="string">'TargetIndicator'</span>,<span class="string">'DecisionIndicator'</span>}
+                        self.textSize=presentationInfo.(type).TextSize;
+                        <span class="keyword">if</span>(presentationInfo.(type).Enabled)
+                            self.text=[presentationInfo.(type).Text repmat(<span class="string">' '</span>,1,(ceil(presentationInfo.StimulusTextSize/self.textSize)+length(presentationInfo.(type).Text)))];
+                        <span class="keyword">else</span>
+                            self.text=<span class="string">''</span>;
+                        <span class="keyword">end</span>
+
+
+                        self.textColor=presentationInfo.(type).Color;
+
+
+                    <span class="keyword">case</span> <span class="string">'typingFeedback'</span>
+                        <span class="keyword">if</span>(ischar(text))
+                            self.text=text;
+                            self.textColor=presentationInfo.typingFeedbackBar.neutralColor;
+                        <span class="keyword">else</span>
+                            self.text=text.text;
+                            <span class="keyword">switch</span> text.mood
+                                <span class="keyword">case</span> <span class="string">'neutral'</span>
+                                    self.textColor=presentationInfo.typingFeedbackBar.neutralColor;
+                                <span class="keyword">case</span> <span class="string">'positive'</span>
+                                    self.textColor=presentationInfo.typingFeedbackBar.positiveColor;
+                                <span class="keyword">case</span> <span class="string">'negative'</span>
+                                    self.textColor=presentationInfo.typingFeedbackBar.negativeColor;
+                            <span class="keyword">end</span>
+                            self.textSize=presentationInfo.typingFeedbackBar.TextSize;
+                            self.vSpacing=presentationInfo.typingFeedbackBar.vSpacing;
+                            self.XPosition=0;
+                            self.YPosition=0;
+                        <span class="keyword">end</span>
+
+
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> addGraphicElement(self,element)
+            self.Children.insertEnd(listNode(element));
+            element.Parent=self;
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> Draw(self)
+            <span class="keyword">if</span>(~isempty(self.Parent))
+                <span class="keyword">switch</span> class(self.Parent)
+                    <span class="keyword">case</span> <span class="string">'textElement'</span>
+                        self.XPosition=self.Parent.XCursor;
+                        self.YPosition=self.Parent.YCursor;
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+            Screen(<span class="string">'TextSize'</span>,self.windowHandle, self.textSize);
+            <span class="keyword">if</span>(isempty(self.text))
+                self.XCursor=self.XPosition;
+                self.YCursor=self.YPosition;
+                self.textBounds=[self.XCursor,self.YCursor,self.XCursor,self.YCursor];
+            <span class="keyword">else</span>
+            <span class="comment">%if(strcmp(self.YPosition,'center'))</span>
+            <span class="keyword">if</span>(length(self.text)&gt;=2 &amp;&amp; strcmp(self.text(1:2),<span class="string">'\n'</span>))
+            [self.XCursor, self.YCursor, self.textBounds] = DrawFormattedText(self.windowHandle, self.text,0,self.YPosition,self.textColor,[],[],[],self.vSpacing);
+            <span class="keyword">else</span>
+            [self.XCursor, self.YCursor, self.textBounds] = DrawFormattedText(self.windowHandle, self.text,self.XPosition,self.YPosition,self.textColor,[],[],[],self.vSpacing);
+            <span class="keyword">end</span>
+<span class="comment">%             else</span>
+<span class="comment">%             newLineLocations=[-1 strfind(self.text,'\n')];</span>
+<span class="comment">%             tempXPos=self.XPosition;</span>
+<span class="comment">%             tempYPos=self.YPosition;</span>
+<span class="comment">%             for(newLineIndex=1:length(newLineLocations)-1)</span>
+<span class="comment">%                 [self.XCursor, self.YCursor, self.textBounds] = DrawFormattedText(self.windowHandle, self.text(newLineLocations(newLineIndex)+2:newLineLocations(newLineIndex+1)+1),tempXPos,tempYPos,self.textColor,[],[],[],self.vSpacing);</span>
+<span class="comment">%</span>
+<span class="comment">%                 tempXPos=0;</span>
+<span class="comment">%                 tempYPos=self.YCursor;</span>
+<span class="comment">%             end</span>
+<span class="comment">%             if(newLineLocations(newLineIndex)+2&lt;=length(self.text))</span>
+<span class="comment">%                 tempXPos=self.XCursor;</span>
+<span class="comment">%</span>
+<span class="comment">%                 [self.XCursor, self.YCursor, self.textBounds] = DrawFormattedText(self.windowHandle, self.text(newLineLocations(newLineIndex)+2:end),tempXPos,tempYPos,self.textColor,[],[],[],self.vSpacing);</span>
+<span class="comment">%             end</span>
+<span class="comment">%            end</span>
+            <span class="keyword">end</span>
+            currentNode=self.Children.Head;
+            <span class="keyword">for</span>(elementIndex=1:self.Children.elementCount)
+                currentNode.Data.Draw;
+                currentNode=currentNode.Next;
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="keyword">function</span> copyObject=copy(self)
+            copyObject=textElement;
+            S=properties(self);
+            <span class="keyword">for</span>(propertyIndex=1:length(S))
+                copyObject.(S{propertyIndex})=self.(S{propertyIndex});
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span>(~isempty(self.Children))
+                copyObject.Children=linkedList;
+                currentNode=self.Children.Head;
+                <span class="keyword">while</span>(~isempty(currentNode))
+                    copyObject.Children.insertEnd(listNode(copy(currentNode.Data)));
+                    copyObject.Children.Tail.Data.Parent=copyObject;
+                    currentNode=currentNode.Next;
+                <span class="keyword">end</span>
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.14<br></p></div><!--
+##### SOURCE BEGIN #####
+classdef textElement < handle
+    properties
+        textSize
+        textColor
+        XPosition='center'
+        YPosition='center'
+        text
+        XCursor
+        YCursor
+        textBounds
+        vSpacing=1;
+        windowHandle
+        Parent
+        Children
+    end
+    methods
+        function self=textElement(type,text,presentationInfo)
+            self.Children=linkedList;
+            if(nargin>0)
+                self.windowHandle=presentationInfo.window;
+                switch type
+                    case {'Stimulus','Target','Trial','Fixation','Decision','copyTaskTarget'}
+                        if strcmp(type,'copyTaskTarget')
+                            self.textSize=presentationInfo.copyTaskTarget.TextSize;
+                        else
+                            self.textSize=presentationInfo.StimulusTextSize;    
+                        end
+                        if(ischar(text))
+                            self.text=text;
+                            if(isfield(presentationInfo.Color,type))
+                                self.textColor=presentationInfo.Color.(type);
+                            else
+                                self.textColor=presentationInfo.Color.Stimulus;
+                            end
+                        else
+                            self.text=text.Stimulus;
+                            if(strcmpi(text.Color,'default'))
+                                if(isfield(presentationInfo.Color,type))
+                                    self.textColor=presentationInfo.Color.(type);
+                                else
+                                    self.textColor=presentationInfo.Color.Stimulus;
+                                end
+                            else
+                                self.textColor=str2num(text.Color);
+                            end
+                        end
+                        
+                    case 'activePauseBar'
+                        self.textSize=presentationInfo.pauseBar.activeTextSize;
+                        self.text=presentationInfo.pauseBar.activeText;
+                        self.textColor=presentationInfo.pauseBar.activeColor;
+                        self.vSpacing=presentationInfo.pauseBar.vSpacing;
+                        if(ischar(presentationInfo.pauseBar.activeRelativeYLocation))
+                            self.YPosition=presentationInfo.pauseBar.activeRelativeYLocation;
+                        else
+                            self.YPosition=presentationInfo.pauseBar.activeRelativeYLocation*presentationInfo.windowRect(4);
+                        end
+                        if(ischar(presentationInfo.pauseBar.activeRelativeXLocation))
+                            self.XPosition=presentationInfo.pauseBar.activeRelativeXLocation;
+                        else
+                            self.XPosition=presentationInfo.pauseBar.activeRelativeXLocation*presentationInfo.windowRect(3);
+                        end
+                    case 'activePauseBarChannelDrop'
+                        self.textSize=presentationInfo.pauseBar.activeTextSize;
+                        self.text=presentationInfo.pauseBar.activeTextChannelDrop;
+                        self.textColor=presentationInfo.pauseBar.activeColor;
+                        self.vSpacing=presentationInfo.pauseBar.vSpacing;
+                        if(ischar(presentationInfo.pauseBar.activeRelativeYLocation))
+                            self.YPosition=presentationInfo.pauseBar.activeRelativeYLocation;
+                        else
+                            self.YPosition=presentationInfo.pauseBar.activeRelativeYLocation*presentationInfo.windowRect(4);
+                        end
+                        if(ischar(presentationInfo.pauseBar.activeRelativeXLocation))
+                            self.XPosition=presentationInfo.pauseBar.activeRelativeXLocation;
+                        else
+                            self.XPosition=presentationInfo.pauseBar.activeRelativeXLocation*presentationInfo.windowRect(3);
+                        end
+                    case 'inactivePauseBar'
+                        self.vSpacing=presentationInfo.pauseBar.vSpacing;
+                        self.textSize=presentationInfo.pauseBar.inactiveTextSize;
+                        self.text=presentationInfo.pauseBar.inactiveText;
+                        self.textColor=presentationInfo.pauseBar.inactiveColor;
+                        if(ischar(presentationInfo.pauseBar.inactiveRelativeYLocation))
+                            self.YPosition=presentationInfo.pauseBar.inactiveRelativeYLocation;
+                        else
+                            self.YPosition=presentationInfo.pauseBar.inactiveRelativeYLocation*presentationInfo.windowRect(4);
+                        end
+                        if(ischar(presentationInfo.pauseBar.inactiveRelativeXLocation))
+                            self.XPosition=presentationInfo.pauseBar.inactiveRelativeXLocation;
+                        else
+                            self.XPosition=presentationInfo.pauseBar.inactiveRelativeXLocation*presentationInfo.windowRect(3);
+                        end
+                    case {'TargetIndicator','DecisionIndicator'}
+                        self.textSize=presentationInfo.(type).TextSize;
+                        if(presentationInfo.(type).Enabled)
+                            self.text=[presentationInfo.(type).Text repmat(' ',1,(ceil(presentationInfo.StimulusTextSize/self.textSize)+length(presentationInfo.(type).Text)))];
+                        else
+                            self.text='';
+                        end
+                        
+                        
+                        self.textColor=presentationInfo.(type).Color;
+                        
+                        
+                    case 'typingFeedback'
+                        if(ischar(text))
+                            self.text=text;
+                            self.textColor=presentationInfo.typingFeedbackBar.neutralColor;
+                        else
+                            self.text=text.text;
+                            switch text.mood
+                                case 'neutral'
+                                    self.textColor=presentationInfo.typingFeedbackBar.neutralColor;
+                                case 'positive'
+                                    self.textColor=presentationInfo.typingFeedbackBar.positiveColor;
+                                case 'negative'
+                                    self.textColor=presentationInfo.typingFeedbackBar.negativeColor;
+                            end
+                            self.textSize=presentationInfo.typingFeedbackBar.TextSize;
+                            self.vSpacing=presentationInfo.typingFeedbackBar.vSpacing;
+                            self.XPosition=0;
+                            self.YPosition=0;
+                        end
+                        
+                        
+                end
+            end
+        end
+        
+        function addGraphicElement(self,element)
+            self.Children.insertEnd(listNode(element));
+            element.Parent=self;
+        end
+        
+        function Draw(self)
+            if(~isempty(self.Parent))
+                switch class(self.Parent)
+                    case 'textElement'
+                        self.XPosition=self.Parent.XCursor;
+                        self.YPosition=self.Parent.YCursor;
+                end
+            end
+            Screen('TextSize',self.windowHandle, self.textSize);
+            if(isempty(self.text))
+                self.XCursor=self.XPosition;
+                self.YCursor=self.YPosition;
+                self.textBounds=[self.XCursor,self.YCursor,self.XCursor,self.YCursor];
+            else
+            %if(strcmp(self.YPosition,'center'))
+            if(length(self.text)>=2 && strcmp(self.text(1:2),'\n'))
+            [self.XCursor, self.YCursor, self.textBounds] = DrawFormattedText(self.windowHandle, self.text,0,self.YPosition,self.textColor,[],[],[],self.vSpacing);    
+            else
+            [self.XCursor, self.YCursor, self.textBounds] = DrawFormattedText(self.windowHandle, self.text,self.XPosition,self.YPosition,self.textColor,[],[],[],self.vSpacing);
+            end
+%             else
+%             newLineLocations=[-1 strfind(self.text,'\n')];
+%             tempXPos=self.XPosition;
+%             tempYPos=self.YPosition;
+%             for(newLineIndex=1:length(newLineLocations)-1)
+%                 [self.XCursor, self.YCursor, self.textBounds] = DrawFormattedText(self.windowHandle, self.text(newLineLocations(newLineIndex)+2:newLineLocations(newLineIndex+1)+1),tempXPos,tempYPos,self.textColor,[],[],[],self.vSpacing);
+%                 
+%                 tempXPos=0;
+%                 tempYPos=self.YCursor;
+%             end
+%             if(newLineLocations(newLineIndex)+2<=length(self.text))
+%                 tempXPos=self.XCursor;
+%                 
+%                 [self.XCursor, self.YCursor, self.textBounds] = DrawFormattedText(self.windowHandle, self.text(newLineLocations(newLineIndex)+2:end),tempXPos,tempYPos,self.textColor,[],[],[],self.vSpacing);
+%             end
+%            end
+            end
+            currentNode=self.Children.Head;
+            for(elementIndex=1:self.Children.elementCount)
+                currentNode.Data.Draw;
+                currentNode=currentNode.Next;
+            end
+        end
+        
+        function copyObject=copy(self)
+            copyObject=textElement;
+            S=properties(self);
+            for(propertyIndex=1:length(S))
+                copyObject.(S{propertyIndex})=self.(S{propertyIndex});
+            end
+            
+            if(~isempty(self.Children))
+                copyObject.Children=linkedList;
+                currentNode=self.Children.Head;
+                while(~isempty(currentNode))
+                    copyObject.Children.insertEnd(listNode(copy(currentNode.Data)));
+                    copyObject.Children.Tail.Data.Parent=copyObject;
+                    currentNode=currentNode.Next;
+                end
+            end
+        end
+        
+    end
+end
+##### SOURCE END #####
+--></body></html>

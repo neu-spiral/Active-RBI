@@ -1,0 +1,22 @@
+Future Work Note: 
+	addTrials function of DecisionClass: If trialIDs are not ordered and sequential, currentTrialID might be larger than length of trialIDs vector which might cause an "Index out of bounds" error.
+
+%%%%%%%%%%%%%%%%%%%%
+New Daq: March 14th 2016
+
+Incorporation of new Daq Module 64. in Windows 7/8- 32/64 and Matlab 32bits.
+
+It has the functionality to load binary files
+
+In order to detect automatically the parallel port you need to replace the old devcon32.exe. I downloaded the Windows Driver Kit (WDK) 8.1  from here:
+https://msdn.microsoft.com/en-us/windows/hardware/hh852365
+
+To be used in windows 8 LENOVO LAPTOP it uses the following express card.
+
+The new card express card model is: 1 Port ExpressCard Laptop Parallel Adapter Card - SPP/EPP/ECP. From StarTech
+Here is the website.
+http://www.startech.com/Cards-Adapters/Parallel/1-Port-PCI-Express-Base-Parallel-ExpressCard~EC1PECPS.
+
+IMPORTANT: For the moment is not able to do the first test of synchronization in windows 8. So it is needed to be added in RSVPketyboardPresentation the following.
+ Screen('Preference', 'SkipSyncTests', 1);
+
