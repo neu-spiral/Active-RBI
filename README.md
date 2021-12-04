@@ -6,4 +6,4 @@ This repo contains an implementation of active RBI method, "https://arxiv.org/pd
 
 
   ## Dependecy
-  python=3.5
+  python=3.6
